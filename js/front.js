@@ -69,15 +69,17 @@ export function loading(st, p, go) {
   st.appendChild(el);
   const slides = $$(el, '.load-slide'), dots = $$(el, '.dots i');
   let k = 0;
-  const car = setInterval(() => { k = 1 - k; slides.forEach((s, i) => s.classList.toggle('on', i === k)); dots.forEach((s, i) => s.classList.toggle('on', i === k)); }, 3200);
+  const car = setInterval(() => { k = 1 - k; slides.forEach((s, i) => s.classList.toggle('on', i === k)); dots.forEach((s, i) => s.classList.toggle('on', i === k)); }, 2600);
+  // 至少停留到兩張輪播圖都看過一輪；進度條依「實際下載」與「最短時間」兩者較慢的那個前進
+  const MIN_MS = 4800, t0 = performance.now();
   let done = 0, shown = 0, alive = true;
   const total = PRELOAD.length;
   const set = v => { $(el, '#pct').textContent = v + '%'; $(el, '#fill').style.width = v + '%'; $(el, '[role=progressbar]').setAttribute('aria-valuenow', v); };
   const tick = setInterval(() => {
-    const target = Math.round(done / total * 100);
-    if (shown < target) { shown = Math.min(target, shown + 3); set(shown); }
+    const target = Math.round(Math.min(done / total, (performance.now() - t0) / MIN_MS) * 100);
+    if (shown < target) { shown = Math.min(target, shown + 2); set(shown); }
     if (shown >= 100) {
-      clearInterval(tick);
+      clearInterval(tick); clearInterval(car);
       setTimeout(() => {
         if (!alive) return;
         const d = get();
