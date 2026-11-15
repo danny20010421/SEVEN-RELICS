@@ -120,7 +120,7 @@ export function render(st, params, go) {
   function say(cn, en, portrait = true) {
     return new Promise(res => {
       const showP = portrait && close.classList.contains('hidden') && cine.classList.contains('hidden');
-      const pic = showP ? html(`<img class="portrait" src="${IMG(`hero-${g}.webp`)}" alt="">`) : null;
+      const pic = showP ? html(`<img class="portrait${portrait === 'pain' ? ' pain' : ''}" src="${IMG(`hero-${g}${portrait === 'pain' ? '-pain' : ''}.webp`)}" alt="">`) : null;
       if (pic) el.appendChild(pic);
       const b = html(`<div class="sub" role="button" tabindex="0" aria-label="點一下繼續"><div class="who"><span>${esc(name)}</span>${ICON.voice}</div><p class="cn">${cn}</p><p class="en">${en}</p>${ICON.down}</div>`);
       const done = () => { sfx('tap'); b.remove(); if (pic) pic.remove(); res(); };
@@ -206,8 +206,8 @@ export function render(st, params, go) {
     bgm('n00');
     paintSlots();
     await wait(300); $(el, '#black').classList.remove('on'); await wait(900); S();
-    await say('這裡是……哪裡？', 'Where… am I?'); S();
-    await say('頭好痛……什麼都想不起來。', 'My head… I can’t remember anything.'); S();
+    await say('這裡是……哪裡？', 'Where… am I?', 'pain'); S();
+    await say('頭好痛……什麼都想不起來。', 'My head… I can’t remember anything.', 'pain'); S();
 
     // 1 撿起鐵棒
     setHs([['crowbar', S01.crowbar, true]]);

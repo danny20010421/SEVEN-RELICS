@@ -178,6 +178,8 @@ input, select { font-family: inherit; -webkit-user-select: text; user-select: te
 .tip .foot span { font-size: 16px; line-height: 24px; color: var(--text-2); }
 .blocker { position: absolute; inset: 0; z-index: 8; }
 .portrait { position: absolute; left: 56px; top: 72px; width: 400px; height: 1080px; object-fit: contain; object-position: top center; z-index: 23; pointer-events: none; filter: drop-shadow(0 0 24px rgba(0, 0, 0, 0.9)); animation: fadeIn 0.3s ease both; }
+/* 頭痛立繪畫布較寬，放大到與一般立繪同高、同中心 */
+.portrait.pain { left: -84px; width: 680px; }
 .area { position: absolute; z-index: 5; padding: 0; background: none; border: 2px solid transparent; cursor: pointer; }
 .area.show { border-color: var(--pink); box-shadow: 0 0 24px rgba(229, 38, 58, 0.8), inset 0 0 24px rgba(229, 38, 58, 0.4); animation: areaPulse 1.4s ease-in-out infinite; }
 @keyframes areaPulse { 50% { box-shadow: 0 0 40px rgba(255, 138, 150, 1), inset 0 0 32px rgba(229, 38, 58, 0.6); } }
