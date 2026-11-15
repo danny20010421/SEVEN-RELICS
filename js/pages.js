@@ -81,7 +81,17 @@ export function stages(st, p, go) {
   };
   const general = () => {
     const d = get();
+    setTimeout(() => { const b = $(body, '#g01'); if (b) b.addEventListener('click', async () => {
+      sfx('tap');
+      if (d.records.includes('g01')) {
+        const ok = await modal({ title: '再次挑戰', body: '這個關卡已經破關。<br>可以重看劇情，但不會再獲得獎勵。', buttons: [{ label: '取消', kind: 'btn-line', value: false }, { label: '開始', kind: 'btn', value: true }] });
+        if (ok) go('g01', { replay: true });
+        return;
+      }
+      go('g01');
+    }); });
     body.innerHTML = `<div class="content"><div class="glist">
+${d.records.includes('n00') ? `<button type="button" class="card gitem" id="g01"><span class="col" style="gap:4px"><span class="serif" style="font-size:24px;line-height:32px">G01 · 從未消失的黃金</span><span style="font-size:14px;line-height:24px;color:var(--muted)">台灣・金瓜石 · 難度 ★★☆☆☆ · 不限時${d.records.includes('g01') ? ' · 已破關' : ''}</span></span><span class="btn sm" style="width:144px">${d.records.includes('g01') ? '再次挑戰' : '開始調查'}</span></button>` : `<div class="card gitem lock"><span class="col" style="gap:4px"><span class="serif" style="font-size:24px;line-height:32px">G01 · ？？？</span><span style="font-size:14px;line-height:24px">通關序章後開放</span></span>${ICON.lock}</div>`}
 <div class="card gitem lock"><span class="col" style="gap:4px"><span class="serif" style="font-size:24px;line-height:32px">更多一般關卡</span><span style="font-size:14px;line-height:24px">分支任務製作中，敬請期待</span></span>${ICON.lock}</div>
 </div></div>`;
   };
@@ -303,20 +313,37 @@ function people(body, d, focus) {
   $$(body, '[data-p]').forEach(b => b.addEventListener('click', () => { sfx('tap'); people(body, d, b.dataset.p); }));
 }
 
+// 劇情紀錄：序章與已破關的一般關卡
+const STORY = [
+  { id: 'n00', group: '序章', name: '記憶的終點', label: '序章 · 紀錄 01', html: `<p>在意識深處的緊急通道醒來。門上的跑馬燈留下四句謎語：</p>
+<p style="font-family:var(--serif);font-weight:600;color:var(--text)">未曾存在，吞沒一切<br>不曾移動，目觀四方<br>鏡中之影，與誰相同<br>另一消散，何以為證</p>
+<p>門後是一條伸向黑暗的通道。模糊的人影、殘缺的符號……我好像來過那裡。</p>` },
+  { id: 'g01', group: '一般關卡', name: '從未消失的黃金', label: '一般關卡 · G01　台灣・金瓜石', html: `<p>受因杜阿森教授之託，協助黃金博物館調查 1945 年 2 月 17 日的運輸紀錄。三車貨物沒有抵達終點，而是經由一條未登記的升降路線，被藏進了五坑深處。</p>
+<p>藏起黃金的，是英國戰俘亞瑟・威廉斯、Edward Miller、Thomas Reed，與台灣技工林清和。黃金留在原處，金庫的位置不曾寫進任何報告。</p>
+<div class="label" style="margin-top:8px">收藏　亞瑟的最後一封信（影像檔）</div>
+<p style="font-family:var(--serif);font-weight:600;color:var(--text)">如果你正在讀這封信，代表我們成功了。<br>黃金屬於活著的人。但請別忘了那些死去的人。<br>如果有一天，這些黃金再次被人發現，我只希望它們不會成為下一場貪婪的開始。<br>—— Arthur Williams</p>
+<p style="font-size:14px;line-height:24px;color:var(--muted)">本關為真實礦業與戰俘歷史背景上的原創故事，人物與藏金事件皆為虛構。</p>` },
+];
+function story(body, d, pick) {
+  const have = STORY.filter(s => d.records.includes(s.id));
+  const cur = have.find(s => s.id === pick) || have[0];
+  let list = '', g = '';
+  for (const s of STORY) {
+    if (s.group !== g) { g = s.group; list += `<div class="label" style="height:32px;display:flex;align-items:center">${g}</div>`; }
+    list += d.records.includes(s.id) ? `<button type="button" class="fitem${cur && cur.id === s.id ? ' on' : ' got'}" data-s="${s.id}">${s.name}</button>` : `<div class="fitem"><span>？？？</span>${ICON.lock}</div>`;
+  }
+  body.innerHTML = `<div class="content"><div class="flist">${list}</div>
+<div class="panel fdoc">${cur ? `<div class="label">${cur.label}</div><h2>${cur.name}</h2><div class="redline"></div>${cur.html}` : emptyState('尚未取得劇情紀錄')}</div></div>`;
+  $$(body, '[data-s]').forEach(b => b.addEventListener('click', () => { sfx('tap'); story(body, d, b.dataset.s); }));
+}
+
 export function files(st, p, go) {
   bgm('lobby');
   const { el, body } = mount(st, '調查檔案', tabs(['劇情紀錄', '人物關係', '組織情報', '證據牆']));
   const paint = i => {
     const d = get();
     if (i === 0) {
-      const has = d.records.includes('n00');
-      body.innerHTML = `<div class="content"><div class="flist"><div class="label" style="height:32px;display:flex;align-items:center">序章</div>
-${has ? '<button type="button" class="fitem on">記憶的終點</button>' : `<div class="fitem"><span>？？？</span>${ICON.lock}</div>`}
-${Array.from({ length: 4 }, () => `<div class="fitem"><span>？？？</span>${ICON.lock}</div>`).join('')}</div>
-<div class="panel fdoc">${has ? `<div class="label">序章 · 紀錄 01</div><h2>記憶的終點</h2><div class="redline"></div>
-<p>在意識深處的緊急通道醒來。門上的跑馬燈留下四句謎語：</p>
-<p style="font-family:var(--serif);font-weight:600;color:var(--text)">未曾存在，吞沒一切<br>不曾移動，目觀四方<br>鏡中之影，與誰相同<br>另一消散，何以為證</p>
-<p>門後是一條伸向黑暗的通道。模糊的人影、殘缺的符號……我好像來過那裡。</p>` : emptyState('尚未取得劇情紀錄')}</div></div>`;
+      story(body, d);
     } else if (i === 1) {
       people(body, d);
     } else {
