@@ -177,6 +177,10 @@ input, select { font-family: inherit; -webkit-user-select: text; user-select: te
 .tip .foot { height: 48px; display: flex; align-items: center; justify-content: space-between; }
 .tip .foot span { font-size: 16px; line-height: 24px; color: var(--text-2); }
 .blocker { position: absolute; inset: 0; z-index: 8; }
+.portrait { position: absolute; left: 56px; top: 72px; width: 400px; height: 1080px; object-fit: contain; object-position: top center; z-index: 23; pointer-events: none; filter: drop-shadow(0 0 24px rgba(0, 0, 0, 0.9)); animation: fadeIn 0.3s ease both; }
+.area { position: absolute; z-index: 5; padding: 0; background: none; border: 2px solid transparent; cursor: pointer; }
+.area.show { border-color: var(--pink); box-shadow: 0 0 24px rgba(229, 38, 58, 0.8), inset 0 0 24px rgba(229, 38, 58, 0.4); animation: areaPulse 1.4s ease-in-out infinite; }
+@keyframes areaPulse { 50% { box-shadow: 0 0 40px rgba(255, 138, 150, 1), inset 0 0 32px rgba(229, 38, 58, 0.6); } }
 
 /* scene layers */
 .layer { position: absolute; inset: 0; transition: transform 0.7s ease, opacity 0.5s ease, filter 0.5s; transform-origin: 640px 250px; }
@@ -219,11 +223,9 @@ input, select { font-family: inherit; -webkit-user-select: text; user-select: te
 @keyframes gbar { 0% { top: 10%; } 20% { top: 62%; } 40% { top: 30%; } 60% { top: 84%; } 80% { top: 46%; } 100% { top: 12%; } }
 
 /* memory */
-.mem-base { filter: blur(6px) brightness(0.7); }
-.mem-sharp { animation: memFlick 2.6s steps(1) infinite; }
-@keyframes memFlick { 0% { opacity: 0.85; } 12% { opacity: 0.15; } 18% { opacity: 0.9; } 37% { opacity: 0.25; } 41% { opacity: 0.8; } 63% { opacity: 0.1; } 70% { opacity: 0.85; } 88% { opacity: 0.3; } }
-.mem-fig { position: absolute; left: 520px; top: 40px; width: 240px; height: 466px; object-fit: contain; animation: figFlick 1.6s steps(1) infinite; }
-@keyframes figFlick { 0% { opacity: 0.9; } 30% { opacity: 0.2; } 45% { opacity: 0.8; } 70% { opacity: 0.05; } 85% { opacity: 0.7; } }
+/* 遮罩疊在人影上：亮起時人影被抹去，熄掉時人影浮現 → 人影本身在閃 */
+.mem-ghost { position: absolute; background-size: 1280px 720px; background-repeat: no-repeat; filter: blur(12px) brightness(0.5); -webkit-mask-image: radial-gradient(closest-side, #000 60%, transparent); mask-image: radial-gradient(closest-side, #000 60%, transparent); opacity: 0; animation: figFlick 1.6s steps(1) infinite; pointer-events: none; }
+@keyframes figFlick { 0% { opacity: 0; } 22% { opacity: 1; } 30% { opacity: 0; } 52% { opacity: 0.9; } 58% { opacity: 0.2; } 64% { opacity: 1; } 78% { opacity: 0; } }
 .vignette { position: absolute; inset: 0; background: radial-gradient(closest-side, rgba(0, 0, 0, 0), rgba(10, 6, 7, 0.7)); pointer-events: none; }
 
 /* ===== lobby ===== */

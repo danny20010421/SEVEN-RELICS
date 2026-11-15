@@ -115,10 +115,15 @@ export function render(st, params, go) {
 
   // ---------- 對白、提示、系統訊息 ----------
   const name = (d.player && d.player.name) || '玩家';
-  function say(cn, en) {
+  // 主角立繪：只在不會擋住解謎畫面時出現（特寫、過場時不顯示）
+  const g = (d.player && d.player.gender) || 'm';
+  function say(cn, en, portrait = true) {
     return new Promise(res => {
+      const showP = portrait && close.classList.contains('hidden') && cine.classList.contains('hidden');
+      const pic = showP ? html(`<img class="portrait" src="${IMG(`hero-${g}.webp`)}" alt="">`) : null;
+      if (pic) el.appendChild(pic);
       const b = html(`<div class="sub" role="button" tabindex="0" aria-label="點一下繼續"><div class="who"><span>${esc(name)}</span>${ICON.voice}</div><p class="cn">${cn}</p><p class="en">${en}</p>${ICON.down}</div>`);
-      const done = () => { sfx('tap'); b.remove(); res(); };
+      const done = () => { sfx('tap'); b.remove(); if (pic) pic.remove(); res(); };
       b.addEventListener('click', done);
       b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') done(); });
       el.appendChild(b); b.focus({ preventScroll: true });
@@ -202,6 +207,7 @@ export function render(st, params, go) {
     paintSlots();
     await wait(300); $(el, '#black').classList.remove('on'); await wait(900); S();
     await say('這裡是……哪裡？', 'Where… am I?'); S();
+    await say('頭好痛……什麼都想不起來。', 'My head… I can’t remember anything.'); S();
 
     // 1 撿起鐵棒
     setHs([['crowbar', S01.crowbar, true]]);
@@ -215,6 +221,7 @@ export function render(st, params, go) {
     await act(a => a.type === 'itemOpened'); untip();
     await act(a => a.type === 'itemClosed'); S();
     selected = null; paintSlots();
+    await say('那裡有一扇門。是出口嗎？', 'There’s a door over there. Is it a way out?'); S();
 
     // 3 前往門前
     setHs([['door', S01.door, true, true]]);
@@ -222,6 +229,7 @@ export function render(st, params, go) {
     await act(a => a.type === 'hs' && a.id === 'door'); S();
     untip(); setHs([]); sfx('whoosh'); scene.classList.add('zoomed'); await wait(800); S();
     await say('門上有一道電子鎖。', 'There’s an electronic lock on the door.'); S();
+    await say('看來沒那麼容易出去。', 'Looks like getting out won’t be that easy.'); S();
 
     // 4 拉近電子鎖
     setHs([['lock', S02.lock, true]]);
@@ -230,15 +238,23 @@ export function render(st, params, go) {
     untip(); openKeypad();
 
     // 5 用鐵棒撬鎖（失敗）
-    const kpTarget = () => { const b = html('<button type="button" class="hs show big" style="left:451px;top:380px" data-hs="keypad" aria-label="密碼鎖"></button>'); b.addEventListener('click', () => { sfx('tap'); emit({ type: 'hs', id: 'keypad', item: selected }); }); close.appendChild(b); return b; };
-    let t = kpTarget();
-    tip('先點道具欄的鐵棒，選擇「使用」，再點一下這道鎖。', 5, { left: 664, top: 320 });
+    // full = 點畫面任何地方都算；否則點整個密碼鎖範圍
+    const kpTarget = full => {
+      const b = html(full
+        ? '<button type="button" class="area" style="left:0;top:0;width:1144px;height:720px" data-hs="keypad" aria-label="點一下畫面"></button>'
+        : '<button type="button" class="area show" style="left:232px;top:56px;width:424px;height:600px" data-hs="keypad" aria-label="密碼鎖"></button>');
+      b.addEventListener('click', () => { sfx('tap'); emit({ type: 'hs', id: 'keypad', item: selected }); });
+      close.appendChild(b); return b;
+    };
+    let t = kpTarget(true);
+    tip('先點道具欄的鐵棒，選擇「使用」，再點一下畫面任何地方。', 5, { left: 664, top: 320 });
     await act(a => a.type === 'hs' && a.id === 'keypad' && a.item === 'crowbar'); S();
     untip(); t.remove(); selected = null; paintSlots();
     sfx('clang'); vibrate(120);
     await sys(['鎖具異常堅固，無法以蠻力破壞。', '也許附近藏著開鎖的方法。'], 2800, 160, true); S();
-    await say('撬不開……', 'It won’t budge…'); S();
+    await say('撬不開……', 'It won’t budge…', false); S();
     shut();
+    await say('這道鎖比看起來還要堅固。得找別的辦法。', 'This lock is tougher than it looks. I need another way.'); S();
 
     // 6 跑馬燈謎語
     setHs([['exit', S02.exit, true]]);
@@ -260,9 +276,10 @@ export function render(st, params, go) {
     const eb = $(close, '[data-k="E"]'); eb.classList.add('press'); await wait(250); eb.classList.remove('press');
     sfx('error'); vibrate(80); paintKp('err', '密碼錯誤'); await wait(1200); S();
     blocker.remove();
-    await say('不對。得先想通那段謎語。', 'Wrong. I need to solve that riddle first.'); S();
+    await say('不對。得先想通那段謎語。', 'Wrong. I need to solve that riddle first.', false); S();
     await tip('答錯不會怎樣。但在主線關卡中，答錯 3 次或時間用完，就必須從頭開始。', 8, { left: 664, top: 320 }, true); S();
     kp.input = ''; shut();
+    await say('也許附近還藏著什麼線索……', 'Maybe there’s another clue around here…'); S();
 
     // 8 撬開電箱
     setHs([['box', S02.box, true], ['lock', S02.lock, false], ['exit', S02.exit, false]]);
@@ -275,13 +292,13 @@ export function render(st, params, go) {
       else if (a.id === 'lock') sys(['先找找看附近有沒有開鎖的線索。'], 1800);
     }
     untip(); removeItem('crowbar');
-    openClose(`<img src="${IMG('n00-box.webp')}" id="boxImg" alt="牆上的小電箱" style="position:absolute;left:261px;top:20px;width:621px;height:680px">`);
+    openClose(`<img class="bg" src="${IMG('n00-box.webp')}" id="boxImg" alt="牆上的小電箱">`);
     await wait(500); sfx('pry'); vibrate(150); await wait(700); S();
     $(close, '#boxImg').src = IMG('n00-box-open.webp');
-    const comp = html(`<button type="button" class="hs show" style="left:598px;top:351px;width:176px;height:176px;margin:-88px 0 0 -88px;border-radius:50%" data-hs="compass" aria-label="解析盤"><img src="${IMG('it-compass.webp')}" alt="" style="position:absolute;inset:0;width:176px;height:176px;filter:brightness(0.8) saturate(0.9)"></button>`);
+    const comp = html(`<button type="button" class="hs show" style="left:670px;top:360px;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%" data-hs="compass" aria-label="解析盤"><img src="${IMG('it-compass.webp')}" alt="" style="position:absolute;inset:0;width:200px;height:200px;filter:brightness(0.75) saturate(0.9) drop-shadow(0 8px 12px rgba(0,0,0,0.8))"></button>`);
     comp.addEventListener('click', () => { sfx('tap'); emit({ type: 'hs', id: 'compass' }); });
     close.appendChild(comp);
-    await say('裡面有東西。', 'There’s something inside.'); S();
+    await say('裡面有東西。', 'There’s something inside.', false); S();
     tip('點一下解析盤，把它撿起來。', 9, { left: 760, top: 400 });
     await act(a => a.type === 'hs' && a.id === 'compass'); S();
     untip(); comp.remove(); sfx('pick'); addItem('compass');
@@ -295,14 +312,15 @@ export function render(st, params, go) {
     while (a1.id === 'exit') { untip(); await showRiddle(false); S(); setHs([['lock', S02.lock, true], ['exit', S02.exit, false]]); a1 = await act(a => a.type === 'hs' && (a.id === 'lock' || a.id === 'exit')); S(); }
     untip(); openKeypad();
     if (a1.item !== 'compass') {
-      t = kpTarget();
-      tip('點道具欄的解析盤，選擇「使用」，再點一下密碼鎖。', 10, { left: 664, top: 320 });
+      t = kpTarget(false);
+      tip('點道具欄的解析盤，選擇「使用」，再點一下密碼鎖的任何位置。', 10, { left: 680, top: 320 });
       await act(a => a.type === 'hs' && a.id === 'keypad' && a.item === 'compass'); S();
       untip(); t.remove();
     }
     removeItem('compass'); sfx('hint');
     kp.reveal = { i: 2, d: '2' }; paintKp('', '解析完成');
     await sys(['解析完成：第 3 位數字是 2。'], 2400, 160, true); S();
+    await say('第三位是 2……「鏡中之影」，原來是指兩個。', 'The third digit is 2… “a reflection in the mirror” — it means two.', false); S();
 
     // 10 解開密碼
     tip('解開謎語，輸入四位數密碼。順序必須完全正確。<br><span style="color:var(--muted)">按 C 清除，按 ↵ 確認。</span>', 11, { left: 664, top: 320 });
@@ -326,10 +344,12 @@ export function render(st, params, go) {
     untip(); backBtn.remove();
     sfx('unlock'); paintKp('ok', '解鎖成功'); vibrate(60);
     await sys(['解鎖成功。'], 1400, 160, true); S();
-    await say('開了。', 'It’s open.'); S();
+    await say('開了。', 'It’s open.', false); S();
+    shut();
+    await say('門後……有什麼在等著我？', 'What’s waiting for me behind this door?'); S();
 
     // 11 結尾演出
-    shut(); setHs([]);
+    setHs([]);
     $(el, '#slots').classList.add('hidden'); $(el, '#hud').classList.add('hidden'); $(el, '#hudR').classList.add('hidden');
     $$(el, '.shade-top, .shade-right').forEach(x => x.classList.add('hidden'));
     sfx('door'); scene.classList.add('door-open'); scene.style.transform = 'scale(2.2)'; await wait(1800); S();
@@ -340,9 +360,14 @@ export function render(st, params, go) {
     $(el, '#black').classList.remove('on'); sfx('whoosh'); await wait(1200); S();
     await say('這個地方……我好像來過。', 'This place… I feel like I’ve been here before.'); S();
     $(el, '#black').classList.add('on'); await wait(800); S();
-    cine.innerHTML = `<img class="bg mem-base" src="${IMG('n00-memory.webp')}" alt=""><img class="bg mem-sharp" src="${IMG('n00-memory.webp')}" alt="記憶碎片：模糊的人影與殘缺的符號"><img class="mem-fig" src="${IMG('n00-figure.webp')}" alt=""><div class="vignette"></div>`;
+    // 記憶碎片：畫面本身不動，只有畫中的每個人影各自明滅閃爍
+    const FIGS = [[228, 66, 100, 124], [380, 180, 152, 124], [790, 96, 180, 210], [1080, 240, 160, 130], [176, 322, 176, 206], [498, 352, 46, 56], [872, 402, 52, 86], [950, 490, 170, 130]];
+    cine.innerHTML = `<img class="bg" src="${IMG('n00-memory.webp')}" alt="記憶碎片：模糊的人影與殘缺的符號">` +
+      FIGS.map(([x, y, w, h], i) => `<div class="mem-ghost" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;background-image:url(${IMG('n00-memory.webp')});background-position:${-x}px ${-y}px;animation-duration:${(1.3 + (i * 0.37) % 1.1).toFixed(2)}s;animation-delay:${(-i * 0.43).toFixed(2)}s"></div>`).join('') +
+      `<div class="vignette"></div>`;
     $(el, '#black').classList.remove('on'); sfx('tinnitus'); await wait(1400); S();
     await say('這些人是誰……我又是誰？', 'Who are these people… and who am I?'); S();
+    await say('那個符號……我在哪裡見過？', 'That symbol… where have I seen it before?'); S();
     sfx('flash'); $(el, '#white').classList.add('on'); await wait(2000); S();
 
     d.prologueDone = true;
@@ -366,6 +391,7 @@ export function render(st, params, go) {
         await wait(2700); S();
         await say(cn + '。', en); S();
       }
+      await say('四句話……每一句都在指一個數字嗎？', 'Four lines… does each one point to a number?'); S();
     }
     led.innerHTML = `<div class="col" style="width:100%;align-items:center;gap:8px">${RIDDLE.map(([cn]) => `<div style="font-family:var(--serif);font-weight:900;font-size:40px;line-height:64px;letter-spacing:0.24em;padding-left:0.24em;color:#fff1ec;text-shadow:0 0 8px #ff6b6b,0 0 24px #ff2a2a">${cn}</div>`).join('')}</div>`;
     const b = html(`<button type="button" class="backbtn">${ICON.back.replace('<svg', '<svg width="20" height="20"')}<span>返回</span></button>`);

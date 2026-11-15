@@ -50,7 +50,7 @@ export function terms(st, p, go) {
 export const PRELOAD = ['wordmark.webp', 'load1.webp', 'load2.webp', 'wild.webp', 'hero-m.webp', 'hero-f.webp', 'avatar-m.webp', 'avatar-f.webp',
   'coin.webp', 'diamond.webp', 'ic-world.webp', 'ic-event.webp', 'ic-shop.webp', 'ic-bag.webp', 'ic-signin.webp', 'ic-vip.webp', 'ic-settings.webp',
   'it-timer.webp', 'it-compass.webp', 'it-memo.webp', 'it-crowbar.webp',
-  'n00-s01.webp', 'n00-crowbar-floor.webp', 'n00-marquee.webp', 'n00-keypad.webp', 'n00-box.webp', 'n00-box-open.webp', 'n00-corridor.webp', 'n00-memory.webp', 'n00-figure.webp'];
+  'n00-s01.webp', 'n00-crowbar-floor.webp', 'n00-marquee.webp', 'n00-keypad.webp', 'n00-box.webp', 'n00-box-open.webp', 'n00-corridor.webp', 'n00-memory.webp'];
 
 export function loading(st, p, go) {
   const el = html(`<div class="scr">

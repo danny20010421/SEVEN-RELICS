@@ -12,7 +12,7 @@
 - 純前端（HTML、CSS、JavaScript 模組），不需建置，可直接部署到 GitHub Pages
 - 固定 1280×720 舞台等比縮放，手機直拿時顯示轉向提示
 - 進度目前存在瀏覽器（localStorage）；帳號雲端存檔、Google／LINE 登入、金流需另建後端
-- 背景音樂：登入頁 Kyle Preston〈Dark Tension〉、序章 Out of Flux〈Slithering Woe〉、大廳 Jimmy Svensson〈Discovery〉（`assets/audio/`）；音效以 Web Audio 即時合成
+- 背景音樂：登入頁 bgm-000110〈Cold Scrapes Below〉（casper.tw 免費音樂）、序章 bgm-000073〈Night Pursuit〉（casper.tw 免費音樂）、大廳 WombatNoisesAudio〈DON'T GO INSIDE〉（`assets/audio/`）；音效以 Web Audio 即時合成
 
 ## 本機執行
 ```
