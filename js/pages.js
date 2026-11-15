@@ -262,6 +262,47 @@ export function events(st, p, go) {
 }
 
 // ---------------- 調查檔案 ----------------
+// 人物關係：以主角為中心的關係圖；通關指定主線關卡後解鎖
+const PEOPLE = [
+  {
+    id: 'induasen', name: '因杜阿森', title: '歷史學家', rel: '大學教授', slot: 'left', unlock: 'n00',
+    av: 'npc-induasen-av.webp', img: 'npc-induasen.webp',
+    lines: ['外表冷酷、實則熱心的老人。擁有強大的人脈與訊息資源，世界各地遇到困難的機構，都會想找他協助。', '自稱是主角的大學老師，是幫助主角恢復記憶的關鍵人物。']
+  }
+];
+const SLOT = { left: [192, 248, 416, 280], right: [880, 248, 720, 280], top: [536, 40, 568, 184], bottom: [536, 456, 568, 404] };
+function people(body, d, focus) {
+  const known = PEOPLE.filter(m => d.records.includes(m.unlock));
+  const pick = focus && known.find(m => m.id === focus);
+  if (pick) {
+    body.innerHTML = `<div class="content"><div class="panel pdoc">
+  <div class="pdoc-pic"><img src="${IMG(pick.img)}" alt="${pick.name}"></div>
+  <div class="pdoc-text">
+    <div class="row" style="height:24px;gap:8px;font-size:14px;color:var(--muted)"><span>人物關係</span><span>›</span><span>${esc(d.player.name)}</span><span>›</span><span style="color:var(--gold-2)">${pick.name}</span></div>
+    <h2 class="serif" style="margin:0;font-size:40px;line-height:56px">${pick.name}</h2>
+    <div class="row" style="gap:8px"><span class="chip-red">${pick.title}</span><span class="pchip">與主角：${pick.rel}</span></div>
+    <div class="redline"></div>
+    ${pick.lines.map(t => `<p>${t}</p>`).join('')}
+  </div>
+  <button type="button" class="btn-line" id="pback" style="position:absolute;right:32px;bottom:32px;width:208px">返回關係圖</button>
+</div></div>`;
+    $(body, '#pback').addEventListener('click', () => { sfx('tap'); people(body, d); });
+    return;
+  }
+  const node = (x, y, inner, label, on, id) => `<button type="button" class="pnode" style="left:${x}px;top:${y}px"${id ? ` data-p="${id}"` : ''} aria-label="${label}"><span class="pav${on ? ' on' : ''}">${inner}</span><span class="pname">${label}</span></button>`;
+  const q = '<span style="font-size:32px;font-weight:700;line-height:40px;color:var(--muted-2)">？</span>';
+  let html2 = '<div class="pline" style="left:320px;top:199px;width:592px;height:2px"></div><div class="pline" style="left:615px;top:40px;width:2px;height:320px"></div>';
+  for (const [slot, [x, y, lx, ly]] of Object.entries(SLOT)) {
+    const m = known.find(k => k.slot === slot);
+    html2 += `<span class="prel" style="left:${lx}px;top:${ly - 96}px">${m ? m.rel : '******'}</span>`;
+    html2 += m ? node(x, y - 96, `<img src="${IMG(m.av)}" alt="">`, m.name, true, m.id) : node(x, y - 96, q, '？？？', false);
+  }
+  html2 += node(536, 152, `<img src="${IMG(`avatar-${d.player.gender}.webp`)}" alt="">`, esc(d.player.name), true);
+  body.innerHTML = `<div class="content"><div class="panel pgraph"><div class="pgraph-in">${html2}</div>
+  <div class="muted" style="position:absolute;left:24px;bottom:24px;height:40px;display:flex;align-items:center;font-size:16px;color:var(--text-2)">${known.length ? '點人物可查看詳細資料。通關主線關卡後，會有更多關鍵人物加入。' : '通關主線關卡後，關鍵人物才會加入這裡。'}</div></div></div>`;
+  $$(body, '[data-p]').forEach(b => b.addEventListener('click', () => { sfx('tap'); people(body, d, b.dataset.p); }));
+}
+
 export function files(st, p, go) {
   bgm('lobby');
   const { el, body } = mount(st, '調查檔案', tabs(['劇情紀錄', '人物關係', '組織情報', '證據牆']));
@@ -276,6 +317,8 @@ ${Array.from({ length: 4 }, () => `<div class="fitem"><span>？？？</span>${IC
 <p>在意識深處的緊急通道醒來。門上的跑馬燈留下四句謎語：</p>
 <p style="font-family:var(--serif);font-weight:600;color:var(--text)">未曾存在，吞沒一切<br>不曾移動，目觀四方<br>鏡中之影，與誰相同<br>另一消散，何以為證</p>
 <p>門後是一條伸向黑暗的通道。模糊的人影、殘缺的符號……我好像來過那裡。</p>` : emptyState('尚未取得劇情紀錄')}</div></div>`;
+    } else if (i === 1) {
+      people(body, d);
     } else {
       const t = ['人物關係', '組織情報', '證據牆'][i - 1];
       body.innerHTML = `<div class="content"><div class="panel fill">${emptyState(`尚未取得${t}`, '通關主線關卡後，相關內容會加入這裡。')}</div></div>`;

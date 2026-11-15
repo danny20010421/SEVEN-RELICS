@@ -362,3 +362,21 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 @media (prefers-reduced-motion: reduce) {
   .sway, .glitch-bar, .rgb img, .hs.show::after, .sub .next { animation: none !important; }
 }
+
+/* ===== 人物關係 ===== */
+.pgraph { position: absolute; inset: 0; padding: 0; }
+.pgraph-in { position: absolute; left: 0; top: 96px; width: 1232px; height: 400px; }
+.pline { position: absolute; background: #6b4a40; }
+.prel { position: absolute; width: 96px; height: 32px; display: flex; align-items: center; justify-content: center; background: #0a0607; border: 1px solid var(--line-dim); color: var(--gold-2); font-size: 14px; line-height: 20px; }
+.pnode { position: absolute; width: 160px; height: 136px; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: none; color: var(--text); font-family: inherit; cursor: pointer; }
+.pav { width: 96px; height: 96px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 50%; background: #110b0c; border: 2px solid var(--line-dim); }
+.pav.on { border-color: var(--glow); }
+.pav img { width: 92px; height: 92px; object-fit: cover; display: block; }
+.pname { padding: 0 8px; background: #110b0c; font-size: 16px; line-height: 32px; font-weight: 700; }
+.pnode[data-p]:hover .pav { box-shadow: 0 0 16px rgba(229, 38, 58, 0.7); }
+.pdoc { position: absolute; inset: 0; padding: 0; overflow: hidden; }
+.pdoc-pic { position: absolute; left: 0; top: 0; width: 440px; height: 100%; overflow: hidden; background: linear-gradient(90deg, rgba(196, 20, 44, 0.12), transparent); }
+.pdoc-pic img { position: absolute; left: -120px; top: 16px; width: 680px; }
+.pdoc-text { position: absolute; left: 472px; top: 40px; right: 48px; display: flex; flex-direction: column; gap: 16px; }
+.pdoc-text p { margin: 0; font-size: 18px; line-height: 32px; color: var(--text-2); }
+.pchip { height: 24px; padding: 0 12px; display: inline-flex; align-items: center; border: 1px solid var(--gold); color: var(--gold-2); font-size: 14px; }
