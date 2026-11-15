@@ -105,9 +105,9 @@ function stopDrone() {
   setTimeout(() => d.nodes.forEach(n => { try { n.stop(); } catch (e) {} }), 1400);
 }
 
-// 背景音樂檔：登入頁 Kyle Preston - Dark Tension；序章 Out of Flux - Slithering Woe
-// 沒有登記檔案的畫面（例如大廳）使用合成環境音
-const FILES = { login: 'assets/audio/bgm-login.mp3', n00: 'assets/audio/bgm-n00.mp3' };
+// 背景音樂檔：登入頁 Kyle Preston - Dark Tension；序章 Out of Flux - Slithering Woe；大廳與各內頁 Jimmy Svensson - Discovery
+// 沒有登記檔案的畫面使用合成環境音
+const FILES = { login: 'assets/audio/bgm-login.mp3', n00: 'assets/audio/bgm-n00.mp3', lobby: 'assets/audio/bgm-lobby.mp3' };
 export async function bgm(name) {
   if (!ensure() || currentBgm === name) return;
   currentBgm = name;
