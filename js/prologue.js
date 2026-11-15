@@ -133,7 +133,7 @@ export function render(st, params, go) {
   let tipEl = null;
   function tip(text, step, pos = { left: 560, top: 320 }, withBtn = false) {
     if (tipEl) tipEl.remove();
-    tipEl = html(`<div class="tip" style="left:${pos.left}px;top:${pos.top}px"><div class="label">新手教學</div><p>${text}</p><div class="foot"><span>${step} / 11</span>${withBtn ? '<button type="button" class="btn sm" style="width:120px">下一步</button>' : ''}</div></div>`);
+    tipEl = html(`<div class="tip" style="left:${pos.left}px;${pos.bottom != null ? `bottom:${pos.bottom}px` : `top:${pos.top}px`}${pos.width ? `;width:${pos.width}px` : ''}"><div class="label">新手教學</div><p>${text}</p><div class="foot"><span>${step} / 11</span>${withBtn ? '<button type="button" class="btn sm" style="width:120px">下一步</button>' : ''}</div></div>`);
     el.appendChild(tipEl);
     if (withBtn) return new Promise(res => tipEl.querySelector('.btn').addEventListener('click', () => { sfx('tap'); tipEl.remove(); tipEl = null; res(); }));
     return Promise.resolve();
@@ -383,6 +383,7 @@ export function render(st, params, go) {
   async function showRiddle(first, fromKeypad = false) {
     const prev = fromKeypad ? close.innerHTML : null;
     const prevKp = fromKeypad ? { ...kp } : null;
+    untip();   // 看謎語時不要讓教學框擋住謎語
     openClose(`<img class="bg" src="${IMG('n00-marquee.webp')}" alt="門上方的跑馬燈"><div class="led" id="led"></div>`);
     const led = $(close, '#led');
     sfx('marquee');
@@ -398,7 +399,7 @@ export function render(st, params, go) {
     led.innerHTML = `<div class="col" style="width:100%;align-items:center;gap:8px">${RIDDLE.map(([cn]) => `<div style="font-family:var(--serif);font-weight:900;font-size:40px;line-height:64px;letter-spacing:0.24em;padding-left:0.24em;color:#fff1ec;text-shadow:0 0 8px #ff6b6b,0 0 24px #ff2a2a">${cn}</div>`).join('')}</div>`;
     const b = html(`<button type="button" class="backbtn">${ICON.back.replace('<svg', '<svg width="20" height="20"')}<span>返回</span></button>`);
     close.appendChild(b);
-    if (first) tip('記住這四句謎語，之後隨時可以回來重看。點「返回」回到門前。', 6, { left: 820, top: 520 });
+    if (first) tip('記住這四句謎語，之後隨時可以回來重看。點「返回」回到門前。', 6, { left: 192, bottom: 24, width: 600 });
     await new Promise(res => b.addEventListener('click', () => { sfx('tap'); res(); }));
     untip();
     if (fromKeypad) {
