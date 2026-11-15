@@ -1,4 +1,4 @@
-import { get, save, reset, SHOP, buy, SIGNIN, STREAK, canSignin, doSignin, VIP, vipLevel, taskDone, triesLeft, today } from './store.js';
+import { get, save, reset, SHOP, buy, SIGNIN, STREAK, canSignin, doSignin, VIP, vipLevel, taskDone, triesLeft, today, startMain } from './store.js';
 import { sfx, bgm, applyVolume } from './audio.js';
 import { html, $, $$, IMG, ICON, fmt, esc, shell, tabs, modal, alertBox, toast, rewardModal } from './ui.js';
 
@@ -16,15 +16,34 @@ const chName = i => i < 10 ? `第${CN[i]}章` : i === 10 ? '第十一章' : '第
 export function stages(st, p, go) {
   bgm('lobby');
   const { el, body } = mount(st, '關卡選擇', tabs(['主線關卡', '一般關卡'], p.tab || 0));
+  // 主線：序章 + 12 章；預設選第一個可玩的（目前是序章）
+  let sel = 'n00';
   const main = () => {
-    body.innerHTML = `<div class="chlist" role="list">${Array.from({ length: 12 }, (_, i) => `<button type="button" class="ch${i === 0 ? ' on' : ''}" data-ch="${i}" role="listitem"><span class="row" style="gap:12px"><b>${chName(i)}</b><span>${i === 0 ? '******' : '尚未解鎖'}</span></span>${i === 0 ? '<span style="font-size:14px;color:var(--gold-2)">0 / 9</span>' : ICON.lock}</button>`).join('')}</div>
-<div class="panel stage-panel">
+    const d = get(), n00Done = d.records.includes('n00');
+    const item = (id, name, sub, right, on) => `<button type="button" class="ch${on ? ' on' : ''}" data-ch="${id}" role="listitem"><span class="row" style="gap:12px"><b>${name}</b><span>${sub}</span></span>${right}</button>`;
+    const list = item('n00', '序章', '記憶的終點', `<span style="font-size:14px;color:var(--gold-2)">${n00Done ? '已破關' : '0 / 1'}</span>`, sel === 'n00') +
+      Array.from({ length: 12 }, (_, i) => item(i, chName(i), i === 0 ? '******' : '尚未解鎖', i === 0 ? '<span style="font-size:14px;color:var(--gold-2)">0 / 9</span>' : ICON.lock, sel === 0 && i === 0)).join('');
+    const tries = `<div class="row" style="height:48px;gap:16px"><span style="font-size:16px;color:var(--text-2)">今日剩餘次數</span><b style="font-size:24px;line-height:32px">${triesLeft()} / 2</b><button type="button" class="btn-line sm" id="more" style="width:144px">${ICON.plus}<span style="margin-left:8px">增加次數</span></button></div>`;
+    const panel = sel === 'n00' ? `<div class="panel stage-panel">
+  <div class="col" style="gap:16px">
+    <div class="row" style="justify-content:space-between;gap:24px">
+      <div class="col" style="gap:4px"><div class="label">序章</div><h2 class="serif" style="margin:0;font-size:32px;line-height:40px">記憶的終點</h2></div>
+      ${tries}
+    </div>
+    <p style="margin:0;font-size:16px;line-height:24px;color:var(--muted)">在緊急通道盡頭醒來，失去了所有記憶。打開金屬逃生門，找出自己是誰。</p>
+  </div>
+  <div class="nodes"><span class="node${n00Done ? ' done' : ''}">${n00Done ? ICON.check : ''}</span></div>
+  <div class="row" style="padding:24px;justify-content:space-between;gap:24px;background:#1a1213;border:1px solid #2f1e1d">
+    <div class="col" style="gap:8px"><h3 class="serif" style="margin:0;font-size:24px;line-height:32px">${n00Done ? '已破關' : '尚未破關'}</h3><span style="font-size:16px;line-height:24px;color:var(--text-2)">${n00Done ? '已破關的主線關卡再次挑戰不扣次數，但不會再獲得獎勵。' : '新手教學關卡，跟著提示一步步完成。'}</span></div>
+    <button type="button" class="btn" id="play" style="width:208px">${n00Done ? '再次挑戰' : '開始挑戰'}</button>
+  </div>
+</div>` : `<div class="panel stage-panel">
   <div class="col" style="gap:16px">
     <div class="row" style="justify-content:space-between;gap:24px">
       <div class="col" style="gap:4px"><div class="label">第一章</div><h2 class="serif" style="margin:0;font-size:32px;line-height:40px">******</h2></div>
-      <div class="row" style="height:48px;gap:16px"><span style="font-size:16px;color:var(--text-2)">今日剩餘次數</span><b style="font-size:24px;line-height:32px">${triesLeft()} / 2</b><button type="button" class="btn-line sm" id="more" style="width:144px">${ICON.plus}<span style="margin-left:8px">增加次數</span></button></div>
+      ${tries}
     </div>
-    <p style="margin:0;font-size:16px;line-height:24px;color:var(--muted)">九個小節環環相扣，須依序限時破解。每日可挑戰 2 次，額外次數需消耗鑽石。</p>
+    <p style="margin:0;font-size:16px;line-height:24px;color:var(--muted)">九個小節環環相扣，須依序限時破解。每日可挑戰 2 次，額外次數需消耗鑽石；已破關的小節再次挑戰不扣次數，但不會再獲得獎勵。</p>
   </div>
   <div class="nodes">${Array.from({ length: 9 }, (_, i) => `<span class="node">${ICON.lock}</span>${i < 8 ? '<span class="link-line"></span>' : ''}`).join('')}</div>
   <div class="row" style="padding:24px;justify-content:space-between;gap:24px;background:#1a1213;border:1px solid #2f1e1d">
@@ -32,7 +51,25 @@ export function stages(st, p, go) {
     <button type="button" class="btn" disabled style="width:208px">開始挑戰</button>
   </div>
 </div>`;
-    $$(body, '[data-ch]').forEach(b => b.addEventListener('click', () => { sfx('tap'); toast(b.dataset.ch === '0' ? '第一章劇情製作中，敬請期待' : '完成前一章後解鎖'); }));
+    body.innerHTML = `<div class="chlist" role="list">${list}</div>${panel}`;
+    $$(body, '[data-ch]').forEach(b => b.addEventListener('click', () => {
+      sfx('tap');
+      const id = b.dataset.ch;
+      if (id === 'n00' || id === '0') { sel = id === 'n00' ? 'n00' : 0; main(); return; }
+      toast('完成前一章後解鎖');
+    }));
+    const play = $(body, '#play');
+    if (play) play.addEventListener('click', async () => {
+      sfx('tap');
+      const r = startMain('n00');
+      if (r === 'replay') {
+        const ok = await modal({ title: '再次挑戰', body: '這個關卡已經破關。<br>再次挑戰不會扣除今日挑戰次數，但破關後不會再獲得獎勵。', buttons: [{ label: '取消', kind: 'btn-line', value: false }, { label: '開始', kind: 'btn', value: true }] });
+        if (ok) go('prologue', { replay: true });
+        return;
+      }
+      if (r === 'none') { alertBox('今日次數已用完', '可以消耗鑽石增加挑戰次數，或明天再來。'); return; }
+      go('prologue');
+    });
     $(body, '#more').addEventListener('click', async () => {
       sfx('tap');
       const d = get();
@@ -45,10 +82,8 @@ export function stages(st, p, go) {
   const general = () => {
     const d = get();
     body.innerHTML = `<div class="content"><div class="glist">
-<button type="button" class="card gitem" id="replay"><span class="col" style="gap:4px"><span class="serif" style="font-size:24px;line-height:32px">序章 · 記憶的終點</span><span style="font-size:14px;line-height:24px;color:var(--muted)">新手教學 · 不限時${d.records.includes('n00') ? ' · 已完成' : ''}</span></span><span class="btn sm" style="width:144px">${d.records.includes('n00') ? '再玩一次' : '開始'}</span></button>
 <div class="card gitem lock"><span class="col" style="gap:4px"><span class="serif" style="font-size:24px;line-height:32px">更多一般關卡</span><span style="font-size:14px;line-height:24px">分支任務製作中，敬請期待</span></span>${ICON.lock}</div>
 </div></div>`;
-    $(body, '#replay').addEventListener('click', () => { sfx('tap'); go('prologue'); });
   };
   (p.tab ? general : main)();
   onTabs(el, i => (i ? general : main)());
@@ -283,8 +318,9 @@ export function profile(st, p, go) {
 <div class="abs col" style="left:424px;top:0;width:808px;gap:16px">
   <section class="panel col" style="height:232px;padding:24px;justify-content:space-between">
     <h2 class="serif" style="margin:0;font-size:20px;line-height:32px">探索進度</h2>
+    <div class="col" style="gap:8px"><div class="row" style="height:24px;justify-content:space-between"><span>主線關卡　序章</span><b>${d.records.includes('n00') ? '已破關' : '未破關'}</b></div><div class="bar gold"><i style="width:${d.records.includes('n00') ? 100 : 0}%"></i></div></div>
     <div class="col" style="gap:8px"><div class="row" style="height:24px;justify-content:space-between"><span>主線關卡　第一章</span><b>已破解 0 / 9 節</b></div><div class="bar gold"><i style="width:0%"></i></div></div>
-    <div class="col" style="gap:8px"><div class="row" style="height:24px;justify-content:space-between"><span>一般關卡</span><b>已完成 ${d.records.length} 關</b></div><div class="bar gold"><i style="width:${d.records.length ? 100 : 0}%"></i></div></div>
+    <div class="col" style="gap:8px"><div class="row" style="height:24px;justify-content:space-between"><span>一般關卡</span><b>已完成 ${d.records.filter(r => r !== 'n00').length} 關</b></div><div class="bar gold"><i style="width:0%"></i></div></div>
   </section>
   <section class="panel col" style="height:352px;padding:24px;gap:16px">
     <h2 class="serif" style="margin:0;font-size:20px;line-height:32px">成就</h2>

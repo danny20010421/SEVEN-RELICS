@@ -124,6 +124,15 @@ export function buy(id) {
   return 'ok';
 }
 
+// 主線關卡：已破關的關卡再次挑戰不扣次數，但破關後不再發獎勵
+export const cleared = id => data.records.includes(id);
+export function startMain(id) {
+  if (cleared(id)) return 'replay';
+  if (triesLeft() <= 0) return 'none';
+  data.mainTries.used += 1; save();
+  return 'ok';
+}
+
 export function triesLeft() {
   rollDaily();
   return Math.max(0, 2 + data.mainTries.extra - data.mainTries.used);

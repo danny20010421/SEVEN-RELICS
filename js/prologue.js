@@ -24,6 +24,7 @@ const S02 = { exit: zp([643, 119]), lock: zp([544, 425]), box: zp([413, 329]) };
 const KEYS = [['1', 371, 283], ['2', 451, 283], ['3', 531, 283], ['4', 371, 348], ['5', 451, 348], ['6', 531, 348], ['7', 371, 413], ['8', 451, 413], ['9', 531, 413], ['C', 371, 480], ['0', 451, 480], ['E', 531, 480]];
 
 export function render(st, params, go) {
+  const replay = !!(params && params.replay);
   const d = get();
   const el = html(`<div class="scr">
 <div class="layer" id="scene">
@@ -277,7 +278,7 @@ export function render(st, params, go) {
     sfx('error'); vibrate(80); paintKp('err', '密碼錯誤'); await wait(1200); S();
     blocker.remove();
     await say('不對。得先想通那段謎語。', 'Wrong. I need to solve that riddle first.', false); S();
-    await tip('答錯不會怎樣。但在主線關卡中，答錯 3 次或時間用完，就必須從頭開始。', 8, { left: 664, top: 320 }, true); S();
+    await tip('序章是教學，答錯不會怎樣。之後的主線關卡答錯 3 次或時間用完，就必須從頭開始。', 8, { left: 664, top: 320 }, true); S();
     kp.input = ''; shut();
     await say('也許附近還藏著什麼線索……', 'Maybe there’s another clue around here…'); S();
 
@@ -370,10 +371,11 @@ export function render(st, params, go) {
     await say('那個符號……我在哪裡見過？', 'That symbol… where have I seen it before?'); S();
     sfx('flash'); $(el, '#white').classList.add('on'); await wait(2000); S();
 
+    bgm(null);
+    if (replay) { go('stages'); return; }   // 已破關再挑戰：不發獎勵、不算每日任務
     d.prologueDone = true;
     if (!d.records.includes('n00')) d.records.push('n00');
     save(); taskDone('stage');
-    bgm(null);
     go('lobby', { fromPrologue: true });
   }
 
