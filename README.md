@@ -71,3 +71,8 @@ python3 tools/review_asset.py regen it-lantern --prompt "修正後的主體描�
 python3 -m http.server 8000
 ```
 開啟 http://localhost:8000
+
+## 字型授權
+
+- `assets/fonts/g01-hand.woff2`：霞鶩文楷 TC（LXGW WenKai TC），SIL Open Font License 1.1。只保留 G01 文件用到的字。
+- `assets/fonts/g01-sign.woff2`：Homemade Apple，Apache License 2.0。只保留簽名用到的字母。
