@@ -45,6 +45,8 @@ ALIASES = {
     "ui-icon": "icon",
     "item": "item",
     "items": "item",
+    "sprite": "sprite",
+    "sprites": "sprite",
     "currency": "currency",
 }
 
@@ -55,6 +57,7 @@ NAME_PATTERNS = {
     "avatar": re.compile(r"^(?:avatar-[mf]|npc-[a-z0-9]+(?:-[a-z0-9]+)*-av)$"),
     "icon": re.compile(r"^ic-[a-z0-9]+(?:-[a-z0-9]+)*$"),
     "item": re.compile(r"^it-[a-z0-9]+(?:-[a-z0-9]+)*$"),
+    "sprite": re.compile(r"^g[0-9]{2}(?:-[a-z0-9]+)+$"),
     "currency": re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$"),
 }
 
@@ -193,6 +196,56 @@ def load_guide(path: Path = GUIDE_PATH) -> dict[str, Category]:
         if phrase not in text:
             raise GuideError(f"STYLE_GUIDE.md 缺少交付尺寸 {phrase}。")
     return categories
+
+
+def api_size_for(width: int, height: int) -> str:
+    """Pick an API size within 1% of width/height so Pillow can scale without cropping."""
+    if width < 1 or height < 1:
+        raise GuideError(f"sprite 尺寸必須為正數，收到 {width}x{height}。")
+    ratio = width / height
+    if max(width, height) / min(width, height) > 3:
+        raise GuideError(f"{width}x{height} 的長短邊比超過 3:1，OpenAI 自訂 size 不接受。")
+    best: tuple[float, int, int] | None = None
+    wide = width >= height
+    for long in range(16, MAX_EDGE + 1, 16):
+        raw = (long / ratio) if wide else (long * ratio)
+        guesses = (
+            round(raw / 16) * 16,
+            math_floor_16(raw),
+            math_ceil_16(raw),
+        )
+        for guess in guesses:
+            pair = (long, guess) if wide else (guess, long)
+            best = _consider(pair, ratio, best)
+        if best and best[0] < 0.01:
+            return f"{best[1]}x{best[2]}"
+    nearest = f"{best[1]}x{best[2]}（誤差 {best[0]:.2%}）" if best else "無"
+    raise GuideError(f"{width}x{height} 找不到誤差 1% 以內的 API size，最接近 {nearest}。")
+
+
+def math_floor_16(value: float) -> int:
+    return int(value // 16) * 16
+
+
+def math_ceil_16(value: float) -> int:
+    return int(-(-value // 16)) * 16
+
+
+def _consider(pair: tuple[int, int], ratio: float, best: tuple[float, int, int] | None):
+    aw, ah = pair
+    if aw < 16 or ah < 16 or aw > MAX_EDGE or ah > MAX_EDGE:
+        return best
+    if aw % 16 or ah % 16:
+        return best
+    pixels = aw * ah
+    if pixels < MIN_PIXELS or pixels > MAX_PIXELS:
+        return best
+    if max(aw, ah) / min(aw, ah) > 3:
+        return best
+    err = abs((aw / ah) - ratio) / ratio
+    if best is None or err < best[0]:
+        return (err, aw, ah)
+    return best
 
 
 def resolve_category(name: str, guide: dict[str, Category]) -> Category:

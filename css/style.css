@@ -385,6 +385,16 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 /* ===== 一般關卡 G01 ===== */
 .g01-svg { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; display: block; }
 .g01-svg g { transition: opacity 0.4s ease; }
+.g01-sp { position: absolute; pointer-events: none; transition: opacity 0.4s ease; }
+.g01-aw { position: absolute; left: 820px; top: 200px; z-index: 4; font-family: var(--serif); font-size: 44px; letter-spacing: 0.08em; color: #d8b594; opacity: 0; pointer-events: none; text-shadow: 0 2px 8px #000; transform: rotate(-6deg); }
+.g01-tag { position: absolute; z-index: 5; min-width: 36px; height: 28px; padding: 0 6px; display: flex; align-items: center; justify-content: center; background: #d9d0bc; color: #1a120e; font-family: var(--serif); font-weight: 900; font-size: 18px; line-height: 28px; pointer-events: none; }
+.gdoc-scroll { max-height: 420px; overflow: auto; display: flex; flex-direction: column; gap: 16px; }
+.gmemo { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; background: #1a1213; border: 1px solid var(--line-dim); }
+.gmemo p { margin: 0; font-size: 16px; line-height: 24px; color: var(--text-2); }
+.pav { position: relative; }
+.pav:has(img.miss)::after, .pdoc-pic:has(img.miss)::after { content: attr(data-fb); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 900; font-size: 32px; color: var(--gold-2); }
+.pav img.miss, .pdoc-pic img.miss { visibility: hidden; }
+.miss-img { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; font-family: var(--serif); font-weight: 900; color: var(--gold-2); }
 .g01-badge { position: absolute; left: 24px; bottom: 24px; height: 32px; padding: 0 12px; display: flex; align-items: center; justify-content: center; background: rgba(10, 6, 7, 0.8); border: 1px dashed var(--gold); color: var(--gold-2); font-size: 14px; line-height: 20px; z-index: 1; pointer-events: none; }
 .hud-item { position: relative; padding: 0; display: flex; align-items: center; justify-content: center; }
 .hud-item img { width: 36px; height: 36px; display: block; }

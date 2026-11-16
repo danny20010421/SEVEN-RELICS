@@ -1,5 +1,6 @@
 // 一般關卡 G01「從未消失的黃金」：台灣・金瓜石
-// 劇情與謎題依企劃書 V1.0。場景美術未到位的部分，暫用 g01art.js 的向量示意圖。
+// 劇情與謎題依企劃書 V1.0。S03–S08 與結語遠景優先用 webp；缺任何一張就整幕退回 g01art.js。
+export const FICTION = '本關以金瓜石的礦業史與戰俘強迫勞動為背景，寫成原創懸疑故事。亞瑟・威廉斯、藏金行動、封閉金庫與可重新啟動的升降設備皆為虛構，並非史實。真實封閉礦坑不可進入，請勿嘗試現地操作。';
 import { get, save, taskDone } from './store.js';
 import { sfx, bgm, applyVolume } from './audio.js';
 import { html, $, $$, IMG, ICON, wait, esc, modal, toast, alertBox, fmt } from './ui.js';
@@ -41,6 +42,30 @@ const DOCS = {
     '<p class="hand">這些黃金足以讓我們任何一個人過上富裕的生活。但沒有人打算獨自帶走它們。</p><p class="hand">我們決定將黃金藏在這裡，直到這場戰爭結束。若我們沒能回來，希望找到它們的人，能記住曾經在這座山裡受苦的人。</p>',
     '<p class="hand">黃金屬於活著的人。但請別忘了那些死去的人。</p><p class="hand">如果有一天，這些黃金再次被人發現，我只希望它們不會成為下一場貪婪的開始。</p><p class="hand" style="text-align:right">—— Arthur Williams</p>'] },
 };
+// 檔案按鈕裡的小圖。圖還沒到就用通用文件符號。
+const DOC_ICON = {
+  journal: 'it-journal.webp', letter: 'it-letter.webp', photoA: 'it-photo.webp', photoB: 'it-photo.webp',
+  survey: 'it-survey.webp', depart: 'it-ledger.webp', arrive: 'it-ledger.webp', manual: 'it-manual.webp',
+};
+const NOTES = {
+  photo: ['六坑口舊照片：本山六坑。'],
+  invite: ['館長邀請函：戰時運輸紀錄前後不符，另有一份未列入正式目錄的舊礦圖。'],
+  report: ['礦山報告：<b>1945-02-17</b> 有紅筆註記，運量對不上。'],
+  survey: ['調查資料：<b>1945-02-17</b> 離站與到站數量不一致。舊礦圖多出一條未登記的路線。'],
+  schedule: ['班次表：早班 01（06–14）、午班 02（14–22）、夜班 <b>03</b>（22–06）。'],
+  note: ['紙條：「我們只在所有人都睡著後，才能記下真正的數字。」'],
+  journal: [
+    '日誌 1944-12-12：十二月十二日是亞瑟的生日。',
+    '日誌 1945-02-15：特殊封裝的金屬貨物，比礦石重，疑似已經提煉的黃金。',
+    '日誌 1945-02-17：三車貨物不會抵達原本的終點。日期本身就是線索。',
+    '日誌 1945-02-21：林清和知道一條舊升降路線，通往上方坑道，不在平常的運輸清單裡。',
+    '日誌 1945-02-28：最後一批貨物已經安置。記得那一天，就能打開最後一道門。',
+  ],
+  photoA: ['合照：Arthur、Edward、Thomas、林清和，四個人站在坑口前。'],
+  photoB: ['合照背面：「黃金已經藏好了。我希望我們四個人，都能活著回到這裡。」'],
+  manual: ['維修手冊：一、解除制動。二、接通電源。三、選擇上升或下降。順序錯誤，控制盤會復位。'],
+  letter: ['亞瑟的信：他們把黃金留下來，是為了記住在這座山裡受苦的人。原信留在箱中，只收一份影像。'],
+};
 
 export function render(st, params, go) {
   const replay = !!(params && params.replay);
@@ -73,6 +98,13 @@ export function render(st, params, go) {
   let alive = true, listeners = [], inv = [], selected = null;
   let step = { goal: '', hints: [], hl: [], memo: '' }, hintLv = 0;
   const got = new Set();          // 已取得的文件
+  const memoLines = [];
+  const addNote = (id, text) => { if (!memoLines.some(n => n.id === id)) memoLines.push({ id, text }); };
+  function absorb(id) {
+    (NOTES[id] || []).forEach((text, i) => addNote(id + i, text));
+    if (got.has('schedule') && got.has('note')) addNote('night', '所有人都睡著的時段是夜班，班次編號是 <b>03</b>。');
+    if (got.has('depart') && got.has('arrive')) addNote('diff', '離站簿與到站簿只有 <b>02/17</b> 不一致：離站 12 車、到站 9 車，差額 <b>3</b> 車。');
+  }
   const seen = new Set();         // 已調查過的熱點
   let usedHelp = false, compassUsed = 0, memoUsed = 0;
   let lockApi = null;             // 目前開著的密碼介面（給解析盤用）
@@ -116,9 +148,54 @@ export function render(st, params, go) {
   }
 
   // ---------- 場景與熱點 ----------
-  function setScene(inner, isArt = true) { scene.innerHTML = inner + (isArt ? ART.BADGE : ''); hsLayer.innerHTML = ''; }
+  function setScene(inner, placeholder = false) { scene.innerHTML = inner + (placeholder ? ART.BADGE : ''); hsLayer.innerHTML = ''; }
   const bgImg = (n, alt) => `<img class="bg" src="${IMG(n)}" alt="${alt}">`;
+  const probed = new Map();
+  function probe(src) {
+    if (probed.has(src)) return probed.get(src);
+    const p = new Promise(res => {
+      const img = new Image();
+      img.onload = () => res(true);
+      img.onerror = () => res(false);
+      img.src = src;
+    });
+    probed.set(src, p);
+    return p;
+  }
+  let painted = false, linArt = false;
+  const iconReady = {};
+  async function resolveArt() {
+    for (const [id, file] of [['grip', 'it-grip.webp'], ['ctl', 'it-handle.webp']]) {
+      if (await probe(IMG(file))) ITEMS[id].src = IMG(file);
+    }
+    for (const file of new Set(Object.values(DOC_ICON))) iconReady[file] = await probe(IMG(file));
+    linArt = await probe(IMG('npc-lin.webp'));
+  }
+  const fileIcon = id => {
+    const file = DOC_ICON[id];
+    return file && iconReady[file] ? `<img src="${IMG(file)}" alt="" style="width:36px;height:36px;object-fit:contain">` : ICO.file;
+  };
+  // 缺任何一張 webp，整幕退回向量示意圖，避免半套圖對不齊。
+  async function showPlace(place) {
+    const files = [place.bg, ...(place.sprites || []).map(s => s.file)];
+    const ok = (await Promise.all([...new Set(files)].map(f => probe(IMG(f))))).every(Boolean);
+    if (!ok) { painted = false; setScene(place.fallback(), true); return; }
+    painted = true;
+    const sprites = (place.sprites || []).map(s => {
+      const style = [`left:${s.x}px`, `top:${s.y}px`, `width:${s.w}px`, `height:${s.h}px`, `opacity:${s.opacity ?? 1}`, `z-index:${s.z ?? 1}`, `object-fit:${s.fit || 'fill'}`, s.extra || ''].filter(Boolean).join(';');
+      return `<img class="g01-sp" id="${s.id}" src="${IMG(s.file)}" alt="" style="${style}">`;
+    }).join('');
+    const tags = (place.tags || []).map(t => `<span class="g01-tag" style="left:${t.x}px;top:${t.y}px">${t.text}</span>`).join('');
+    setScene(`<img class="bg" src="${IMG(place.bg)}" alt="${place.alt}">${sprites}${tags}${place.extra || ''}`, false);
+  }
+  const fade = (id, opacity) => { const n = scene.querySelector('#' + id); if (n) n.style.opacity = String(opacity); return n; };
   const svg = id => scene.querySelector('#' + id);
+  function showExit(label) {
+    if (el.querySelector('.g01-accept')) return;
+    const b = html(`<button type="button" class="btn serif-btn g01-accept" style="width:240px">${label}</button>`);
+    b.addEventListener('click', () => { sfx('tap'); emit({ type: 'hs', id: 'exit', item: selected }); });
+    el.appendChild(b);
+  }
   // list: [id, x, y, w, h, 名稱]
   function setHs(list) {
     hsLayer.innerHTML = '';
@@ -148,6 +225,7 @@ export function render(st, params, go) {
       let pic = null;
       if (who === 'me' && calm && opt.pic !== false) pic = html(`<img class="portrait" src="${IMG(`hero-${g}.webp`)}" alt="">`);
       if (who === 'ind' && calm) pic = html(`<img class="portrait npc" src="${IMG('npc-induasen.webp')}" alt="">`);
+      if (who === 'lin' && calm && linArt) pic = html(`<img class="portrait npc" src="${IMG('npc-lin.webp')}" alt="">`);
       if (pic) el.appendChild(pic);
       const b = html(`<div class="sub${who === 'think' ? ' think' : ''}" role="button" tabindex="0" aria-label="點一下繼續"><div class="who"><span>${esc(who === 'think' ? `${pname}（內心）` : WHO[who] || '')}</span>${ICON.voice}</div><p class="cn">${cn}</p><p class="en">${en}</p>${ICON.down}</div>`);
       const done = () => { sfx('tap'); b.remove(); if (pic) pic.remove(); res(); };
@@ -240,14 +318,17 @@ export function render(st, params, go) {
   async function getDoc(id) {
     const first = !got.has(id);
     got.add(id);
+    absorb(id);
     await readDoc(id);
-    if (first && got.size === 1) tip('看過的文件都會收進右上角的「檔案」，隨時可以重看，不用背下來。', { left: 640, top: 96 });
+    if (first && got.size === 1) tip('看過的文件都會收進右上角的「檔案」。重點數字記在調查備忘錄裡，不用背下來。', { left: 640, top: 96 });
   }
   $(el, '#fileBtn').addEventListener('click', () => {
     sfx('tap');
-    if (!got.size) { toast('還沒有取得任何文件。'); return; }
+    if (!got.size && !memoLines.length) { toast('還沒有取得任何文件。'); return; }
+    const memo = memoLines.length ? memoLines.map(n => `<p>${n.text}</p>`).join('') : '<p>還沒有記下線索。</p>';
     const m = html(`<div class="modal-back" style="z-index:44"><div class="gdoc" role="dialog" aria-label="檔案"><div class="label">調查檔案</div><h2>已取得的文件</h2><div class="redline"></div>
-<div class="gfiles">${[...got].map(id => `<button type="button" class="gfile" data-doc="${id}">${ICO.file}<span>${DOCS[id].title}</span></button>`).join('')}</div>
+<div class="gdoc-scroll"><div class="gmemo"><div class="label">調查備忘錄</div>${memo}</div>
+<div class="gfiles">${[...got].map(id => `<button type="button" class="gfile" data-doc="${id}">${fileIcon(id)}<span>${DOCS[id].title}</span></button>`).join('')}</div></div>
 <button type="button" class="x" aria-label="關閉">${ICON.close}</button></div></div>`);
     m.addEventListener('click', e => {
       const b = e.target.closest('[data-doc]');
@@ -277,11 +358,13 @@ export function render(st, params, go) {
 
   // ---------- 場景切換 ----------
   async function fadeTo(fn, ms = 700) {
+    el.querySelectorAll('.g01-accept').forEach(n => n.remove());
     $(el, '#black').classList.add('on'); await wait(ms); S();
-    untip(); fn(); await wait(200); S();
+    untip(); await fn(); await wait(200); S();
     $(el, '#black').classList.remove('on'); await wait(ms); S();
   }
   async function chapter(title, sub) {
+    el.querySelectorAll('.g01-accept').forEach(n => n.remove());
     const b = html(`<div class="g01-card"><div class="label">${sub}</div><h2>${title}</h2></div>`);
     $(el, '#black').classList.add('on'); await wait(800); S();
     el.appendChild(b); await wait(1800); S(); b.remove();
@@ -329,8 +412,11 @@ export function render(st, params, go) {
 
   // ================= 流程 =================
   async function flow() {
+    await resolveArt();
     paintSlots(); paintHud();
     bgm('lobby');
+    await modal({ title: '劇情聲明', body: FICTION, width: 720, buttons: [{ label: '我知道了', kind: 'btn', value: true }] });
+    if (!alive) return;
 
     // ---------- S01 研究室 ----------
     await chapter('從未消失的黃金', '一般關卡 G01　台灣・金瓜石'); S();
@@ -377,7 +463,7 @@ export function render(st, params, go) {
     // ---------- S03 本山六坑入口：謎題① ----------
     bgm('g01mine');
     await chapter('本山六坑入口', 'S03'); S();
-    setScene(ART.s03()); $(el, '#black').classList.remove('on'); await wait(700); S();
+    await showPlace(ART.PLACES.s03); $(el, '#black').classList.remove('on'); await wait(700); S();
     let hasBar = false, chock = true, hasGrip = false, gripOn = false, cartLook = 0;
     setHs([['cart', 420, 340, 280, 230, '礦車'], ['wheel', 640, 540, 90, 70, '車輪'], ['bar', 170, 360, 100, 300, '鐵撬棒'], ['crate', 870, 470, 180, 180, '破木箱'], ['switch', 240, 430, 120, 180, '轉轍器']]);
     const s03Hint = () => !hasBar ? '牆邊好像靠著一根鐵撬棒。' : chock ? '礦車的車輪底下卡著止輪器。選擇鐵撬棒「使用」，再點車輪。' : !hasGrip ? '右邊的破木箱裡，露出了一截手柄。' : !gripOn ? '轉轍器少了扳桿。把扳桿手柄裝上去。' : '拉動轉轍器的扳桿，礦車就會滑開。';
@@ -391,7 +477,7 @@ export function render(st, params, go) {
         if (item === 'bar') { sfx('pry'); svg('chock').style.opacity = 0; chock = false; await me('好了，現在應該能移動了。', 'There. It should move now.'); return; }
         return void await me('底下似乎卡住了什麼。', 'Something seems to be jammed underneath.');
       }
-      if (id === 'bar') { if (hasBar) return; hasBar = true; svg('bar').style.opacity = 0; dropHs('bar'); addItem('bar'); await me('這個或許派得上用場。', 'This might come in handy.'); return; }
+      if (id === 'bar') { if (hasBar) return; hasBar = true; svg('bar').style.opacity = 0; dropHs('bar'); addItem('bar'); tip('點開道具欄裡的鐵撬棒，按「使用」，再點要撬的位置。', { left: 96, top: 96 }); await me('這個或許派得上用場。', 'This might come in handy.'); return; }
       if (id === 'crate') { if (hasGrip) return void await me('箱子裡已經空了。', 'The crate is empty now.'); hasGrip = true; svg('grip').style.opacity = 0; addItem('grip'); await me('一個金屬手柄……末端有卡榫。', 'A metal handle… with a notch at the end.'); return; }
       if (id === 'switch') {
         if (!gripOn) {
@@ -407,19 +493,25 @@ export function render(st, params, go) {
     }); S();
     dropHs('cart');
     // 坑道裡一閃而過的 A.W.
+    sfx('drip');
+    await sys(['滴水聲在坑道裡迴盪，遠處傳來金屬的回音。'], 2200); S();
     const aw = svg('aw'); aw.style.transition = 'opacity 0.3s'; aw.style.opacity = 0.9; sfx('tinnitus'); await wait(500); aw.style.opacity = 0; S();
     await me('剛剛牆上……好像刻著「A.W.」？', 'On the wall just now… was that “A.W.”?'); S();
 
     // ---------- S04 礦工休息室：謎題② ----------
     await chapter('礦工休息室', 'S04'); S();
-    setScene(ART.s04()); $(el, '#black').classList.remove('on'); await wait(700); S();
+    await showPlace(ART.PLACES.s04); $(el, '#black').classList.remove('on'); await wait(700); S();
     const opened = new Set(); let gotPhotoA = false;
-    setHs([['board', 180, 110, 300, 200, '黑板'], ['note', 424, 170, 84, 110, '紙條'], ['schedule', 250, 384, 150, 60, '班次表'], ['helmet', 460, 380, 110, 60, '礦工帽'], ['photoA', 70, 370, 110, 90, '舊照片'], ['lk1', 680, 220, 90, 400, '01 號鐵櫃'], ['lk2', 780, 220, 90, 400, '02 號鐵櫃'], ['lk3', 880, 220, 90, 400, '03 號鐵櫃']]);
+    setHs([['board', 180, 110, 300, 200, '黑板'], ['note', 424, 170, 84, 110, '紙條'], ['lamp', 520, 64, 90, 80, '舊礦燈'], ['schedule', 250, 384, 150, 60, '班次表'], ['helmet', 460, 380, 110, 60, '礦工帽'], ['soaked', 600, 430, 90, 40, '泡水紀錄'], ['photoA', 70, 370, 110, 90, '舊照片'], ['books', 1024, 280, 100, 320, '書櫃'], ['lk1', 680, 220, 90, 400, '01 號鐵櫃'], ['lk2', 780, 220, 90, 400, '02 號鐵櫃'], ['lk3', 880, 220, 90, 400, '03 號鐵櫃']]);
     setStep('找出藏著線索的鐵櫃', ['桌上的班次表和牆上的紙條，暗示了該打開哪一個鐵櫃。', '紙條說，真正的數字是在「所有人都睡著後」記下的——那是哪一個班次？', '夜班的編號是 03。選擇鐵撬棒「使用」，撬開 03 號鐵櫃。'], ['schedule', 'note', 'lk3'], '班次表：早班 01、午班 02、夜班 03。紙條：「我們只在所有人都睡著後，才能記下真正的數字。」所有人都睡著＝夜班＝03 號鐵櫃，用鐵撬棒撬開它。');
     await me('這裡是礦工休息的地方……好像很久沒人來過了。', 'This must be where the miners rested… no one’s been here in ages.'); S();
     await loop(async (id, item) => {
+      if (id === 'exit') return true;
       if (id === 'board') return void await me('黑板上寫著「安全第一」。字跡已經模糊了。', 'The blackboard reads “Safety First.” The chalk has almost faded.');
       if (id === 'helmet') return void await me('一頂舊礦工帽，帽燈早就不亮了。', 'An old miner’s helmet. The lamp died long ago.');
+      if (id === 'lamp') return void await me('一盞舊礦燈，燈油早就乾了。', 'An old mining lamp. The oil dried up long ago.');
+      if (id === 'books') return void await me('書櫃上有幾本泡過水的紀錄，紙頁黏成一塊，一個字都看不清。', 'Water-damaged logs on the shelf. The pages are fused. Not a word is readable.');
+      if (id === 'soaked') return void await me('桌上還有一份泡爛的紀錄，字跡全暈開了。', 'Another soaked record on the table. The ink has bled away.');
       if (id === 'note' || id === 'schedule') return void await getDoc(id);
       if (id === 'photoA') { await getDoc('photoA'); if (!gotPhotoA) { gotPhotoA = true; await me('Arthur……A.W.？還有林清和，是台灣人的名字。', 'Arthur… A.W.? And Lin Qinghe—a Taiwanese name.'); } return; }
       if (id.startsWith('lk')) {
@@ -428,19 +520,23 @@ export function render(st, params, go) {
         if (item !== 'bar') return void await me('上了鎖，門扣都鏽死了。', 'Locked. The latch has rusted shut.');
         sfx('pry'); opened.add(n);
         if (n !== '3') return void await me('裡面只有破舊的工作服。', 'Only some worn-out work clothes.');
+        fade('lk3door', 0);
         sfx('door'); await wait(300); S();
         await me('一本日誌……封面寫著「A. WILLIAMS」。', 'A journal… “A. WILLIAMS” on the cover.'); S();
-        await getDoc('journal'); return true;
+        await getDoc('journal');
+        await me('A.W.……亞瑟・威廉斯。原來入口牆上的字，是他留下的。', 'A.W.… Arthur Williams. So he left those letters at the entrance.'); S();
+        await me('日誌上說，二月十七日的數字會告訴我答案。休息室還能再看看，然後去運礦站。', 'The journal says the numbers from February 17 will tell me. I can look around, then head to the loading station.'); S();
+        setStep('前往運礦站', ['舊照片可以收進收藏。看完就前往運礦站。'], ['photoA'], '夜班鐵櫃已經打開，日誌收在檔案裡。可選：看看四人合照，再前往運礦站。');
+        showExit('前往運礦站');
+        return;
       }
     }); S();
-    await me('A.W.……亞瑟・威廉斯。原來入口牆上的字，是他留下的。', 'A.W.… Arthur Williams. So he left those letters at the entrance.'); S();
-    await me('日誌上說，二月十七日的數字會告訴我答案。先去運礦站看看。', 'The journal says the numbers from February 17 will tell me. I should check the loading station.'); S();
 
     // ---------- S05 六坑運礦站：謎題③ ----------
     await chapter('六坑運礦站', 'S05'); S();
-    setScene(ART.s05()); $(el, '#black').classList.remove('on'); await wait(700); S();
+    await showPlace(ART.PLACES.s05); $(el, '#black').classList.remove('on'); await wait(700); S();
     let solved3 = false;
-    setHs([['depart', 80, 380, 86, 52, '離站簿'], ['arrive', 166, 380, 86, 52, '到站簿'], ['scale', 890, 330, 160, 190, '磅秤'], ['board5', 740, 140, 250, 170, '登記板'], ['gravel', 450, 530, 180, 60, '鐵軌碎石']]);
+    setHs([['depart', 76, 368, 110, 80, '離站簿'], ['arrive', 166, 368, 120, 80, '到站簿'], ['scale', 890, 330, 160, 190, '磅秤'], ['board5', 740, 140, 250, 170, '登記板'], ['gravel', 450, 520, 180, 70, '鐵軌碎石']]);
     setStep('找出消失的礦車數量', ['再比較一下兩份表格。', '離站與到站數量，應該一致才對。', '二月十七日的差異最明顯。離站 12 車，到站只有 9 車。'], ['depart', 'arrive', 'board5'], '比對離站簿與到站簿：只有 02/17 對不上，離站 12 車、到站 9 車，少了 3 車。在登記板輸入 3。');
     tip('打開兩本紀錄簿比對，找出數字對不上的那一天，再到登記板輸入消失的礦車數量。', { left: 360, top: 96 });
     await loop(async id => {
@@ -448,11 +544,12 @@ export function render(st, params, go) {
       if (id === 'scale') return void await me('磅秤的指針早就卡死了。', 'The scale’s needle is stuck fast.');
       if (id === 'gravel') {
         if (!solved3) return void await me('鐵軌旁堆著一些碎石。', 'Some loose gravel beside the track.');
-        sfx('pry'); svg('gravel').style.opacity = 0.2; svg('oldsw').style.opacity = 1; await wait(500); S();
+        sfx('pry'); fade('gravel', 0); fade('oldsw', 1); await wait(500); S();
         await me('碎石底下藏著一個舊轉轍器……通往一條封閉的側線。', 'An old switch hidden under the gravel… leading to a sealed side line.'); return true;
       }
       if (id === 'board5') {
         if (solved3) return void await me('消失的，是三車貨物。', 'Three cartloads went missing.');
+        if (!got.has('depart') || !got.has('arrive')) return void await me('先把兩本簿子打開，對過同一天的數字。', 'Open both books and compare the same dates.');
         untip();
         const ok = await numberLock({ len: 1, title: '消失的礦車數量', sub: '運量登記', answer: '3', hints: ['再比較一下兩份表格。', '離站與到站數量，應該一致才對。', '二月十七日的差異最明顯。'] }); S();
         if (!ok) return;
@@ -465,7 +562,7 @@ export function render(st, params, go) {
 
     // ---------- S06 封閉維修坑道：謎題④ ----------
     await chapter('封閉維修坑道', 'S06'); S();
-    setScene(ART.s06()); $(el, '#black').classList.remove('on'); await wait(700); S();
+    await showPlace(ART.PLACES.s06); $(el, '#black').classList.remove('on'); await wait(700); S();
     setHs([['A', 150, 300, 260, 340, 'A 正常出坑路線'], ['B', 470, 300, 260, 340, 'B 工具維修倉庫'], ['C', 790, 300, 260, 340, 'C 舊式升降井'], ['wall', 380, 110, 440, 120, '牆上的刻字']]);
     setStep('找出沒有被記錄的路線', ['先讀一讀牆上的刻字。', '出坑的有紀錄，入庫的有編號……哪一條路兩者都不是？', '「不升不出者」——不走出坑、也不進倉庫的，是舊式升降井 C。'], ['wall', 'C'], '刻字：「凡出坑者，皆有紀錄。凡入庫者，皆有編號。唯不升不出者，不留其名。」A 出坑有到站紀錄、B 入庫有編號，只有 C 舊式升降井不在帳本上。選 C。');
     await me('三條路……哪一條才是他們走的？', 'Three paths… which one did they take?'); S();
@@ -479,7 +576,7 @@ export function render(st, params, go) {
       if (id === 'B') { sfx('error'); return void await me('倉庫裡的東西都有編號……也不是這裡。', 'Everything in the store is numbered… not here either.'); }
       return true;
     }); S();
-    await fadeTo(() => setScene(ART.s06b())); S();
+    await fadeTo(() => showPlace(ART.PLACES.s06b)); S();
     let cartIn = false, doorOpen = false, gotPhotoB = false;
     setHs([['cart2', 130, 420, 260, 210, '礦車'], ['latch', 640, 320, 100, 90, '門扣'], ['door', 440, 200, 190, 320, '鐵門'], ['photo2', 780, 310, 110, 120, '門邊的照片']]);
     setStep('打開側線盡頭的鐵門', [() => !cartIn ? '先把礦車推進側線。' : '門扣鏽死了。選擇鐵撬棒「使用」，撬開門扣。'], () => (!cartIn ? ['cart2'] : ['latch']), '把礦車推進側線讓出通道，再用鐵撬棒撬開受損的門扣。門邊的照片可以看看。');
@@ -490,7 +587,7 @@ export function render(st, params, go) {
         if (doorOpen) return true;
         if (!cartIn) return void await me('礦車卡在軌道上，擋住了去路。', 'The cart is stuck on the track, blocking the way.');
         if (item !== 'bar') return void await me('門扣鏽死了，徒手打不開。', 'The latch is rusted shut. I can’t open it by hand.');
-        sfx('pry'); await wait(200); sfx('door'); svg('latch').style.opacity = 0; svg('door2').style.opacity = 1; doorOpen = true;
+        sfx('pry'); await wait(200); sfx('door'); fade('latch', 0); if (painted) fade('door', 0); else fade('door2', 1); doorOpen = true;
         await me('開了。後面是一條往上的通道。', 'It’s open. A passage leads upward.'); S();
         setStep('穿過鐵門', ['點打開的鐵門，繼續往前走。'], ['door'], '鐵門已經打開，點它繼續前進。門邊的照片也可以看看。');
         return;
@@ -499,7 +596,7 @@ export function render(st, params, go) {
 
     // ---------- S07 五坑舊運輸區：謎題⑤ ----------
     await chapter('五坑舊運輸區', 'S07'); S();
-    setScene(ART.s07()); $(el, '#black').classList.remove('on'); await wait(700); S();
+    await showPlace(ART.PLACES.s07); $(el, '#black').classList.remove('on'); await wait(700); S();
     let hasCtl = false, ctlOn = false;
     setHs([['manual', 150, 200, 96, 110, '維修手冊'], ['panel', 186, 326, 160, 200, '控制盤'], ['rack', 820, 240, 220, 200, '工具架'], ['shaft', 430, 90, 280, 540, '升降井']]);
     setStep('啟動升降設備', [() => !hasCtl ? '工具架上有一支控制手柄。' : !ctlOn ? '把控制手柄裝到控制盤上。' : '照維修手冊上的順序操作控制盤。', '維修手冊：解除制動 → 接通電源 → 選擇上升。'], () => (!hasCtl ? ['rack'] : !ctlOn ? ['panel'] : ['manual', 'panel']), '從工具架拿控制手柄，裝到控制盤上。依維修手冊的順序：解除制動 → 接通電源 → 上升。');
@@ -529,21 +626,23 @@ export function render(st, params, go) {
     // ---------- S08 被遺忘的金庫：謎題⑥ ----------
     await chapter('被遺忘的金庫', 'S08'); S();
     cine.classList.add('hidden'); cine.innerHTML = '';
-    setScene(ART.s08()); $(el, '#black').classList.remove('on'); await wait(700); S();
+    await showPlace(ART.PLACES.s08); $(el, '#black').classList.remove('on'); await wait(700); S();
     let vaultOpen = false;
-    setHs([['words', 340, 228, 440, 60, '門上的英文刻字'], ['frame', 300, 150, 40, 490, '門框'], ['frame2', 780, 150, 40, 490, '門框'], ['lock', 490, 370, 140, 100, '機械鎖'], ['plate', 630, 510, 90, 50, '密碼牌']]);
-    setStep('打開金庫的鐵門', ['日誌裡，好像有人提過某個特別的日子。', '門框上刻著：「當你忘記所有歸途，請記住我來到這世上的日子。」', '密碼牌寫著 MMDD：月份兩位、日期兩位。亞瑟的生日是 12 月 12 日。'], ['frame', 'plate', 'lock'], '門框：「請記住我來到這世上的日子」＝亞瑟的生日。日誌第一頁：12 月 12 日。密碼牌 MMDD＝月月日日。密碼是 1212。');
+    setHs([['words', 340, 200, 440, 70, '門上的英文刻字'], ['frame', 300, 150, 40, 490, '門框'], ['frame2', 780, 150, 40, 490, '門框'], ['lock', 470, 290, 180, 130, '機械鎖'], ['plate', 610, 490, 140, 80, '密碼牌']]);
+    setStep('打開金庫的鐵門', ['日誌寫著：十二月十二日是他的生日。', '門框刻著：「當你忘記所有歸途，請記住我來到這世上的日子。」', '密碼牌是 MMDD。月份兩位、日期兩位。'], ['frame', 'plate', 'lock'], '門框要你記住他來到這世上的日子。日誌第一頁：12 月 12 日。密碼牌 MMDD＝月月日日。密碼是 1212。');
     await me('厚重的鐵門……還用鐵鍊鎖著。', 'A heavy iron door… chained shut.'); S();
     await loop(async (id, item) => {
-      if (id === 'words') return void await me('「不為帝國，不為戰爭，只為那些未能歸來的人。」', '“Not for the empire. Not for the war. For those who never returned.”');
-      if (id === 'frame' || id === 'frame2') return void await me('門框上刻著：「當你忘記所有歸途，請記住我來到這世上的日子。」', 'Carved in the frame: “When all roads home are forgotten, remember the day I was born.”');
-      if (id === 'plate') return void await me('密碼牌上刻著「MMDD」。月、月、日、日？', 'The plate reads “MMDD.” Month, month, day, day?');
+      if (id === 'words') { addNote('words', '門上刻字：不為帝國，不為戰爭，只為那些未能歸來的人。'); return void await me('「不為帝國，不為戰爭，只為那些未能歸來的人。」', '“Not for the empire. Not for the war. For those who never returned.”'); }
+      if (id === 'frame' || id === 'frame2') { addNote('frame', '門框：「當你忘記所有歸途，請記住我來到這世上的日子。」'); return void await me('門框上刻著：「當你忘記所有歸途，請記住我來到這世上的日子。」', 'Carved in the frame: “When all roads home are forgotten, remember the day I was born.”'); }
+      if (id === 'plate') { addNote('plate', '密碼牌：<b>MMDD</b>（月份兩位、日期兩位）。'); return void await me('密碼牌上刻著「MMDD」。月、月、日、日？', 'The plate reads “MMDD.” Month, month, day, day?'); }
       if (id === 'lock') {
         if (vaultOpen) return true;
-        const ok = await numberLock({ len: 4, dial: true, title: '機械鎖', sub: '四位數密碼', answer: '1212', hints: ['不對。日誌裡，好像有人提過某個特別的日子。', '不對。「請記住我來到這世上的日子」……', '不對。MMDD——月份兩位、日期兩位。'] }); S();
+        const ok = await numberLock({ len: 4, dial: true, title: '機械鎖', sub: '四位數密碼', answer: '1212', hints: ['不對。日誌寫著：十二月十二日是他的生日。', '不對。門框說：當你忘記所有歸途，請記住我來到這世上的日子。', '不對。密碼牌是 MMDD。月份兩位、日期兩位。'] }); S();
         if (!ok) return;
-        vaultOpen = true; sfx('unlock'); svg('chain').style.opacity = 0; await wait(600); S(); sfx('door');
-        svg('vault').style.transition = 'opacity 1.2s'; svg('vault').style.opacity = 1; await wait(1200); S();
+        vaultOpen = true; sfx('unlock'); fade('chain', 0); await wait(600); S(); sfx('door');
+        const vault = svg('vault'); if (vault) { vault.style.transition = 'opacity 1.2s'; vault.style.opacity = '1'; }
+        if (painted) { fade('vaultDoor', 0); fade('lockArt', 0); fade('plateArt', 0); }
+        await wait(1200); S();
         return true;
       }
     }); S();
@@ -554,7 +653,11 @@ export function render(st, params, go) {
       if (item !== 'bar') return void await me('箱蓋釘死了。', 'The lid is nailed shut.');
       sfx('pry'); return true;
     }); S();
-    cine.classList.remove('hidden'); cine.innerHTML = '<div class="g01-gold"><div class="g01-bars">' + Array.from({ length: 12 }, () => '<i></i>').join('') + '</div></div><div class="vignette"></div>';
+    cine.classList.remove('hidden');
+    const goldSrc = IMG('g01-s08-gold.webp');
+    cine.innerHTML = await probe(goldSrc)
+      ? `<img class="bg" src="${goldSrc}" alt="木箱中以舊布包裹的金條"><div class="vignette"></div>`
+      : '<div class="g01-gold"><div class="g01-bars">' + Array.from({ length: 12 }, () => '<i></i>').join('') + '</div></div><div class="vignette"></div>';
     sfx('flash'); await wait(1200); S();
     await me('……黃金。竟然真的在這裡。這麼多年來……從來沒有人發現？', '…Gold. It really is here. All these years… and no one ever found it?'); S();
     await me('箱子裡還夾著一封信。', 'There’s a letter tucked inside the crate.'); S();
@@ -581,6 +684,7 @@ export function render(st, params, go) {
     await me('不客氣。', 'You’re welcome.'); S();
     await say('如果以後還有類似的調查，希望能再次請你幫忙。', 'If anything like this comes up again, I hope we can count on you.', 'lin'); S();
     await me('有機會的話。', 'If the chance comes.'); S();
+    await fadeTo(() => showPlace(ART.PLACES.ridge)); S();
     await say('有些寶藏，或許從來就不該被帶走。', 'Some treasures were perhaps never meant to be taken.', 'think'); S();
 
     // 黑幕標題
@@ -588,8 +692,25 @@ export function render(st, params, go) {
     const card = html('<div class="g01-card end"><div class="label">G01 CLEAR</div><h2>從未消失的黃金</h2><p>真相已揭曉・祕密仍留在山中。</p></div>');
     el.appendChild(card); await wait(3200); S();
 
-    // 結算
+    // 結算。金幣只在首次通關發放；收藏與檔案註記重玩時仍會補上。
     const dd = get();
+    if (!dd.collection) dd.collection = [];
+    dd.g01 = dd.g01 || { photoA: false, photoB: false, letter: false };
+    dd.g01.photoA = dd.g01.photoA || gotPhotoA;
+    dd.g01.photoB = dd.g01.photoB || gotPhotoB;
+    dd.g01.letter = true;
+    const upsert = (id, name, img, desc) => {
+      const i = dd.collection.findIndex(c => c.id === id);
+      if (i < 0) dd.collection.push({ id, name, img, desc });
+      else dd.collection[i].desc = desc;
+    };
+    upsert('g01-letter', '亞瑟的最後一封信', 'it-letter.webp', '1945 年 3 月留在木箱裡的信，影像檔。原信留在原處，黃金沒有帶走。');
+    if (dd.g01.photoA || dd.g01.photoB) {
+      const bits = [];
+      if (dd.g01.photoA) bits.push('休息室那張寫著 Arthur、Edward、Thomas、林清和');
+      if (dd.g01.photoB) bits.push('側線那張背面寫著：黃金已經藏好了');
+      upsert('g01-photo', '戰俘四人合照', 'it-photo.webp', bits.join('。') + '。');
+    }
     const first = !replay && !dd.records.includes('g01');
     const collected = gotPhotoA && gotPhotoB;
     const rows = [];
@@ -598,16 +719,20 @@ export function render(st, params, go) {
       if (collected) rows.push(['戰俘檔案完整收集', 200]);
       if (!usedHelp) rows.push(['未使用提示道具', 100]);
       dd.coins += rows.reduce((s, r) => s + r[1], 0);
-      dd.records.push('g01'); save(); taskDone('stage');
+      dd.records.push('g01');
+      taskDone('stage');
       sfx('coin');
     }
+    save();
+    const miss = [!gotPhotoA && '休息室的合照', !gotPhotoB && '側線鐵門旁的合照'].filter(Boolean);
     card.remove();
     const res = html(`<div class="modal-back" style="z-index:60"><div class="modal g01-clear" role="dialog" aria-label="破關結算" style="width:720px">
 <div class="col" style="align-items:center;gap:8px"><div class="label">一般關卡 · G01</div><h2 style="font-size:40px;line-height:56px;letter-spacing:0.16em">破解完成</h2></div>
 ${first ? `<div class="col" style="align-self:stretch;gap:8px">${rows.map(([t, n]) => `<div class="g01-rw"><span>${t}</span><span class="row" style="gap:8px"><img src="${IMG('coin.webp')}" alt="遊戲幣" style="width:32px;height:32px"><b>×${n}</b></span></div>`).join('')}</div>
-${!collected ? '<p style="font-size:16px;line-height:24px;color:var(--muted)">還有戰俘的照片沒有找到。</p>' : ''}` : '<p>已破關的關卡再次挑戰，不會再獲得獎勵。</p>'}
+${miss.length ? `<p style="font-size:16px;line-height:24px;color:var(--muted)">戰俘檔案還沒收齊：${miss.join('、')}。再挑戰可以補看，獎勵只在首次通關結算。</p>` : ''}` : '<p>已破關的關卡再次挑戰，不會再獲得獎勵。</p>'}
 <div style="align-self:stretch;height:1px;background:#4a302c"></div>
-<p style="font-size:16px;line-height:24px">取得收藏「亞瑟的最後一封信」影像檔，已收進調查檔案的劇情紀錄。</p>
+<p style="font-size:16px;line-height:24px">取得收藏「亞瑟的最後一封信」影像檔。原信與黃金都留在山裡，調查檔案不記載金庫的位置。</p>
+<p style="font-size:14px;line-height:24px;color:var(--muted)">${FICTION}</p>
 <div class="actions"><button type="button" class="btn-line" data-a="stages" style="width:208px">返回關卡選擇</button><button type="button" class="btn" data-a="lobby" style="width:208px">返回大廳</button></div></div></div>`);
     el.appendChild(res);
     const a = await new Promise(r => res.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b) { sfx('tap'); r(b.dataset.a); } })); S();

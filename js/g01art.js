@@ -106,3 +106,80 @@ ${[0, 1, 2, 3].map(i => `<circle cx="${370 + i * 126}" cy="210" r="8" fill="#6b5
 <g id="vault" opacity="0"><rect x="340" y="190" width="440" height="430" fill="#060403"/>${[[380, 470], [500, 500], [620, 470], [440, 400], [580, 410]].map(([x, y]) => `<rect x="${x}" y="${y}" width="110" height="70" fill="#4a3020" stroke="#2a1810" stroke-width="4"/><path d="M${x} ${y + 20} h110" stroke="#2a1810" stroke-width="3"/>`).join('')}${T(560, 600, '木箱')}</g>`);
 
 export const BADGE = '<div class="g01-badge">暫用示意圖</div>';
+
+// S09 結語遠景：山霧與樹梢。沒有紅光、沒有人影。正式圖是 g01-ridge.webp。
+export const s09 = () => wrap(`<rect width="1280" height="720" fill="#100e0c"/>
+<path d="M0 280 L180 180 L340 250 L520 120 L760 230 L980 150 L1280 260 V720 H0Z" fill="#1c1814"/>
+<path d="M0 360 L240 280 L480 340 L720 250 L1040 330 L1280 280 V720 H0Z" fill="#2a241e" opacity="0.9"/>
+<path d="M0 460 Q360 400 720 450 T1280 420 V720 H0Z" fill="#14110e"/>
+<g fill="#0c0a09">${[80, 180, 260, 980, 1100, 1200].map((x, i) => `<path d="M${x} 720 L${x + 18} ${520 - (i % 3) * 30} L${x + 36} 720Z"/>`).join('')}</g>
+<rect x="560" y="470" width="70" height="36" fill="#3a3028"/><path d="M548 470 L595 448 L642 470Z" fill="#4a3a30"/>
+<rect width="1280" height="720" fill="#c9b8a4" opacity="0.08"/>
+${T(640, 660, '金瓜石　山霧')}`);
+
+// 正式圖缺失任何一張時，整幕退回上面的 SVG。座標是 1280×720 舞台像素。
+const sp = (id, file, x, y, w, h, extra = {}) => ({ id, file, x, y, w, h, ...extra });
+export const PLACES = {
+  s03: {
+    bg: 'g01-s03.webp', alt: '本山六坑入口，生鏽的礦車擋住坑口', fallback: s03,
+    extra: '<div id="aw" class="g01-aw">A.W.</div>',
+    sprites: [
+      sp('cart', 'g01-cart.webp', 430, 360, 300, 225, { z: 2 }),
+      sp('chock', 'g01-chock.webp', 656, 552, 72, 48, { z: 4 }),
+      sp('bar', 'g01-crowbar.webp', 176, 390, 80, 240, { z: 3 }),
+      sp('grip', 'g01-grip.webp', 968, 488, 70, 50, { z: 4 }),
+      sp('lever', 'g01-grip.webp', 250, 448, 84, 60, { opacity: 0, z: 5, extra: 'transform:rotate(-42deg);transform-origin:15% 85%' }),
+    ],
+  },
+  s04: {
+    bg: 'g01-s04.webp', alt: '礦工休息室，黑板、木桌與三座鐵櫃', fallback: s04,
+    sprites: [
+      sp('photoAart', 'it-photo.webp', 70, 368, 110, 84, { z: 3, fit: 'cover' }),
+      sp('lk3door', 'g01-s04-locker.webp', 886, 280, 80, 240, { z: 2 }),
+    ],
+    tags: [{ x: 706, y: 296, text: '01' }, { x: 806, y: 296, text: '02' }, { x: 906, y: 296, text: '03' }],
+  },
+  s05: {
+    bg: 'g01-s05.webp', alt: '六坑運礦站，兩條軌道與桌面上的紀錄簿', fallback: s05,
+    sprites: [
+      sp('departBook', 'g01-ledger.webp', 80, 372, 96, 64, { z: 3 }),
+      sp('arriveBook', 'g01-ledger.webp', 184, 372, 96, 64, { z: 3 }),
+      sp('oldsw', 'g01-switch.webp', 490, 512, 96, 64, { opacity: 0, z: 2 }),
+      sp('gravel', 'g01-gravel.webp', 450, 524, 180, 60, { z: 4 }),
+    ],
+  },
+  s06: {
+    bg: 'g01-s06.webp', alt: '封閉維修坑道的三條路線', fallback: s06, sprites: [],
+    tags: [{ x: 262, y: 248, text: 'A' }, { x: 582, y: 248, text: 'B' }, { x: 902, y: 248, text: 'C' }],
+  },
+  s06b: {
+    bg: 'g01-s06b.webp', alt: '維修側線盡頭的鏽蝕鐵門', fallback: s06b,
+    sprites: [
+      sp('cart2', 'g01-cart.webp', 130, 430, 260, 195, { z: 2 }),
+      sp('door', 'g01-s06-door.webp', 430, 180, 280, 360, { z: 3 }),
+      sp('latch', 'g01-latch.webp', 656, 328, 64, 48, { z: 4 }),
+      sp('photo2art', 'it-photo.webp', 790, 318, 110, 84, { z: 3, fit: 'cover' }),
+    ],
+  },
+  s07: {
+    bg: 'g01-s07.webp', alt: '五坑舊運輸區的豎井與控制盤', fallback: s07,
+    sprites: [
+      sp('panelArt', 'g01-s07-panel.webp', 186, 326, 160, 200, { z: 2 }),
+      sp('grip2', 'it-handle.webp', 936, 292, 64, 64, { z: 3, fit: 'contain' }),
+      sp('ctl', 'it-handle.webp', 238, 398, 56, 56, { opacity: 0, z: 4, fit: 'contain' }),
+    ],
+  },
+  s08: {
+    bg: 'g01-s08.webp', alt: '被遺忘的金庫，鐵鍊封住的厚鐵門', fallback: s08,
+    sprites: [
+      sp('vault', 'g01-crates.webp', 380, 400, 400, 200, { opacity: 0, z: 1 }),
+      sp('vaultDoor', 'g01-s08-door.webp', 340, 180, 440, 440, { z: 2 }),
+      sp('chain', 'g01-chain.webp', 350, 400, 420, 140, { z: 3 }),
+      sp('lockArt', 'g01-keypad.webp', 490, 300, 140, 100, { z: 4 }),
+      sp('plateArt', 'g01-plate.webp', 620, 500, 120, 60, { z: 5 }),
+    ],
+  },
+  ridge: {
+    bg: 'g01-ridge.webp', alt: '金瓜石的山霧，風吹過樹梢', fallback: s09, sprites: [],
+  },
+};

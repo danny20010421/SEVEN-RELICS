@@ -1,4 +1,5 @@
 import { get, save, reset, SHOP, buy, SIGNIN, STREAK, canSignin, doSignin, VIP, vipLevel, taskDone, triesLeft, today, startMain } from './store.js';
+import { FICTION } from './g01.js';
 import { sfx, bgm, applyVolume } from './audio.js';
 import { html, $, $$, IMG, ICON, fmt, esc, shell, tabs, modal, alertBox, toast, rewardModal } from './ui.js';
 
@@ -93,7 +94,7 @@ export function stages(st, p, go) {
     body.innerHTML = `<div class="content"><div class="glist">
 ${d.records.includes('n00') ? `<button type="button" class="card gitem" id="g01"><span class="col" style="gap:4px"><span class="serif" style="font-size:24px;line-height:32px">G01 · 從未消失的黃金</span><span style="font-size:14px;line-height:24px;color:var(--muted)">台灣・金瓜石 · 難度 ★★☆☆☆ · 不限時${d.records.includes('g01') ? ' · 已破關' : ''}</span></span><span class="btn sm" style="width:144px">${d.records.includes('g01') ? '再次挑戰' : '開始調查'}</span></button>` : `<div class="card gitem lock"><span class="col" style="gap:4px"><span class="serif" style="font-size:24px;line-height:32px">G01 · ？？？</span><span style="font-size:14px;line-height:24px">通關序章後開放</span></span>${ICON.lock}</div>`}
 <div class="card gitem lock"><span class="col" style="gap:4px"><span class="serif" style="font-size:24px;line-height:32px">更多一般關卡</span><span style="font-size:14px;line-height:24px">分支任務製作中，敬請期待</span></span>${ICON.lock}</div>
-</div></div>`;
+</div><p style="margin:16px 0 0;max-width:880px;font-size:14px;line-height:24px;color:var(--muted)">G01 的藏金情節為虛構，取材自金瓜石礦業與戰俘歷史。真實封閉礦坑不可進入，請勿嘗試現地操作。</p></div>`;
   };
   (p.tab ? general : main)();
   onTabs(el, i => (i ? general : main)());
@@ -146,13 +147,15 @@ export function bag(st, p, go) {
   const NAMES = { timer: ['加時器', '主線任務延長 3 分鐘。同一關卡限用 3 次。'], compass: ['解析盤', '協助縮小密碼謎題的範圍。同一關卡限用 2 次。'], memo: ['調查備忘錄', '自動整理已發現的相關線索。每關限用 1 次。'] };
   const paint = i => {
     const d = get();
-    const list = i === 0 ? d.clues.map(c => ({ img: c.img, name: c.name, desc: c.desc, n: 1 })) : i === 1 ? Object.keys(NAMES).filter(k => d.items[k] > 0).map(k => ({ img: 'it-' + k + '.webp', name: NAMES[k][0], desc: NAMES[k][1], n: d.items[k] })) : [];
+    const list = i === 0 ? d.clues.map(c => ({ img: c.img, name: c.name, desc: c.desc, n: 1 })) : i === 1 ? Object.keys(NAMES).filter(k => d.items[k] > 0).map(k => ({ img: 'it-' + k + '.webp', name: NAMES[k][0], desc: NAMES[k][1], n: d.items[k] })) : i === 3 ? (d.collection || []).map(c => ({ img: c.img, name: c.name, desc: c.desc, n: 1 })) : [];
     if (!list.length) { body.innerHTML = `<div class="content">${emptyState(i === 0 ? '尚未取得關鍵線索' : '這裡還沒有東西', i === 0 ? '破解主線關卡後取得的關鍵線索會收在這裡。' : '')}</div>`; return; }
-    body.innerHTML = `<div class="content"><div class="bag-grid">${Array.from({ length: 40 }, (_, k) => list[k] ? `<button type="button" class="bslot has${k === 0 ? ' sel' : ''}" data-k="${k}" aria-label="${list[k].name}"><img src="${IMG(list[k].img)}" alt=""><span class="n">×${list[k].n}</span></button>` : '<span class="bslot" aria-hidden="true"></span>').join('')}</div>
+    const bagImg = (file, px) => `<img src="${IMG(file)}" alt="" style="width:${px}px;height:${px}px;object-fit:contain" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'miss-img',textContent:'藏'}))">`;
+    body.innerHTML = `<div class="content"><div class="bag-grid">${Array.from({ length: 40 }, (_, k) => list[k] ? `<button type="button" class="bslot has${k === 0 ? ' sel' : ''}" data-k="${k}" aria-label="${list[k].name}">${bagImg(list[k].img, 72)}<span class="n">×${list[k].n}</span></button>` : '<span class="bslot" aria-hidden="true"></span>').join('')}</div>
 <div class="panel bag-detail" id="det"></div></div>`;
     const det = k => {
       const it = list[k];
-      $(body, '#det').innerHTML = `<div class="col" style="gap:16px"><div class="center" style="height:160px;background:#1a1213;border:1px solid #4a302c"><img src="${IMG(it.img)}" alt="" style="width:136px;height:136px"></div><h2 class="serif" style="margin:0;font-size:24px;line-height:32px">${it.name}</h2><div class="row" style="gap:8px"><span class="chip">${i === 0 ? '關鍵線索' : '道具'}</span><span class="chip">持有 ×${it.n}</span></div><p style="margin:0;font-size:16px;line-height:28px;color:var(--muted)">${it.desc}</p></div><div class="muted" style="font-size:14px;line-height:24px">${i === 1 ? '道具可在關卡中從右上角使用。' : ''}</div>`;
+      const kind = i === 0 ? '關鍵線索' : i === 3 ? '收藏品' : '道具';
+      $(body, '#det').innerHTML = `<div class="col" style="gap:16px"><div class="center" style="height:160px;background:#1a1213;border:1px solid #4a302c">${bagImg(it.img, 136)}</div><h2 class="serif" style="margin:0;font-size:24px;line-height:32px">${it.name}</h2><div class="row" style="gap:8px"><span class="chip">${kind}</span><span class="chip">持有 ×${it.n}</span></div><p style="margin:0;font-size:16px;line-height:28px;color:var(--muted)">${it.desc}</p></div><div class="muted" style="font-size:14px;line-height:24px">${i === 1 ? '道具可在關卡中從右上角使用。' : ''}</div>`;
       $$(body, '.bslot.has').forEach(x => x.classList.toggle('sel', +x.dataset.k === k));
     };
     det(0);
@@ -278,6 +281,11 @@ const PEOPLE = [
     id: 'induasen', name: '因杜阿森', title: '歷史學家', rel: '大學教授', slot: 'left', unlock: 'n00',
     av: 'npc-induasen-av.webp', img: 'npc-induasen.webp',
     lines: ['外表冷酷、實則熱心的老人。擁有強大的人脈與訊息資源，世界各地遇到困難的機構，都會想找他協助。', '自稱是主角的大學老師，是幫助主角恢復記憶的關鍵人物。']
+  },
+  {
+    id: 'lin', name: '林館長', title: '博物館館長', rel: '委託人', slot: 'right', unlock: 'g01',
+    av: 'npc-lin-av.webp', img: 'npc-lin.webp',
+    lines: ['黃金博物館在這一關的委託人。完全虛構的人物，不對應任何一位現實中的館長。', '她提供調查檔案與進坑許可。主角回館時，沒有說出金庫的位置。']
   }
 ];
 const SLOT = { left: [192, 248, 416, 280], right: [880, 248, 720, 280], top: [536, 40, 568, 184], bottom: [536, 456, 568, 404] };
@@ -286,7 +294,7 @@ function people(body, d, focus) {
   const pick = focus && known.find(m => m.id === focus);
   if (pick) {
     body.innerHTML = `<div class="content"><div class="panel pdoc">
-  <div class="pdoc-pic"><img src="${IMG(pick.img)}" alt="${pick.name}"></div>
+  <div class="pdoc-pic" data-fb="${pick.name.slice(0, 1)}"><img src="${IMG(pick.img)}" alt="${pick.name}" onerror="this.classList.add('miss')"></div>
   <div class="pdoc-text">
     <div class="row" style="height:24px;gap:8px;font-size:14px;color:var(--muted)"><span>人物關係</span><span>›</span><span>${esc(d.player.name)}</span><span>›</span><span style="color:var(--gold-2)">${pick.name}</span></div>
     <h2 class="serif" style="margin:0;font-size:40px;line-height:56px">${pick.name}</h2>
@@ -299,13 +307,13 @@ function people(body, d, focus) {
     $(body, '#pback').addEventListener('click', () => { sfx('tap'); people(body, d); });
     return;
   }
-  const node = (x, y, inner, label, on, id) => `<button type="button" class="pnode" style="left:${x}px;top:${y}px"${id ? ` data-p="${id}"` : ''} aria-label="${label}"><span class="pav${on ? ' on' : ''}">${inner}</span><span class="pname">${label}</span></button>`;
+  const node = (x, y, inner, label, on, id, fb = '') => `<button type="button" class="pnode" style="left:${x}px;top:${y}px"${id ? ` data-p="${id}"` : ''} aria-label="${label}"><span class="pav${on ? ' on' : ''}"${fb ? ` data-fb="${fb}"` : ''}>${inner}</span><span class="pname">${label}</span></button>`;
   const q = '<span style="font-size:32px;font-weight:700;line-height:40px;color:var(--muted-2)">？</span>';
   let html2 = '<div class="pline" style="left:320px;top:199px;width:592px;height:2px"></div><div class="pline" style="left:615px;top:40px;width:2px;height:320px"></div>';
   for (const [slot, [x, y, lx, ly]] of Object.entries(SLOT)) {
     const m = known.find(k => k.slot === slot);
     html2 += `<span class="prel" style="left:${lx}px;top:${ly - 96}px">${m ? m.rel : '******'}</span>`;
-    html2 += m ? node(x, y - 96, `<img src="${IMG(m.av)}" alt="">`, m.name, true, m.id) : node(x, y - 96, q, '？？？', false);
+    html2 += m ? node(x, y - 96, `<img src="${IMG(m.av)}" alt="" onerror="this.classList.add('miss')">`, m.name, true, m.id, m.name.slice(0, 1)) : node(x, y - 96, q, '？？？', false);
   }
   html2 += node(536, 152, `<img src="${IMG(`avatar-${d.player.gender}.webp`)}" alt="">`, esc(d.player.name), true);
   body.innerHTML = `<div class="content"><div class="panel pgraph"><div class="pgraph-in">${html2}</div>
@@ -318,11 +326,17 @@ const STORY = [
   { id: 'n00', group: '序章', name: '記憶的終點', label: '序章 · 紀錄 01', html: `<p>在意識深處的緊急通道醒來。門上的跑馬燈留下四句謎語：</p>
 <p style="font-family:var(--serif);font-weight:600;color:var(--text)">未曾存在，吞沒一切<br>不曾移動，目觀四方<br>鏡中之影，與誰相同<br>另一消散，何以為證</p>
 <p>門後是一條伸向黑暗的通道。模糊的人影、殘缺的符號……我好像來過那裡。</p>` },
-  { id: 'g01', group: '一般關卡', name: '從未消失的黃金', label: '一般關卡 · G01　台灣・金瓜石', html: `<p>受因杜阿森教授之託，協助黃金博物館調查 1945 年 2 月 17 日的運輸紀錄。三車貨物沒有抵達終點，而是經由一條未登記的升降路線，被藏進了五坑深處。</p>
-<p>藏起黃金的，是英國戰俘亞瑟・威廉斯、Edward Miller、Thomas Reed，與台灣技工林清和。黃金留在原處，金庫的位置不曾寫進任何報告。</p>
+  { id: 'g01', group: '一般關卡', name: '從未消失的黃金', label: '一般關卡 · G01　台灣・金瓜石', html: d => {
+    const g = d.g01 || {};
+    const who = (g.photoA || g.photoB)
+      ? '英國戰俘亞瑟・威廉斯、Edward Miller、Thomas Reed，與台灣技工林清和'
+      : '英國戰俘亞瑟・威廉斯與他的同伴，以及台灣技工林清和';
+    return `<p>受因杜阿森教授之託，協助黃金博物館調查 1945 年 2 月 17 日的運輸紀錄。三車貨物沒有抵達終點，而是沿著一條沒有寫進正式清單的維修路線被移走。</p>
+<p>藏起黃金的，是${who}。黃金留在山裡。這份紀錄不記載金庫的位置，也不把黃金當成可以取走的東西。</p>
 <div class="label" style="margin-top:8px">收藏　亞瑟的最後一封信（影像檔）</div>
 <p style="font-family:var(--serif);font-weight:600;color:var(--text)">如果你正在讀這封信，代表我們成功了。<br>黃金屬於活著的人。但請別忘了那些死去的人。<br>如果有一天，這些黃金再次被人發現，我只希望它們不會成為下一場貪婪的開始。<br>—— Arthur Williams</p>
-<p style="font-size:14px;line-height:24px;color:var(--muted)">本關為真實礦業與戰俘歷史背景上的原創故事，人物與藏金事件皆為虛構。</p>` },
+<p style="font-size:14px;line-height:24px;color:var(--muted)">${FICTION}</p>`;
+  } },
 ];
 function story(body, d, pick) {
   const have = STORY.filter(s => d.records.includes(s.id));
@@ -333,7 +347,7 @@ function story(body, d, pick) {
     list += d.records.includes(s.id) ? `<button type="button" class="fitem${cur && cur.id === s.id ? ' on' : ' got'}" data-s="${s.id}">${s.name}</button>` : `<div class="fitem"><span>？？？</span>${ICON.lock}</div>`;
   }
   body.innerHTML = `<div class="content"><div class="flist">${list}</div>
-<div class="panel fdoc">${cur ? `<div class="label">${cur.label}</div><h2>${cur.name}</h2><div class="redline"></div>${cur.html}` : emptyState('尚未取得劇情紀錄')}</div></div>`;
+<div class="panel fdoc">${cur ? `<div class="label">${cur.label}</div><h2>${cur.name}</h2><div class="redline"></div>${typeof cur.html === 'function' ? cur.html(d) : cur.html}` : emptyState('尚未取得劇情紀錄')}</div></div>`;
   $$(body, '[data-s]').forEach(b => b.addEventListener('click', () => { sfx('tap'); story(body, d, b.dataset.s); }));
 }
 
@@ -361,8 +375,8 @@ export function notice(st, p, go) {
   const paint = i => {
     if (i === 0) body.innerHTML = `<div class="content"><div class="flist"><button type="button" class="fitem on" style="height:72px;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px"><span>搶先體驗版上線</span><span style="font-size:14px;font-weight:400;color:var(--muted)">${today()}</span></button></div>
 <div class="panel fdoc"><div class="label">${today()}</div><h2>搶先體驗版上線</h2><div class="redline"></div>
-<p>感謝你參與《秘寶真相》搶先體驗。目前開放序章「記憶的終點」與大廳各項功能。</p>
-<p>主線第一章、一般關卡、帳號雲端存檔、Google 與 LINE 登入、儲值功能，將陸續開放。</p>
+<p>感謝你參與《秘寶真相》搶先體驗。目前開放序章「記憶的終點」、一般關卡 G01「從未消失的黃金」，以及大廳各項功能。</p>
+<p>主線第一章、其他一般關卡、帳號雲端存檔、Google 與 LINE 登入、儲值功能，將陸續開放。G01 的藏金情節為虛構，請勿進入真實封閉礦坑。</p>
 <p>搶先體驗期間，進度只儲存在目前使用的裝置與瀏覽器中。</p></div></div>`;
     else body.innerHTML = `<div class="content"><div class="panel fill">${emptyState(i === 1 ? '客服管道將於正式上線前公布' : '問題回報功能即將開放')}</div></div>`;
   };
@@ -390,7 +404,7 @@ export function profile(st, p, go) {
     <h2 class="serif" style="margin:0;font-size:20px;line-height:32px">探索進度</h2>
     <div class="col" style="gap:8px"><div class="row" style="height:24px;justify-content:space-between"><span>主線關卡　序章</span><b>${d.records.includes('n00') ? '已破關' : '未破關'}</b></div><div class="bar gold"><i style="width:${d.records.includes('n00') ? 100 : 0}%"></i></div></div>
     <div class="col" style="gap:8px"><div class="row" style="height:24px;justify-content:space-between"><span>主線關卡　第一章</span><b>已破解 0 / 9 節</b></div><div class="bar gold"><i style="width:0%"></i></div></div>
-    <div class="col" style="gap:8px"><div class="row" style="height:24px;justify-content:space-between"><span>一般關卡</span><b>已完成 ${d.records.filter(r => r !== 'n00').length} 關</b></div><div class="bar gold"><i style="width:0%"></i></div></div>
+    <div class="col" style="gap:8px"><div class="row" style="height:24px;justify-content:space-between"><span>一般關卡</span><b>已完成 ${d.records.filter(r => r !== 'n00').length} / 1 關</b></div><div class="bar gold"><i style="width:${Math.min(100, d.records.filter(r => r !== 'n00').length * 100)}%"></i></div></div>
   </section>
   <section class="panel col" style="height:352px;padding:24px;gap:16px">
     <h2 class="serif" style="margin:0;font-size:20px;line-height:32px">成就</h2>

@@ -96,6 +96,7 @@ UI 色票（`css/style.css`）就是畫面的顏色上限。新圖的主色停�
 | 頭像 | `avatar` | 256×256 | 透明 | 64×64 圓形 | `1024x1024` |
 | UI icon | `icon` | 256×256 | 透明 | 功能鍵 48×48 | `1024x1024` |
 | 道具 | `item` | 400×400 | 透明 | 背包格 72×72，檢視約 136–200 | `1024x1024` |
+| 關卡精靈 | `sprite` | 預設 1024×1024，可用 `--width` `--height` 覆寫 | 透明；矩形鋪滿的門板可以不透明 | 疊在場景上的物件，舞台座標見關卡 | 依交付比例計算，誤差 < 1% |
 | 貨幣 | `currency` | 160×160 | 透明 | 頂欄 32×32 | `1024x1024` |
 
 API 的自訂 size 兩邊都要是 16 的倍數，總像素要落在 655,360 到 8,294,400，長短邊比不超過 3:1。1600×900 的 900、850×1300 的兩邊，以及 256、400、160 都過不了這條線，所以腳本先要上表右側的尺寸，再用 Pillow 縮成交付尺寸。場景與立繪的 API 比例已對齊交付比例（誤差小於 1%），縮放時不會裁切主體。
@@ -113,6 +114,7 @@ API 的自訂 size 兩邊都要是 16 的倍數，總像素要落在 655,360 到
 | avatar | `avatar-f`、`avatar-m`，或同一個 NPC 名字加 `-av` | `avatar-f`、`npc-induasen-av` |
 | icon | 必須以 `ic-` 開頭 | `ic-bag`、`ic-map` |
 | item | 必須以 `it-` 開頭 | `it-lantern`、`it-compass` |
+| sprite | `g` 加兩位關卡號，再接至少一段連字號 | `g01-cart`、`g01-s08-door` |
 | currency | 短名。不要用 `ic-` 或 `it-` | `coin`、`diamond` |
 
 `ic-` 只給 icon，`it-` 只給 item。關卡場景用 `nXX-` 加地點；全遊戲共用的背景可以用短名（`wild`、`load1`）。主角只有 `hero-f` 與 `hero-m`，情緒接在後面。NPC 立繪是 `npc-<拼音>`，頭像是同一個名字再加 `-av`。
@@ -125,8 +127,11 @@ portrait ^(?:hero-[mf](?:-[a-z0-9]+)*|npc-[a-z0-9]+(?:-[a-z0-9]+)*)$
 avatar ^(?:avatar-[mf]|npc-[a-z0-9]+(?:-[a-z0-9]+)*-av)$
 icon ^ic-[a-z0-9]+(?:-[a-z0-9]+)*$
 item ^it-[a-z0-9]+(?:-[a-z0-9]+)*$
+sprite ^g[0-9]{2}(?:-[a-z0-9]+)+$
 currency ^[a-z0-9]+(?:-[a-z0-9]+)*$
 ```
+
+關卡精靈是疊在場景上的單一物件（礦車、櫃門、門、把手）。檔名用關卡號開頭，不要用 `it-` 或 `ic-`。交付尺寸不是固定的 1024×1024：生成時加 `--width` 與 `--height`，長短邊比不得超過 3:1，腳本會挑一組同比例的合法 API size 再縮小。預設畫布只在沒給寬高時使用。
 
 多張變體在待審階段寫成 `it-lantern-v1.webp`、`it-lantern-v2.webp`。核准進 `assets/img/` 時只用正式名 `it-lantern.webp`。
 
@@ -181,6 +186,13 @@ One physical UI icon for Seven Relics (秘寶真相), centered on a fully transp
 One inventory object for Seven Relics (秘寶真相), centered on a fully transparent background, slight three-quarter or diagonal view. The longest side spans about 70 to 85 percent of the square; thin objects such as tools stay thin. Antique or worn materials: rusted iron, aged brass, cracked leather, yellowed paper, darkened steel. Blood-red rim light, cream specular highlights, near-black recesses. Semi-realistic product painting, not pixel art, not a flat icon, not a glossy modern product photo. No hands, no scenery, no text, no watermark, no checkerboard.
 ```
 
+### sprite
+
+<!-- style-prefix: sprite -->
+```text
+One compositing sprite for Seven Relics (秘寶真相), on a fully transparent background. Paint only the single object named in the subject, seen from the same eye-level angle as a dark mine interior. If the subject says full-bleed, the opaque surface must touch the canvas edges it names so the game can scale the file onto a hotspot without a gap; interior holes and any named gaps stay transparent. Otherwise keep a transparent silhouette and let the opaque pixels touch the bounding edges the subject names. Blood-red rim light, wet rust, near-black shadows, cream only as small specular highlights. No scenery, no floor, no cast shadow blob, no second object, no frame, no watermark, no checkerboard, and no text unless the subject quotes the exact characters.
+```
+
 ### currency
 
 <!-- style-prefix: currency -->
@@ -195,11 +207,11 @@ One currency token for Seven Relics (秘寶真相), centered, fully transparent 
 任一條 FAIL 條件成立，整張就是 FAIL。不要用「大致可以」放行。不確定就 FAIL，請生成端改 prompt 重來。
 
 1. **身份與檔名。** FAIL：category 與檔名規則不符、`ic-` / `it-` 用錯類別、變體被直接放進 `assets/img/` 時仍帶 `-v1`。
-2. **尺寸與背景。** FAIL：像素尺寸不是規格表、場景帶有 alpha、透明類別沒有透明像素、透明區域被畫成棋盤格、白底或黑底。
+2. **尺寸與背景。** FAIL：像素尺寸不是規格表、場景帶有 alpha、透明類別沒有透明像素、透明區域被畫成棋盤格、白底或黑底。sprite 以 sidecar 的 `output_size` 為準，不必是 1024×1024。prompt 寫明 full-bleed 的矩形門板、櫃門、控制盤可以完全不透明。
 3. **色彩。** FAIL：主色離開近黑、血紅、鏽金、奶油白；出現藍天、草地綠、霓虹青、紫光；紅光鋪滿整張以致沒有近黑陰影。
 4. **畫法。** FAIL：pixel art、Q 版、扁平 icon、塑膠 3D 公仔、真人照片、浮水印、簽名。角色可以有偏大的眼睛與細髮，這是既有立繪的畫法，不算 FAIL。
 5. **光。** FAIL：沒有紅色 rim light，或光源變成日光、白棚燈、無方向的灰霧。場景若是室內或潮濕室外，卻完全沒有霧或濕反射，也是 FAIL。
-6. **主體。** FAIL：道具、icon、貨幣、頭像出現多個互不相關的主體；主體被畫布裁切；立繪看不到腳或頭頂；頭像的臉偏到圓形裁切會切掉五官的位置。
+6. **主體。** FAIL：道具、icon、貨幣、頭像出現多個互不相關的主體；主體被畫布裁切；立繪看不到腳或頭頂；頭像的臉偏到圓形裁切會切掉五官的位置。sprite 若 prompt 要求鋪滿畫布以便對位，四邊碰到邊緣不算裁切。
 7. **文字。** FAIL：出現 prompt 沒有用引號要求的字、假 logo、幣值數字。要求了字卻拼錯，也是 FAIL。
 8. **連續性。** FAIL：`hero-f` / `hero-m` / `npc-induasen` 的臉、髮型或既定服裝被換成另一個人；情緒變體順便換了衣服。
 9. **小尺寸仍可辨。** FAIL：icon 縮到 48px、貨幣縮到 32px、道具縮到 72px 之後只剩一塊紅。
@@ -230,5 +242,6 @@ portrait|850|1300|transparent|1024x1568
 avatar|256|256|transparent|1024x1024
 icon|256|256|transparent|1024x1024
 item|400|400|transparent|1024x1024
+sprite|1024|1024|transparent|1024x1024
 currency|160|160|transparent|1024x1024
 ```

@@ -200,6 +200,9 @@ def cmd_regen(args: argparse.Namespace) -> int:
     ]
     if intended:
         argv.extend(["--use", str(intended)])
+    size = meta.get("output_size")
+    if meta.get("category") == "sprite" and isinstance(size, list) and len(size) == 2:
+        argv.extend(["--width", str(int(size[0])), "--height", str(int(size[1]))])
     if args.model:
         argv.extend(["--model", args.model])
     if args.quality:

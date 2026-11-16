@@ -21,7 +21,8 @@
 python3 tools/gen_image.py --category item --name it-lantern --prompt "A rusted brass oil lantern with a cracked glass chimney." --use "序章可撿取的道具"
 ```
 
-- category：`scene`、`portrait`、`avatar`、`icon`、`item`、`currency`。別名 `bg`、`ui` 可以用。
+- category：`scene`、`portrait`、`avatar`、`icon`、`item`、`sprite`、`currency`。別名 `bg`、`ui` 可以用。
+- `sprite` 要加 `--width` 與 `--height`（長短邊比不超過 3:1）。沒給的話用 1024×1024。
 - 檔名規則在風格指南裡，腳本會拒絕不合法的名字。
 - 想先確認文字：加上 `--dry-run`。它只印最終 prompt 與 `assets/_pending/` 路徑，不呼叫 API。
 - 真的生成需要環境變數 `OPENAI_API_KEY`，或專案根目錄的 `.env`。不要把 key 寫進程式、不要 commit `.env`。
