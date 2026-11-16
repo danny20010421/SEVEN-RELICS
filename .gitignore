@@ -1,1 +1,8 @@
 .DS_Store
+.env
+__pycache__/
+*.pyc
+assets/_pending/*
+!assets/_pending/.gitkeep
+assets/_review/*
+!assets/_review/.gitkeep
