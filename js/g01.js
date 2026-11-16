@@ -465,7 +465,7 @@ export function render(st, params, go) {
     await chapter('本山六坑入口', 'S03'); S();
     await showPlace(ART.PLACES.s03); $(el, '#black').classList.remove('on'); await wait(700); S();
     let hasBar = false, chock = true, hasGrip = false, gripOn = false, cartLook = 0;
-    setHs([['cart', 420, 340, 280, 230, '礦車'], ['wheel', 640, 540, 90, 70, '車輪'], ['bar', 170, 360, 100, 300, '鐵撬棒'], ['crate', 870, 470, 180, 180, '破木箱'], ['switch', 240, 430, 120, 180, '轉轍器']]);
+    setHs([['cart', 450, 430, 380, 270, '礦車'], ['wheel', 640, 600, 110, 80, '車輪'], ['bar', 140, 240, 90, 220, '鐵撬棒'], ['crate', 880, 470, 240, 170, '破木箱'], ['switch', 210, 430, 160, 230, '轉轍器']]);
     const s03Hint = () => !hasBar ? '牆邊好像靠著一根鐵撬棒。' : chock ? '礦車的車輪底下卡著止輪器。選擇鐵撬棒「使用」，再點車輪。' : !hasGrip ? '右邊的破木箱裡，露出了一截手柄。' : !gripOn ? '轉轍器少了扳桿。把扳桿手柄裝上去。' : '拉動轉轍器的扳桿，礦車就會滑開。';
     const s03Hl = () => !hasBar ? ['bar'] : chock ? ['wheel'] : !hasGrip ? ['crate'] : ['switch'];
     setStep('移開擋住入口的礦車', [s03Hint], s03Hl, '入口被礦車擋住，礦車車輪被止輪器卡住。順序：撿起鐵撬棒 → 用撬棒撬掉止輪器 → 從破木箱拿出扳桿手柄 → 裝到轉轍器上 → 拉動扳桿，礦車就會滑往側邊。');
@@ -502,7 +502,7 @@ export function render(st, params, go) {
     await chapter('礦工休息室', 'S04'); S();
     await showPlace(ART.PLACES.s04); $(el, '#black').classList.remove('on'); await wait(700); S();
     const opened = new Set(); let gotPhotoA = false;
-    setHs([['board', 180, 110, 300, 200, '黑板'], ['note', 424, 170, 84, 110, '紙條'], ['lamp', 520, 64, 90, 80, '舊礦燈'], ['schedule', 250, 384, 150, 60, '班次表'], ['helmet', 460, 380, 110, 60, '礦工帽'], ['soaked', 600, 430, 90, 40, '泡水紀錄'], ['photoA', 70, 370, 110, 90, '舊照片'], ['books', 1024, 280, 100, 320, '書櫃'], ['lk1', 680, 220, 90, 400, '01 號鐵櫃'], ['lk2', 780, 220, 90, 400, '02 號鐵櫃'], ['lk3', 880, 220, 90, 400, '03 號鐵櫃']]);
+    setHs([['board', 155, 130, 330, 230, '黑板'], ['note', 200, 448, 70, 36, '紙條'], ['lamp', 455, 55, 140, 200, '舊礦燈'], ['schedule', 278, 468, 140, 80, '班次表'], ['helmet', 390, 385, 140, 80, '礦工帽'], ['soaked', 510, 420, 190, 100, '泡水紀錄'], ['photoA', 48, 310, 132, 110, '舊照片'], ['books', 970, 175, 160, 370, '書櫃'], ['lk1', 590, 165, 120, 390, '01 號鐵櫃'], ['lk2', 710, 165, 90, 390, '02 號鐵櫃'], ['lk3', 796, 168, 168, 390, '03 號鐵櫃']]);
     setStep('找出藏著線索的鐵櫃', ['桌上的班次表和牆上的紙條，暗示了該打開哪一個鐵櫃。', '紙條說，真正的數字是在「所有人都睡著後」記下的——那是哪一個班次？', '夜班的編號是 03。選擇鐵撬棒「使用」，撬開 03 號鐵櫃。'], ['schedule', 'note', 'lk3'], '班次表：早班 01、午班 02、夜班 03。紙條：「我們只在所有人都睡著後，才能記下真正的數字。」所有人都睡著＝夜班＝03 號鐵櫃，用鐵撬棒撬開它。');
     await me('這裡是礦工休息的地方……好像很久沒人來過了。', 'This must be where the miners rested… no one’s been here in ages.'); S();
     await loop(async (id, item) => {
@@ -536,7 +536,7 @@ export function render(st, params, go) {
     await chapter('六坑運礦站', 'S05'); S();
     await showPlace(ART.PLACES.s05); $(el, '#black').classList.remove('on'); await wait(700); S();
     let solved3 = false;
-    setHs([['depart', 76, 368, 110, 80, '離站簿'], ['arrive', 166, 368, 120, 80, '到站簿'], ['scale', 890, 330, 160, 190, '磅秤'], ['board5', 740, 140, 250, 170, '登記板'], ['gravel', 450, 520, 180, 70, '鐵軌碎石']]);
+    setHs([['depart', 54, 392, 108, 80, '離站簿'], ['arrive', 158, 390, 108, 80, '到站簿'], ['scale', 900, 270, 220, 290, '磅秤'], ['board5', 700, 145, 300, 200, '登記板'], ['gravel', 510, 600, 240, 90, '鐵軌碎石']]);
     setStep('找出消失的礦車數量', ['再比較一下兩份表格。', '離站與到站數量，應該一致才對。', '二月十七日的差異最明顯。離站 12 車，到站只有 9 車。'], ['depart', 'arrive', 'board5'], '比對離站簿與到站簿：只有 02/17 對不上，離站 12 車、到站 9 車，少了 3 車。在登記板輸入 3。');
     tip('打開兩本紀錄簿比對，找出數字對不上的那一天，再到登記板輸入消失的礦車數量。', { left: 360, top: 96 });
     await loop(async id => {
@@ -563,7 +563,7 @@ export function render(st, params, go) {
     // ---------- S06 封閉維修坑道：謎題④ ----------
     await chapter('封閉維修坑道', 'S06'); S();
     await showPlace(ART.PLACES.s06); $(el, '#black').classList.remove('on'); await wait(700); S();
-    setHs([['A', 150, 300, 260, 340, 'A 正常出坑路線'], ['B', 470, 300, 260, 340, 'B 工具維修倉庫'], ['C', 790, 300, 260, 340, 'C 舊式升降井'], ['wall', 380, 110, 440, 120, '牆上的刻字']]);
+    setHs([['A', 150, 300, 280, 300, 'A 正常出坑路線'], ['B', 470, 300, 290, 300, 'B 工具維修倉庫'], ['C', 820, 300, 270, 300, 'C 舊式升降井'], ['wall', 360, 80, 520, 150, '牆上的刻字']]);
     setStep('找出沒有被記錄的路線', ['先讀一讀牆上的刻字。', '出坑的有紀錄，入庫的有編號……哪一條路兩者都不是？', '「不升不出者」——不走出坑、也不進倉庫的，是舊式升降井 C。'], ['wall', 'C'], '刻字：「凡出坑者，皆有紀錄。凡入庫者，皆有編號。唯不升不出者，不留其名。」A 出坑有到站紀錄、B 入庫有編號，只有 C 舊式升降井不在帳本上。選 C。');
     await me('三條路……哪一條才是他們走的？', 'Three paths… which one did they take?'); S();
     const ROUTES = { A: ['A　正常出坑路線', '通往出坑口。入口掛著到站紀錄板，每一車都會登記。'], B: ['B　工具維修倉庫', '倉庫門上釘著編號牌，裡面的工具一件件都編了號。'], C: ['C　舊式升降井', '一條長滿鏽的側線，盡頭是早已停用的升降井。牆上沒有任何紀錄板。'] };
@@ -578,7 +578,7 @@ export function render(st, params, go) {
     }); S();
     await fadeTo(() => showPlace(ART.PLACES.s06b)); S();
     let cartIn = false, doorOpen = false, gotPhotoB = false;
-    setHs([['cart2', 130, 420, 260, 210, '礦車'], ['latch', 640, 320, 100, 90, '門扣'], ['door', 440, 200, 190, 320, '鐵門'], ['photo2', 780, 310, 110, 120, '門邊的照片']]);
+    setHs([['cart2', 90, 515, 230, 180, '礦車'], ['latch', 670, 290, 110, 80, '門扣'], ['door', 416, 146, 328, 422, '鐵門'], ['photo2', 780, 240, 140, 110, '門邊的照片']]);
     setStep('打開側線盡頭的鐵門', [() => !cartIn ? '先把礦車推進側線。' : '門扣鏽死了。選擇鐵撬棒「使用」，撬開門扣。'], () => (!cartIn ? ['cart2'] : ['latch']), '把礦車推進側線讓出通道，再用鐵撬棒撬開受損的門扣。門邊的照片可以看看。');
     await loop(async (id, item) => {
       if (id === 'cart2') { if (cartIn) return; cartIn = true; sfx('whoosh'); const c = svg('cart2'); c.style.transition = 'transform 1.4s ease-in'; c.style.transform = 'translate(260px,-40px) scale(0.8)'; await wait(1400); S(); c.style.opacity = 0; return void await me('礦車滑進了側線。', 'The cart rolls onto the side line.'); }
@@ -598,7 +598,7 @@ export function render(st, params, go) {
     await chapter('五坑舊運輸區', 'S07'); S();
     await showPlace(ART.PLACES.s07); $(el, '#black').classList.remove('on'); await wait(700); S();
     let hasCtl = false, ctlOn = false;
-    setHs([['manual', 150, 200, 96, 110, '維修手冊'], ['panel', 186, 326, 160, 200, '控制盤'], ['rack', 820, 240, 220, 200, '工具架'], ['shaft', 430, 90, 280, 540, '升降井']]);
+    setHs([['manual', 145, 200, 140, 160, '維修手冊'], ['panel', 44, 392, 168, 210, '控制盤'], ['rack', 960, 200, 260, 360, '工具架'], ['shaft', 400, 40, 420, 600, '升降井']]);
     setStep('啟動升降設備', [() => !hasCtl ? '工具架上有一支控制手柄。' : !ctlOn ? '把控制手柄裝到控制盤上。' : '照維修手冊上的順序操作控制盤。', '維修手冊：解除制動 → 接通電源 → 選擇上升。'], () => (!hasCtl ? ['rack'] : !ctlOn ? ['panel'] : ['manual', 'panel']), '從工具架拿控制手柄，裝到控制盤上。依維修手冊的順序：解除制動 → 接通電源 → 上升。');
     await me('這個升降井……究竟多久沒有人使用過了？', 'This lift shaft… how long since anyone used it?'); S();
     await loop(async (id, item) => {
@@ -628,7 +628,7 @@ export function render(st, params, go) {
     cine.classList.add('hidden'); cine.innerHTML = '';
     await showPlace(ART.PLACES.s08); $(el, '#black').classList.remove('on'); await wait(700); S();
     let vaultOpen = false;
-    setHs([['words', 340, 200, 440, 70, '門上的英文刻字'], ['frame', 300, 150, 40, 490, '門框'], ['frame2', 780, 150, 40, 490, '門框'], ['lock', 470, 290, 180, 130, '機械鎖'], ['plate', 610, 490, 140, 80, '密碼牌']]);
+    setHs([['words', 460, 172, 280, 36, '門上的英文刻字'], ['frame', 190, 150, 180, 450, '門框'], ['frame2', 840, 150, 180, 450, '門框'], ['lock', 500, 230, 190, 150, '機械鎖'], ['plate', 630, 460, 170, 90, '密碼牌']]);
     setStep('打開金庫的鐵門', ['日誌寫著：十二月十二日是他的生日。', '門框刻著：「當你忘記所有歸途，請記住我來到這世上的日子。」', '密碼牌是 MMDD。月份兩位、日期兩位。'], ['frame', 'plate', 'lock'], '門框要你記住他來到這世上的日子。日誌第一頁：12 月 12 日。密碼牌 MMDD＝月月日日。密碼是 1212。');
     await me('厚重的鐵門……還用鐵鍊鎖著。', 'A heavy iron door… chained shut.'); S();
     await loop(async (id, item) => {
@@ -646,7 +646,7 @@ export function render(st, params, go) {
         return true;
       }
     }); S();
-    setHs([['crate', 370, 390, 380, 190, '木箱']]);
+    setHs([['crate', 420, 500, 400, 150, '木箱']]);
     setStep('打開木箱', ['箱蓋釘死了。選擇鐵撬棒「使用」，撬開木箱。'], ['crate'], '用鐵撬棒撬開木箱。');
     await me('十幾只木箱……', 'A dozen wooden crates…'); S();
     await loop(async (id, item) => {
