@@ -5,6 +5,7 @@ import { get, save, taskDone } from './store.js';
 import { sfx, bgm, applyVolume } from './audio.js';
 import { html, $, $$, IMG, ICON, wait, esc, modal, toast, alertBox, fmt } from './ui.js';
 import * as ART from './g01art.js';
+import * as CU from './g01cu.js';
 
 const svgSrc = s => 'data:image/svg+xml,' + encodeURIComponent(s);
 const ITEMS = {
@@ -75,6 +76,7 @@ export function render(st, params, go) {
   const el = html(`<div class="scr g01">
 <div class="layer" id="scene"></div>
 <div class="fill" id="hsLayer" style="z-index:3"></div>
+<div class="fill hidden" id="cu"></div>
 <div class="fill hidden" id="close" style="z-index:4;background:#0a0607"></div>
 <div class="fill hidden" id="cine" style="z-index:20;background:#000"></div>
 <div class="shade-top"></div>
@@ -94,9 +96,20 @@ export function render(st, params, go) {
 <div class="black on" id="black"></div>
 </div>`);
   st.appendChild(el);
-  const scene = $(el, '#scene'), hsLayer = $(el, '#hsLayer'), close = $(el, '#close'), cine = $(el, '#cine');
+  const scene = $(el, '#scene'), hsLayer = $(el, '#hsLayer'), close = $(el, '#close'), cine = $(el, '#cine'), cu = $(el, '#cu');
   let alive = true, listeners = [], inv = [], selected = null;
   let step = { goal: '', hints: [], hl: [], memo: '' }, hintLv = 0;
+  let stack = [];
+  const IDLE_HINT_MS = 38000;
+  let snap = () => ({ got, place: 's01', opened: new Set(), chock: true, hasBar: false, hasGrip: false, gripOn: false, cartIn: false, doorOpen: false, hasCtl: false, ctlOn: false, vaultOpen: false, crateOpen: false, solved3: false, gravelOn: true });
+  function bind(place, more) {
+    snap = () => Object.assign({
+      got, place, opened: new Set(),
+      chock: true, hasBar: false, hasGrip: false, gripOn: false,
+      cartIn: false, doorOpen: false, hasCtl: false, ctlOn: false,
+      vaultOpen: false, crateOpen: false, solved3: false, gravelOn: true,
+    }, more ? more() : {});
+  }
   const got = new Set();          // 已取得的文件
   const memoLines = [];
   const addNote = (id, text) => { if (!memoLines.some(n => n.id === id)) memoLines.push({ id, text }); };
@@ -129,22 +142,10 @@ export function render(st, params, go) {
   const addItem = id => { if (!inv.includes(id)) inv.push(id); sfx('pick'); paintSlots(id); };
   const dropItem = id => { inv = inv.filter(x => x !== id); if (selected === id) selected = null; paintSlots(); };
   function openItem(id) {
-    const it = ITEMS[id];
-    const m = html(`<div class="modal-back" style="z-index:45"><div class="modal" role="dialog" aria-label="道具檢視" style="width:760px;flex-direction:row;align-items:stretch;gap:32px;padding:32px">
-<div style="width:240px;height:240px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#1a1213;border:1px solid #4a302c"><img src="${it.src}" alt="" style="width:200px;height:200px;display:block"></div>
-<div class="col" style="flex-grow:1;min-width:0;justify-content:space-between;gap:16px">
-  <div class="col" style="gap:12px"><h2 style="text-align:left;margin:0 56px 0 0">${it.name}</h2><p style="text-align:left;margin:0">${it.desc}</p><div style="height:1px;background:#4a302c"></div><p style="text-align:left;margin:0;color:var(--gold-2)">${it.hint}</p></div>
-  <div class="row" style="height:56px;justify-content:flex-end;gap:16px"><button type="button" class="btn-line" data-a="back" style="width:160px">放回道具欄</button><button type="button" class="btn" data-a="use" style="width:160px">使用</button></div>
-</div><button type="button" class="x" aria-label="關閉">${ICON.close}</button></div></div>`);
-    m.addEventListener('click', e => {
-      const a = e.target.closest('[data-a]');
-      if (!a && !e.target.closest('.x')) return;
-      sfx('tap');
-      const use = a && a.dataset.a === 'use';
-      selected = use ? id : (selected === id ? null : selected);
-      m.remove(); paintSlots();
-    });
-    el.appendChild(m);
+    stack.push({ kind: 'item', itemId: id });
+    cu.classList.remove('hidden');
+    cu.classList.add('on');
+    paintCu();
   }
 
   // ---------- 場景與熱點 ----------
@@ -186,7 +187,7 @@ export function render(st, params, go) {
       return `<img class="g01-sp" id="${s.id}" src="${IMG(s.file)}" alt="" style="${style}">`;
     }).join('');
     const tags = (place.tags || []).map(t => `<span class="g01-tag" style="left:${t.x}px;top:${t.y}px">${t.text}</span>`).join('');
-    setScene(`<img class="bg" src="${IMG(place.bg)}" alt="${place.alt}">${sprites}${tags}${place.extra || ''}`, false);
+    setScene(`<img class="bg" src="${IMG(place.bg)}" alt="${place.alt}">${place.under || ''}${sprites}${tags}${place.extra || ''}`, false);
   }
   const fade = (id, opacity) => { const n = scene.querySelector('#' + id); if (n) n.style.opacity = String(opacity); return n; };
   const svg = id => scene.querySelector('#' + id);
@@ -196,25 +197,145 @@ export function render(st, params, go) {
     b.addEventListener('click', () => { sfx('tap'); emit({ type: 'hs', id: 'exit', item: selected }); });
     el.appendChild(b);
   }
-  // list: [id, x, y, w, h, 名稱]
+  // list: [id, x, y, w, h, 名稱]。有近景的物件只負責把鏡頭推進去，互動發生在近景裡。
   function setHs(list) {
     hsLayer.innerHTML = '';
     list.forEach(([id, x, y, w, h, label]) => {
       const b = html(`<button type="button" class="area" data-hs="${id}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px" aria-label="${label}"></button>`);
-      b.addEventListener('click', () => { sfx('tap'); emit({ type: 'hs', id, item: selected }); });
+      b.addEventListener('click', () => {
+        sfx('tap'); armIdle();
+        if (CU.view(id, snap())) { openFromWide(id, b); return; }
+        emit({ type: 'hs', id, item: selected });
+      });
       hsLayer.appendChild(b);
     });
+    armIdle();
   }
   const dropHs = id => { const b = $(hsLayer, `[data-hs="${id}"]`); if (b) b.remove(); };
-  // 等玩家點熱點；handler 回傳 true 代表這一段結束
   async function loop(handler) {
     for (;;) {
       const a = await act(x => x.type === 'hs'); S();
       const used = a.item;
       const r = await handler(a.id, used); S();
+      if (stack.length) paintCu();
       if (used && selected === used) { selected = null; paintSlots(); }
       if (r) return r;
     }
+  }
+
+  // ---------- 近景 ----------
+  let idleTimer = 0;
+  function armIdle() {
+    clearTimeout(idleTimer);
+    el.querySelectorAll('.area.idle').forEach(n => n.classList.remove('idle'));
+    const ms = window.__G01_IDLE_MS || IDLE_HINT_MS;
+    idleTimer = setTimeout(() => {
+      if (!alive) return;
+      const ids = typeof step.hl === 'function' ? step.hl() : (step.hl || []);
+      (ids || []).forEach(id => el.querySelectorAll(`[data-hs="${id}"]`).forEach(n => n.classList.add('idle')));
+    }, ms);
+  }
+  el.addEventListener('pointerdown', armIdle);
+  function openFromWide(id, btn) {
+    if (stack.length) return;
+    const x = parseFloat(btn.style.left) + parseFloat(btn.style.width) / 2;
+    const y = parseFloat(btn.style.top) + parseFloat(btn.style.height) / 2;
+    scene.style.transformOrigin = `${x}px ${y}px`;
+    scene.classList.add('cu-zoom');
+    stack = [{ kind: 'view', id }];
+    cu.classList.remove('hidden');
+    requestAnimationFrame(() => cu.classList.add('on'));
+    paintCu();
+  }
+  function closeStack() {
+    stack = [];
+    scene.classList.remove('cu-zoom');
+    cu.classList.remove('on');
+    cu.classList.add('hidden');
+    cu.innerHTML = '';
+    delete cu.dataset.view;
+  }
+  function popCu() {
+    const frame = stack.pop();
+    if (frame && frame.res) frame.res();
+    if (!stack.length) { closeStack(); return; }
+    paintCu();
+  }
+  function turnDoc(k) {
+    const frame = stack[stack.length - 1];
+    if (!frame || frame.kind !== 'doc') return;
+    const doc = DOCS[frame.docId];
+    sfx('tap');
+    if (k === 'prev') frame.page = Math.max(0, frame.page - 1);
+    else frame.page = Math.min(doc.pages.length - 1, frame.page + 1);
+    paintCu();
+  }
+  cu.addEventListener('click', e => {
+    const t = e.target.closest('[data-cu]');
+    if (!t) return;
+    armIdle();
+    const k = t.dataset.cu;
+    if (k === 'back' || k === 'shut') { sfx('tap'); popCu(); return; }
+    if (k === 'use') { sfx('tap'); selected = t.dataset.item; popCu(); paintSlots(); return; }
+    if (k === 'put') { sfx('tap'); if (selected === t.dataset.item) selected = null; popCu(); paintSlots(); return; }
+    if (k === 'prev' || k === 'next') { turnDoc(k); return; }
+    if (k === 'into') { sfx('tap'); stack.push({ kind: 'view', id: t.dataset.into }); paintCu(); return; }
+    if (k === 'hs') { sfx('tap'); emit({ type: 'hs', id: t.dataset.hs, item: selected }); }
+  });
+  async function paintCu() {
+    const frame = stack[stack.length - 1];
+    if (!frame) return;
+    if (frame.kind === 'doc') { cu.dataset.view = 'doc:' + frame.docId; cu.innerHTML = docMarkup(frame); return; }
+    if (frame.kind === 'item') { cu.dataset.view = 'item:' + frame.itemId; cu.innerHTML = await itemMarkup(frame.itemId); return; }
+    const spec = CU.view(frame.id, snap());
+    if (!spec) { closeStack(); return; }
+    cu.dataset.view = frame.id;
+    const full = spec.file && await probe(IMG(spec.file)) ? IMG(spec.file) : '';
+    let subject = '';
+    if (!full && spec.subject && await probe(IMG(spec.subject.src))) subject = IMG(spec.subject.src);
+    const sprites = [];
+    for (const sp of spec.sprites || []) {
+      let url = '';
+      if (sp.src && await probe(IMG(sp.src))) url = IMG(sp.src);
+      else if (sp.fb && await probe(IMG(sp.fb))) url = IMG(sp.fb);
+      sprites.push({ ...sp, url });
+    }
+    const hits = (spec.hits || []).map(hit => {
+      const attr = hit.into ? `data-cu="into" data-into="${hit.into}"` : `data-cu="hs" data-hs="${hit.id}"`;
+      return `<button type="button" class="area cu-hit${hit.btn ? ' cu-act' : ''}" ${attr} style="left:${hit.x}px;top:${hit.y}px;width:${hit.w}px;height:${hit.h}px" aria-label="${hit.label}">${hit.btn ? hit.label : ''}</button>`;
+    }).join('');
+    const spriteHtml = sprites.map(sp => sp.url
+      ? `<img class="cu-sprite" alt="" src="${sp.url}" style="left:${sp.x}px;top:${sp.y}px;width:${sp.w}px;height:${sp.h}px">`
+      : `<div class="prop-cloth" style="left:${sp.x}px;top:${sp.y}px"></div>`).join('');
+    const subj = subject ? `<img class="cu-subject" alt="" src="${subject}" style="left:${(1280 - spec.subject.w) / 2}px;top:${Math.max(48, (620 - spec.subject.h) / 2)}px;width:${spec.subject.w}px;height:${spec.subject.h}px">` : '';
+    const crop = !full && !subject && spec.crop ? cropHtml(spec.crop) : '';
+    const atmos = !full && spec.atmos ? `<div class="cu-atmos" style="background-image:url(${IMG(spec.atmos)})"></div><div class="cu-vignette"></div>` : '<div class="cu-vignette"></div>';
+    cu.innerHTML = `<div class="cu-stage">${full ? `<img class="cu-full" alt="" src="${full}">` : atmos}
+${full ? '' : `<div class="cu-prop prop-${spec.prop || 'empty'}"></div>`}${crop}${subj}${spriteHtml}
+${spec.text || ''}${spec.plate ? `<div class="cu-plate${String(spec.plate).length === 1 ? ' letter' : ''}"><b>${spec.plate}</b></div>` : ''}
+${hits}<button type="button" class="cu-back" data-cu="back">返回</button>
+<div class="cu-cap"><b>${spec.title}</b>${spec.note ? `<span>${spec.note}</span>` : ''}</div>
+${full ? '' : '<i class="cu-temp">待換正式近景</i>'}</div>`;
+  }
+  function cropHtml(crop) {
+    const scale = Math.min(2.15, 680 / crop.w);
+    return `<div class="cu-cropwin"><img alt="" src="${IMG(crop.src)}" style="width:${1280 * scale}px;height:${720 * scale}px;margin-left:${-crop.x * scale}px;margin-top:${-crop.y * scale}px"></div>`;
+  }
+  function docMarkup(frame) {
+    const doc = DOCS[frame.docId];
+    const last = frame.page >= doc.pages.length - 1;
+    return `<div class="cu-doc" role="dialog" aria-label="${esc(doc.title)}"><div class="label">調查檔案</div><h2>${doc.title}</h2><div class="gdoc-body">${doc.pages[frame.page]}</div>
+<div class="cu-pages">${frame.page ? '<button type="button" class="btn-line sm" data-cu="prev" style="width:144px">上一頁</button>' : ''}<button type="button" class="btn sm" data-cu="${last ? 'shut' : 'next'}" style="width:144px">${last ? '闔上' : '下一頁'}</button></div></div>
+<button type="button" class="cu-back" data-cu="back">返回</button>`;
+  }
+  async function itemMarkup(id) {
+    const it = ITEMS[id];
+    const file = { bar: 'g01-cu-item-bar.webp', grip: 'g01-cu-item-grip.webp', ctl: 'g01-cu-item-ctl.webp' }[id];
+    const full = file && await probe(IMG(file));
+    return `${full ? `<img class="cu-full" alt="" src="${IMG(file)}">` : `<div class="cu-atmos" style="background-image:url(${IMG('g01-s03.webp')})"></div><div class="cu-vignette"></div><i class="cu-temp">待換正式近景</i>`}
+<div class="cu-item">${full ? '' : `<img alt="" src="${it.src}">`}<b style="font-family:var(--serif);font-size:32px;letter-spacing:0.12em">${it.name}</b><p>${it.desc}</p><p>${it.hint}</p>
+<div class="row" style="gap:16px"><button type="button" class="btn-line" data-cu="put" data-item="${id}" style="width:200px">放回道具欄</button><button type="button" class="btn" data-cu="use" data-item="${id}" style="width:200px">使用</button></div></div>
+<button type="button" class="cu-back" data-cu="back">返回</button>`;
   }
 
   // ---------- 對白 ----------
@@ -252,9 +373,12 @@ export function render(st, params, go) {
   function setStep(goal, hints, hl, memo) {
     step = { goal, hints, hl, memo }; hintLv = 0;
     $(el, '#goal').textContent = '目標　' + goal;
+    armIdle();
   }
   function flash(ids) {
-    ids.forEach(id => { const b = $(hsLayer, `[data-hs="${id}"]`); if (b) { b.classList.add('show'); setTimeout(() => b.classList.remove('show'), 6000); } });
+    (ids || []).forEach(id => {
+      el.querySelectorAll(`[data-hs="${id}"]`).forEach(b => { b.classList.add('show'); setTimeout(() => b.classList.remove('show'), 6000); });
+    });
   }
   $(el, '#hintBtn').addEventListener('click', async () => {
     sfx('tap');
@@ -296,30 +420,17 @@ export function render(st, params, go) {
   // ---------- 文件 ----------
   function readDoc(id) {
     return new Promise(res => {
-      const doc = DOCS[id]; let p = 0;
-      const m = html(`<div class="modal-back" style="z-index:44"><div class="gdoc" role="dialog" aria-label="${doc.title}"><div class="label">調查檔案</div><h2>${doc.title}</h2><div class="redline"></div><div class="gdoc-body"></div>
-<div class="gdoc-foot"><span class="gdoc-n"></span><div class="row" style="gap:16px"><button type="button" class="btn-line sm" data-a="prev" style="width:144px">上一頁</button><button type="button" class="btn sm" data-a="next" style="width:144px">下一頁</button></div></div>
-<button type="button" class="x" aria-label="關閉">${ICON.close}</button></div></div>`);
-      const paint = () => {
-        $(m, '.gdoc-body').innerHTML = doc.pages[p];
-        $(m, '.gdoc-n').textContent = doc.pages.length > 1 ? `${p + 1} / ${doc.pages.length}` : '';
-        $(m, '[data-a=prev]').classList.toggle('hidden', p === 0);
-        $(m, '[data-a=next]').textContent = p === doc.pages.length - 1 ? '闔上' : '下一頁';
-      };
-      m.addEventListener('click', e => {
-        const a = e.target.closest('[data-a]');
-        if (e.target.closest('.x') || (a && a.dataset.a === 'next' && p === doc.pages.length - 1)) { sfx('tap'); m.remove(); res(); return; }
-        if (!a) return;
-        sfx('tap'); p += a.dataset.a === 'next' ? 1 : -1; paint();
-      });
-      paint(); el.appendChild(m);
+      stack.push({ kind: 'doc', docId: id, page: 0, res });
+      cu.classList.remove('hidden');
+      cu.classList.add('on');
+      paintCu();
     });
   }
-  async function getDoc(id) {
+  async function getDoc(id, opts = {}) {
     const first = !got.has(id);
     got.add(id);
     absorb(id);
-    await readDoc(id);
+    if (!opts.shown) await readDoc(id);
     if (first && got.size === 1) tip('看過的文件都會收進右上角的「檔案」。重點數字記在調查備忘錄裡，不用背下來。', { left: 640, top: 96 });
   }
   $(el, '#fileBtn').addEventListener('click', () => {
@@ -358,12 +469,14 @@ export function render(st, params, go) {
 
   // ---------- 場景切換 ----------
   async function fadeTo(fn, ms = 700) {
+    closeStack();
     el.querySelectorAll('.g01-accept').forEach(n => n.remove());
     $(el, '#black').classList.add('on'); await wait(ms); S();
     untip(); await fn(); await wait(200); S();
     $(el, '#black').classList.remove('on'); await wait(ms); S();
   }
   async function chapter(title, sub) {
+    closeStack();
     el.querySelectorAll('.g01-accept').forEach(n => n.remove());
     const b = html(`<div class="g01-card"><div class="label">${sub}</div><h2>${title}</h2></div>`);
     $(el, '#black').classList.add('on'); await wait(800); S();
@@ -434,6 +547,7 @@ export function render(st, params, go) {
 
     setStep('調查桌上的資料', ['書桌上和牆上的照片、信封、報告都可以點開來看。'], ['photo', 'invite', 'report'], '研究室裡有三份資料：牆上的金瓜石舊照片、桌上的館長邀請函、攤開的礦山報告摘要。全部看過後，就能接受委託。');
     const s01 = [['photo', 624, 96, 152, 180, '金瓜石舊照片'], ['invite', 700, 548, 140, 48, '館長邀請函'], ['report', 470, 470, 330, 76, '礦山報告摘要']];
+    bind('s01');
     setHs(s01);
     tip('點畫面上的物品就能調查。這一關不限時間。', { left: 96, top: 96 });
     await loop(async id => {
@@ -465,6 +579,7 @@ export function render(st, params, go) {
     await chapter('本山六坑入口', 'S03'); S();
     await showPlace(ART.PLACES.s03); $(el, '#black').classList.remove('on'); await wait(700); S();
     let hasBar = false, chock = true, hasGrip = false, gripOn = false, cartLook = 0;
+    bind('s03', () => ({ chock, hasBar, hasGrip, gripOn }));
     setHs([['cart', 450, 430, 380, 270, '礦車'], ['wheel', 640, 600, 110, 80, '車輪'], ['bar', 140, 240, 90, 220, '鐵撬棒'], ['crate', 880, 470, 240, 170, '破木箱'], ['switch', 210, 430, 160, 230, '轉轍器']]);
     const s03Hint = () => !hasBar ? '牆邊好像靠著一根鐵撬棒。' : chock ? '礦車的車輪底下卡著止輪器。選擇鐵撬棒「使用」，再點車輪。' : !hasGrip ? '右邊的破木箱裡，露出了一截手柄。' : !gripOn ? '轉轍器少了扳桿。把扳桿手柄裝上去。' : '拉動轉轍器的扳桿，礦車就會滑開。';
     const s03Hl = () => !hasBar ? ['bar'] : chock ? ['wheel'] : !hasGrip ? ['crate'] : ['switch'];
@@ -485,10 +600,18 @@ export function render(st, params, go) {
           return void await me('扳桿少了一個手柄……', 'The lever is missing its handle…');
         }
         if (chock) return void await me('扳桿拉得動，但礦車還被卡著。', 'The lever moves, but the cart is still stuck.');
-        sfx('clang'); await wait(300); S();
-        const c = svg('cart'); c.style.transition = 'transform 1.6s ease-in'; c.style.transform = 'translateX(-560px)'; sfx('whoosh');
-        await wait(1700); S();
-        await me('終於可以進去了。', 'Finally, I can get in.'); return true;
+        closeStack();
+        await wait(420); S();
+        sfx('clang'); await wait(280); S();
+        const c = svg('cart');
+        if (c) {
+          c.style.transformOrigin = '30% 78%';
+          c.style.transition = 'transform 2.3s cubic-bezier(.16,.62,.2,1)';
+          c.style.transform = 'translate(-236px, 72px) rotate(-8deg)';
+        }
+        sfx('whoosh');
+        await wait(2400); S();
+        await me('礦車順著坡度，沿左邊的岔軌滑到棚邊，停住了。', 'The cart rolls down the grade, follows the left-hand rail, and stops beside the shed.'); return true;
       }
     }); S();
     dropHs('cart');
@@ -502,7 +625,8 @@ export function render(st, params, go) {
     await chapter('礦工休息室', 'S04'); S();
     await showPlace(ART.PLACES.s04); $(el, '#black').classList.remove('on'); await wait(700); S();
     const opened = new Set(); let gotPhotoA = false;
-    setHs([['board', 155, 130, 330, 230, '黑板'], ['note', 200, 448, 70, 36, '紙條'], ['lamp', 455, 55, 140, 200, '舊礦燈'], ['schedule', 278, 468, 140, 80, '班次表'], ['helmet', 390, 385, 140, 80, '礦工帽'], ['soaked', 510, 420, 190, 100, '泡水紀錄'], ['photoA', 48, 310, 132, 110, '舊照片'], ['books', 970, 175, 160, 370, '書櫃'], ['lk1', 590, 165, 120, 390, '01 號鐵櫃'], ['lk2', 710, 165, 90, 390, '02 號鐵櫃'], ['lk3', 796, 168, 168, 390, '03 號鐵櫃']]);
+    bind('s04', () => ({ opened, hasBar, chock }));
+    setHs([['board', 150, 125, 370, 250, '黑板'], ['note', 200, 448, 70, 36, '紙條'], ['lamp', 455, 55, 140, 200, '舊礦燈'], ['schedule', 278, 468, 140, 80, '班次表'], ['helmet', 390, 385, 140, 80, '礦工帽'], ['soaked', 510, 420, 190, 100, '泡水紀錄'], ['photoA', 200, 175, 170, 120, '舊照片'], ['books', 970, 175, 160, 370, '書櫃'], ['lk1', 596, 162, 124, 388, '01 號鐵櫃'], ['lk2', 724, 162, 124, 388, '02 號鐵櫃'], ['lk3', 852, 162, 124, 388, '03 號鐵櫃']]);
     setStep('找出藏著線索的鐵櫃', ['桌上的班次表和牆上的紙條，暗示了該打開哪一個鐵櫃。', '紙條說，真正的數字是在「所有人都睡著後」記下的——那是哪一個班次？', '夜班的編號是 03。選擇鐵撬棒「使用」，撬開 03 號鐵櫃。'], ['schedule', 'note', 'lk3'], '班次表：早班 01、午班 02、夜班 03。紙條：「我們只在所有人都睡著後，才能記下真正的數字。」所有人都睡著＝夜班＝03 號鐵櫃，用鐵撬棒撬開它。');
     await me('這裡是礦工休息的地方……好像很久沒人來過了。', 'This must be where the miners rested… no one’s been here in ages.'); S();
     await loop(async (id, item) => {
@@ -514,14 +638,8 @@ export function render(st, params, go) {
       if (id === 'soaked') return void await me('桌上還有一份泡爛的紀錄，字跡全暈開了。', 'Another soaked record on the table. The ink has bled away.');
       if (id === 'note' || id === 'schedule') return void await getDoc(id);
       if (id === 'photoA') { await getDoc('photoA'); if (!gotPhotoA) { gotPhotoA = true; await me('Arthur……A.W.？還有林清和，是台灣人的名字。', 'Arthur… A.W.? And Lin Qinghe—a Taiwanese name.'); } return; }
-      if (id.startsWith('lk')) {
-        const n = id[2];
-        if (opened.has(n)) return void await me(n === '3' ? '櫃子已經打開了。' : '裡面只有破舊的工作服。', n === '3' ? 'It’s already open.' : 'Only some worn-out work clothes.');
-        if (item !== 'bar') return void await me('上了鎖，門扣都鏽死了。', 'Locked. The latch has rusted shut.');
-        sfx('pry'); opened.add(n);
-        if (n !== '3') return void await me('裡面只有破舊的工作服。', 'Only some worn-out work clothes.');
-        fade('lk3door', 0);
-        sfx('door'); await wait(300); S();
+      if (id === 'journalRead') {
+        if (got.has('journal')) return void await me('日誌已經收進檔案了。', 'The journal is already in the files.');
         await me('一本日誌……封面寫著「A. WILLIAMS」。', 'A journal… “A. WILLIAMS” on the cover.'); S();
         await getDoc('journal');
         await me('A.W.……亞瑟・威廉斯。原來入口牆上的字，是他留下的。', 'A.W.… Arthur Williams. So he left those letters at the entrance.'); S();
@@ -530,21 +648,37 @@ export function render(st, params, go) {
         showExit('前往運礦站');
         return;
       }
+      if (id.startsWith('lk')) {
+        const n = id[2];
+        if (opened.has(n)) return void await me(n === '3' ? (got.has('journal') ? '櫃子已經空了。' : '日誌還在架子上。') : '裡面只有破舊的工作服。', n === '3' ? (got.has('journal') ? 'The locker is empty.' : 'The journal is still on the shelf.') : 'Only some worn-out work clothes.');
+        if (item !== 'bar') return void await me('上了鎖，門扣都鏽死了。', 'Locked. The latch has rusted shut.');
+        sfx('pry'); opened.add(n); fade('lk' + n + 'door', 0);
+        if (n !== '3') return void await me('裡面只有破舊的工作服。', 'Only some worn-out work clothes.');
+        sfx('door'); await wait(300); S();
+        await me('門開了。架子上有一本日誌。', 'The door is open. A journal sits on the shelf.');
+        return;
+      }
     }); S();
 
     // ---------- S05 六坑運礦站：謎題③ ----------
     await chapter('六坑運礦站', 'S05'); S();
     await showPlace(ART.PLACES.s05); $(el, '#black').classList.remove('on'); await wait(700); S();
-    let solved3 = false;
+    let solved3 = false, gravelOn = true;
+    bind('s05', () => ({ solved3, gravelOn, hasBar }));
     setHs([['depart', 54, 392, 108, 80, '離站簿'], ['arrive', 158, 390, 108, 80, '到站簿'], ['scale', 900, 270, 220, 290, '磅秤'], ['board5', 700, 145, 300, 200, '登記板'], ['gravel', 510, 600, 240, 90, '鐵軌碎石']]);
     setStep('找出消失的礦車數量', ['再比較一下兩份表格。', '離站與到站數量，應該一致才對。', '二月十七日的差異最明顯。離站 12 車，到站只有 9 車。'], ['depart', 'arrive', 'board5'], '比對離站簿與到站簿：只有 02/17 對不上，離站 12 車、到站 9 車，少了 3 車。在登記板輸入 3。');
     tip('打開兩本紀錄簿比對，找出數字對不上的那一天，再到登記板輸入消失的礦車數量。', { left: 360, top: 96 });
     await loop(async id => {
-      if (id === 'depart' || id === 'arrive') return void await getDoc(id);
+      if (id === 'depart' || id === 'arrive') {
+        const first = !got.has(id);
+        await getDoc(id, { shown: true });
+        if (first) await me(id === 'depart' ? '離站的車數抄下來了。' : '到站的車數抄下來了。', id === 'depart' ? 'I’ve copied the departures.' : 'I’ve copied the arrivals.');
+        return;
+      }
       if (id === 'scale') return void await me('磅秤的指針早就卡死了。', 'The scale’s needle is stuck fast.');
       if (id === 'gravel') {
         if (!solved3) return void await me('鐵軌旁堆著一些碎石。', 'Some loose gravel beside the track.');
-        sfx('pry'); fade('gravel', 0); fade('oldsw', 1); await wait(500); S();
+        sfx('pry'); gravelOn = false; fade('gravel', 0); fade('oldsw', 1); await wait(500); S();
         await me('碎石底下藏著一個舊轉轍器……通往一條封閉的側線。', 'An old switch hidden under the gravel… leading to a sealed side line.'); return true;
       }
       if (id === 'board5') {
@@ -563,25 +697,31 @@ export function render(st, params, go) {
     // ---------- S06 封閉維修坑道：謎題④ ----------
     await chapter('封閉維修坑道', 'S06'); S();
     await showPlace(ART.PLACES.s06); $(el, '#black').classList.remove('on'); await wait(700); S();
+    bind('s06');
     setHs([['A', 150, 300, 280, 300, 'A 正常出坑路線'], ['B', 470, 300, 290, 300, 'B 工具維修倉庫'], ['C', 820, 300, 270, 300, 'C 舊式升降井'], ['wall', 360, 80, 520, 150, '牆上的刻字']]);
     setStep('找出沒有被記錄的路線', ['先讀一讀牆上的刻字。', '出坑的有紀錄，入庫的有編號……哪一條路兩者都不是？', '「不升不出者」——不走出坑、也不進倉庫的，是舊式升降井 C。'], ['wall', 'C'], '刻字：「凡出坑者，皆有紀錄。凡入庫者，皆有編號。唯不升不出者，不留其名。」A 出坑有到站紀錄、B 入庫有編號，只有 C 舊式升降井不在帳本上。選 C。');
     await me('三條路……哪一條才是他們走的？', 'Three paths… which one did they take?'); S();
-    const ROUTES = { A: ['A　正常出坑路線', '通往出坑口。入口掛著到站紀錄板，每一車都會登記。'], B: ['B　工具維修倉庫', '倉庫門上釘著編號牌，裡面的工具一件件都編了號。'], C: ['C　舊式升降井', '一條長滿鏽的側線，盡頭是早已停用的升降井。牆上沒有任何紀錄板。'] };
     await loop(async id => {
       if (id === 'wall') return void await me('「凡出坑者，皆有紀錄。凡入庫者，皆有編號。唯不升不出者，不留其名。」', '“All who leave the pit are recorded. All who enter the store are numbered. Only what neither rises nor leaves goes unnamed.”');
-      const [t, desc] = ROUTES[id];
-      const go2 = await modal({ title: t, body: desc, buttons: [{ label: '再想想', kind: 'btn-line', value: false }, { label: '走這條路', kind: 'btn', value: true }] }); S();
-      if (!go2) return;
       if (id === 'A') { sfx('error'); return void await me('出坑的每一車都會被登記……不是這裡。', 'Every cart leaving the pit gets logged… not this way.'); }
       if (id === 'B') { sfx('error'); return void await me('倉庫裡的東西都有編號……也不是這裡。', 'Everything in the store is numbered… not here either.'); }
-      return true;
+      if (id === 'C') return true;
     }); S();
     await fadeTo(() => showPlace(ART.PLACES.s06b)); S();
     let cartIn = false, doorOpen = false, gotPhotoB = false;
+    bind('s06b', () => ({ cartIn, doorOpen, hasBar }));
     setHs([['cart2', 90, 515, 230, 180, '礦車'], ['latch', 670, 290, 110, 80, '門扣'], ['door', 416, 146, 328, 422, '鐵門'], ['photo2', 780, 240, 140, 110, '門邊的照片']]);
     setStep('打開側線盡頭的鐵門', [() => !cartIn ? '先把礦車推進側線。' : '門扣鏽死了。選擇鐵撬棒「使用」，撬開門扣。'], () => (!cartIn ? ['cart2'] : ['latch']), '把礦車推進側線讓出通道，再用鐵撬棒撬開受損的門扣。門邊的照片可以看看。');
     await loop(async (id, item) => {
-      if (id === 'cart2') { if (cartIn) return; cartIn = true; sfx('whoosh'); const c = svg('cart2'); c.style.transition = 'transform 1.4s ease-in'; c.style.transform = 'translate(260px,-40px) scale(0.8)'; await wait(1400); S(); c.style.opacity = 0; return void await me('礦車滑進了側線。', 'The cart rolls onto the side line.'); }
+      if (id === 'cart2') {
+        if (cartIn) return;
+        cartIn = true; closeStack(); await wait(420); S();
+        sfx('whoosh');
+        const c = svg('cart2');
+        if (c) { c.style.transformOrigin = '50% 80%'; c.style.transition = 'transform 1.8s cubic-bezier(.2,.7,.2,1)'; c.style.transform = 'translate(360px, -24px) rotate(5deg)'; }
+        await wait(1900); S();
+        return void await me('礦車沿著側線滑到鐵門旁邊，停住了。', 'The cart follows the side rail and stops beside the door.');
+      }
       if (id === 'photo2') { await getDoc('photoB'); if (!gotPhotoB) { gotPhotoB = true; await me('原來不只他一個人……他們到底想做什麼？', 'So he wasn’t alone… what were they trying to do?'); } return; }
       if (id === 'latch' || id === 'door') {
         if (doorOpen) return true;
@@ -598,12 +738,14 @@ export function render(st, params, go) {
     await chapter('五坑舊運輸區', 'S07'); S();
     await showPlace(ART.PLACES.s07); $(el, '#black').classList.remove('on'); await wait(700); S();
     let hasCtl = false, ctlOn = false;
+    bind('s07', () => ({ hasCtl, ctlOn, hasBar }));
     setHs([['manual', 145, 200, 140, 160, '維修手冊'], ['panel', 44, 392, 168, 210, '控制盤'], ['rack', 960, 200, 260, 360, '工具架'], ['shaft', 400, 40, 420, 600, '升降井']]);
     setStep('啟動升降設備', [() => !hasCtl ? '工具架上有一支控制手柄。' : !ctlOn ? '把控制手柄裝到控制盤上。' : '照維修手冊上的順序操作控制盤。', '維修手冊：解除制動 → 接通電源 → 選擇上升。'], () => (!hasCtl ? ['rack'] : !ctlOn ? ['panel'] : ['manual', 'panel']), '從工具架拿控制手柄，裝到控制盤上。依維修手冊的順序：解除制動 → 接通電源 → 上升。');
     await me('這個升降井……究竟多久沒有人使用過了？', 'This lift shaft… how long since anyone used it?'); S();
     await loop(async (id, item) => {
       if (id === 'manual') return void await getDoc('manual');
       if (id === 'shaft') return void await me('鐵籠就停在井底。上面一片漆黑。', 'The cage sits at the bottom. Above, only darkness.');
+      if (id === 'rust') return void await me('剩下的工具都鏽壞了。', 'The other tools have rusted through.');
       if (id === 'rack') { if (hasCtl) return void await me('剩下的工具都鏽壞了。', 'The other tools have rusted through.'); hasCtl = true; svg('grip2').style.opacity = 0; addItem('ctl'); return void await me('一支控制手柄。', 'A control handle.'); }
       if (id === 'panel') {
         if (!ctlOn) {
@@ -628,6 +770,7 @@ export function render(st, params, go) {
     cine.classList.add('hidden'); cine.innerHTML = '';
     await showPlace(ART.PLACES.s08); $(el, '#black').classList.remove('on'); await wait(700); S();
     let vaultOpen = false;
+    bind('s08', () => ({ vaultOpen }));
     setHs([['words', 460, 172, 280, 36, '門上的英文刻字'], ['frame', 190, 150, 180, 450, '門框'], ['frame2', 840, 150, 180, 450, '門框'], ['lock', 500, 230, 190, 150, '機械鎖'], ['plate', 630, 460, 170, 90, '密碼牌']]);
     setStep('打開金庫的鐵門', ['日誌寫著：十二月十二日是他的生日。', '門框刻著：「當你忘記所有歸途，請記住我來到這世上的日子。」', '密碼牌是 MMDD。月份兩位、日期兩位。'], ['frame', 'plate', 'lock'], '門框要你記住他來到這世上的日子。日誌第一頁：12 月 12 日。密碼牌 MMDD＝月月日日。密碼是 1212。');
     await me('厚重的鐵門……還用鐵鍊鎖著。', 'A heavy iron door… chained shut.'); S();
@@ -648,25 +791,30 @@ export function render(st, params, go) {
     }); S();
     setHs([['crate', 420, 500, 400, 150, '木箱']]);
     setStep('打開木箱', ['箱蓋釘死了。選擇鐵撬棒「使用」，撬開木箱。'], ['crate'], '用鐵撬棒撬開木箱。');
+    let crateOpen = false;
+    bind('s08b', () => ({ crateOpen, hasBar }));
     await me('十幾只木箱……', 'A dozen wooden crates…'); S();
     await loop(async (id, item) => {
-      if (item !== 'bar') return void await me('箱蓋釘死了。', 'The lid is nailed shut.');
-      sfx('pry'); return true;
+      if (id === 'crate') {
+        if (crateOpen) return;
+        if (item !== 'bar') return void await me('箱蓋釘死了。', 'The lid is nailed shut.');
+        sfx('pry'); crateOpen = true; sfx('flash');
+        await me('……黃金。竟然真的在這裡。這麼多年來……從來沒有人發現？', '…Gold. It really is here. All these years… and no one ever found it?');
+        return;
+      }
+      if (id === 'letterRead') {
+        if (got.has('letter')) return void await me('信已經收進檔案了。原信還是留在箱子裡。', 'The letter is already filed. The original stays in the crate.');
+        await me('箱子裡還夾著一封信。', 'There’s a letter tucked inside the crate.'); S();
+        await getDoc('letter');
+        await me('所以……他們不是為了偷走黃金。而是為了不讓其他人帶走它。這麼多年來，它一直都在這裡。', 'So… they weren’t stealing the gold. They were keeping anyone else from taking it. All these years, it’s been right here.'); S();
+        await me('你們的約定，我明白了。', 'I understand your promise.');
+        return;
+      }
+      if (id === 'shut') {
+        if (!got.has('letter')) return void await me('先看看夾在金條裡的那封信。', 'Read the letter tucked among the bars first.');
+        sfx('door'); return true;
+      }
     }); S();
-    cine.classList.remove('hidden');
-    const goldSrc = IMG('g01-s08-gold.webp');
-    cine.innerHTML = await probe(goldSrc)
-      ? `<img class="bg" src="${goldSrc}" alt="木箱中以舊布包裹的金條"><div class="vignette"></div>`
-      : '<div class="g01-gold"><div class="g01-bars">' + Array.from({ length: 12 }, () => '<i></i>').join('') + '</div></div><div class="vignette"></div>';
-    sfx('flash'); await wait(1200); S();
-    await me('……黃金。竟然真的在這裡。這麼多年來……從來沒有人發現？', '…Gold. It really is here. All these years… and no one ever found it?'); S();
-    await me('箱子裡還夾著一封信。', 'There’s a letter tucked inside the crate.'); S();
-    await getDoc('letter'); S();
-    await me('所以……他們不是為了偷走黃金。而是為了不讓其他人帶走它。這麼多年來，它一直都在這裡。', 'So… they weren’t stealing the gold. They were keeping anyone else from taking it. All these years, it’s been right here.'); S();
-    await me('你們的約定，我明白了。', 'I understand your promise.'); S();
-    const shutBtn = html('<button type="button" class="btn serif-btn g01-accept" style="width:240px">關上木箱</button>');
-    el.appendChild(shutBtn);
-    await new Promise(r => shutBtn.addEventListener('click', () => { sfx('door'); r(); })); S(); shutBtn.remove();
     await sys(['不帶走黃金，也不記下金庫的精確位置。', '信件留在原處，只帶走一張照片。'], 2800); S();
 
     // ---------- S09 結語：回到博物館 ----------
