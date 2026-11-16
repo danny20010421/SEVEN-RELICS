@@ -29,6 +29,7 @@ const fresh = () => ({
   records: [],
   collection: [],             // 一般關卡收藏（信件影像、合照）
   g01: null,                  // { photoA, photoB, letter }
+  g01FreeHint: false,         // G01 第一次提示免費，用過就寫進這個存檔
   settings: { bgm: 0.6, sfx: 0.8, quality: 'mid', vibrate: true },
 });
 

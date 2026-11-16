@@ -128,17 +128,18 @@ export const PLACES = {
       sp('chock', 'g01-chock.webp', 648, 618, 72, 48, { z: 4 }),
       sp('bar', 'g01-crowbar.webp', 148, 248, 64, 192, { z: 3 }),
       sp('grip', 'g01-grip.webp', 948, 492, 84, 60, { z: 4 }),
-      sp('lever', 'g01-grip.webp', 246, 438, 88, 62, { opacity: 0, z: 5, extra: 'transform:rotate(-62deg);transform-origin:18% 82%' }),
+      sp('lever', 'g01-grip.webp', 294, 461, 110, 32, { opacity: 0, z: 6, extra: 'transform-origin:6% 50%;transform:rotate(-16deg);filter:drop-shadow(3px 5px 2px rgba(0,0,0,.85))' }),
     ],
   },
   s04: {
     bg: 'g01-s04.webp', alt: '礦工休息室，黑板、木桌與三座鐵櫃', fallback: s04,
-    under: '<div class="g01-bay" style="left:596px;top:162px;width:124px;height:388px"></div><div class="g01-bay" style="left:724px;top:162px;width:124px;height:388px"></div><div class="g01-bay" style="left:852px;top:162px;width:124px;height:388px"></div>',
+    under: ['1', '2', '3'].map((n, i) => {
+      const x = [600, 744, 888][i];
+      const w = i === 2 ? 122 : 118;
+      return `<div class="g01-bay" style="left:${x}px;top:168px;width:${w}px;height:380px"></div><div class="g01-door" id="lk${n}door" style="left:${x}px;top:168px;width:${w}px;height:380px"><img alt="" src="assets/img/g01-s04-locker.webp"><b class="g01-plate">${'0' + n}</b></div>`;
+    }).join(''),
     sprites: [
-      sp('photoAart', 'it-photo.webp', 200, 175, 170, 120, { z: 4, fit: 'cover', extra: 'box-shadow:0 10px 16px rgba(0,0,0,.55);transform:rotate(-2deg)' }),
-      sp('lk1door', 'g01-s04-locker.webp', 596, 162, 124, 388, { z: 2, fit: 'cover' }),
-      sp('lk2door', 'g01-s04-locker.webp', 724, 162, 124, 388, { z: 2, fit: 'cover' }),
-      sp('lk3door', 'g01-s04-locker.webp', 852, 162, 124, 388, { z: 2, fit: 'cover' }),
+      sp('photoAart', 'it-photo.webp', 190, 188, 168, 112, { z: 4, fit: 'cover', extra: 'box-shadow:0 8px 14px rgba(0,0,0,.6);transform:rotate(-1.5deg)' }),
     ],
   },
   s05: {
@@ -156,7 +157,7 @@ export const PLACES = {
   s06b: {
     bg: 'g01-s06b.webp', alt: '維修側線盡頭的鏽蝕鐵門', fallback: s06b,
     sprites: [
-      sp('cart2', 'g01-cart.webp', 96, 524, 210, 158, { z: 2 }),
+      sp('cart2', 'g01-cart.webp', 36, 575, 230, 130, { z: 6 }),
       sp('door', 'g01-s06-door.webp', 416, 146, 328, 422, { z: 3 }),
       sp('latch', 'g01-latch.webp', 688, 308, 74, 56, { z: 4 }),
       sp('photo2art', 'it-photo.webp', 792, 248, 112, 86, { z: 3, fit: 'cover' }),
@@ -164,10 +165,11 @@ export const PLACES = {
   },
   s07: {
     bg: 'g01-s07.webp', alt: '五坑舊運輸區的豎井與控制盤', fallback: s07,
+    extra: '<i class="g01-pip" id="pip-brake" style="left:78px;top:532px"></i><i class="g01-pip" id="pip-power" style="left:148px;top:532px"></i><i class="g01-pip" id="pip-up" style="left:113px;top:568px"></i>',
     sprites: [
       sp('panelArt', 'g01-s07-panel.webp', 44, 392, 168, 210, { z: 2 }),
-      sp('grip2', 'it-handle.webp', 996, 228, 60, 60, { z: 3, fit: 'contain' }),
-      sp('ctl', 'it-handle.webp', 96, 468, 60, 60, { opacity: 0, z: 4, fit: 'contain' }),
+      sp('grip2', 'it-handle.webp', 1012, 268, 40, 96, { z: 3, fit: 'contain' }),
+      sp('ctl', 'it-handle.webp', 105, 466, 46, 46, { opacity: 0, z: 4, fit: 'contain' }),
     ],
   },
   s08: {
