@@ -587,8 +587,6 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 .g1-book .pg .d { font-size: 17px; letter-spacing: 0.06em; opacity: 0.85; }
 .g1-book .pg h4 { margin: 4px 0 14px; font-size: 24px; font-weight: 400; border-bottom: 1px solid rgba(60, 35, 20, 0.35); padding-bottom: 8px; }
 .g1-book .pg p { margin: 0; font-size: 19px; line-height: 34px; text-indent: 2em; }
-.g1-book .turn { position: absolute; bottom: 30px; height: 48px; padding: 0 12px; background: none; border: none; font-family: 'G01Hand', var(--serif); font-size: 18px; color: rgba(38, 22, 12, 0.8); cursor: pointer; }
-.g1-book .turn.prev { left: 84px; } .g1-book .turn.next { right: 84px; }
 .g1-plate { position: absolute; left: 290px; top: 120px; width: 600px; padding: 36px 44px; transform: rotate(-1deg); background: linear-gradient(160deg, #5a4a40, #2e2520); border: 6px solid #241c17; box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6), 0 24px 48px rgba(0, 0, 0, 0.7); color: rgba(230, 214, 196, 0.85); font-family: var(--serif); text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.8); }
 .g1-plate h4 { margin: 0 0 16px; font-size: 26px; letter-spacing: 0.12em; }
 .g1-plate p { margin: 0 0 8px; font-size: 20px; line-height: 32px; }
@@ -610,7 +608,14 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 .g1-book tr.g1pick:hover td { background: rgba(120, 70, 30, 0.08); }
 .g1-book tr.circled td:first-child::after { content: ''; position: absolute; left: -6px; top: 4px; width: 300px; height: 38px; border: 2.5px solid rgba(170, 22, 26, 0.85); border-radius: 50%; transform: rotate(-2deg); mix-blend-mode: multiply; pointer-events: none; }
 .g1-chalkmsg2 { position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: 'G01Hand', var(--serif); color: rgba(236, 232, 220, 0.8); text-shadow: 0 0 2px rgba(255, 255, 255, 0.25); pointer-events: none; }
-.g1-chalkmsg2 p { margin: 0; font-size: 34px; line-height: 48px; letter-spacing: 0.08em; }
-.g1-chalkmsg2 p.big { font-size: 44px; line-height: 60px; }
-.g1-chalkmsg2 .arrow { width: 64px; height: 64px; }
+.g1-chalkmsg2 p { margin: 0; font-size: 48px; line-height: 72px; letter-spacing: 0.08em; }
+.g1-chalkmsg2 p.big { font-size: 64px; line-height: 88px; }
+.g1-chalkmsg2 .arrow { width: 96px; height: 96px; }
 .g1-dust { position: absolute; z-index: 4; touch-action: none; cursor: grab; }
+
+.g1-book { cursor: pointer; }
+.g1-book .curl { position: absolute; bottom: 22px; width: 56px; height: 56px; pointer-events: none; }
+.g1-book .curl.r { right: 30px; background: linear-gradient(315deg, rgba(60, 35, 15, 0.35) 0%, rgba(60, 35, 15, 0.12) 30%, transparent 52%); }
+.g1-book .curl.l { left: 30px; background: linear-gradient(45deg, rgba(60, 35, 15, 0.35) 0%, rgba(60, 35, 15, 0.12) 30%, transparent 52%); }
+.g1-clip { position: absolute; overflow: hidden; pointer-events: none; z-index: 2; }
+.g1-scratch.aw3 { font-size: 28px; color: rgba(236, 206, 168, 0.62); transform: rotate(-9deg) skewX(-8deg); }

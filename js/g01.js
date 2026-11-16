@@ -7,7 +7,7 @@ import { html, $, $$, IMG, ICON, wait, esc, modal, toast, alertBox, fmt } from '
 
 const ITEMS = {
   bar: { name: '鐵撬棒', src: IMG('it-crowbar.webp'), desc: '靠在屋牆邊的鐵撬棒，扁口還很結實。', hint: '能撬開卡住或鏽死的東西。' },
-  grip: { name: '扳桿手柄', src: IMG('it-grip.webp'), desc: '破木箱裡的金屬手柄，末端有卡榫。', hint: '轉轍器的扳桿少了一支手柄。' },
+  grip: { name: '礦車扳桿', src: IMG('it-lever.webp'), desc: '木箱裡斜插著的一支鐵扳桿，底座有轉軸。', hint: '插到控制機上，扳下去就能放開礦車。' },
   fl: { name: '手電筒', src: IMG('it-flashlight.webp'), desc: '一支舊手電筒，換上自己帶的備用電池後還能亮。', hint: '對著黑暗的地方使用，就能照亮。' },
   ctl: { name: 'T 型手柄', src: IMG('it-handle.webp'), desc: '工具架上的 T 型手柄，握把磨得發亮。', hint: '形狀跟控制盤上的插座一樣。' },
 };
@@ -256,17 +256,23 @@ export function render(st, params, go) {
     if (doc.kind === 'ledgerpick') return docHtml(DOCS.ledger, 0);
     const [l, r] = doc.spreads[page]; const n = doc.spreads.length;
     return `<div class="g1-book"><img src="${IMG('g01-book.webp')}" alt=""><div class="pg l">${l}</div><div class="pg r">${r}</div>
-${n > 1 ? `${page > 0 ? '<button type="button" class="turn prev" data-turn="-1">‹ 上一頁</button>' : ''}${page < n - 1 ? '<button type="button" class="turn next" data-turn="1">翻頁 ›</button>' : ''}` : ''}</div>`;
+${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="curl r"></div>' : ''}</div>`;
   }
   function readDoc(id) {
     return new Promise(res => {
       const doc = DOCS[id]; let page = 0;
       const m = html(`<div class="g1-docback" role="dialog" aria-label="${doc.title}"></div>`);
-      const paint = () => { m.innerHTML = docHtml(doc, page) + '<div class="g1-dochint">點旁邊收起</div>'; };
+      const multi = doc.kind === 'book' && doc.spreads.length > 1;
+      const paint = () => { m.innerHTML = docHtml(doc, page) + `<div class="g1-dochint">${multi ? '點書的右側翻到下一頁，點左側翻回上一頁　點旁邊收起' : '點旁邊收起'}</div>`; };
       m.addEventListener('click', e => {
-        const t = e.target.closest('[data-turn]');
-        if (t) { sfx('tap'); page += +t.dataset.turn; paint(); return; }
-        if (e.target.closest('.g1-paper,.g1-book,.g1-plate,.g1-photo') && doc.kind === 'book') return;
+        const bk = e.target.closest('.g1-book');
+        if (bk) {
+          if (!multi) return;
+          const r = bk.getBoundingClientRect(), right = e.clientX > r.left + r.width / 2;
+          const np = page + (right ? 1 : -1);
+          if (np < 0 || np >= doc.spreads.length) return;
+          sfx('tap'); page = np; paint(); return;
+        }
         sfx('tap'); m.remove(); res();
       });
       paint(); el.appendChild(m);
@@ -378,62 +384,70 @@ ${n > 1 ? `${page > 0 ? '<button type="button" class="turn prev" data-turn="-1">
 
     // ---------- S03 本山六坑入口 ----------
     bgm('g01mine');
-    await chapter('本山六坑入口', 'S03', () => setScene('g01-s03.webp', '本山六坑入口，生鏽的礦車擋住坑口', [
-      ['cart', 'g01-cart-rear.webp', 488, 330, 300, 0, 'z-index:2;transition:transform 2.2s ease-in,filter 2.2s ease-in,opacity 2.2s ease-in'],
-      ['chock', 'g01-chock.webp', 716, 600, 64, 42, 'z-index:3'],
-      ['bar', 'g01-crowbar.webp', 120, 450, 52, 170, 'z-index:2;transform:rotate(-10deg)'],
-      ['grip', 'g01-grip.webp', 948, 492, 84, 60, 'z-index:2'],
-      ['lever', 'g01-grip.webp', 246, 438, 88, 62, 'opacity:0;z-index:5;transform:rotate(-62deg);transform-origin:18% 82%'],
-    ], '<div id="aw" class="g1-scratch" style="left:860px;top:236px;opacity:0">A.W.</div>')); S();
-    let hasBar = false, chock = true, hasGrip = false, gripOn = false;
-    setHs([['cart', 488, 330, 300, 270, '礦車'], ['wheel', 690, 560, 110, 90, '車輪'], ['bar', 100, 440, 100, 190, '鐵撬棒'], ['crate', 880, 470, 220, 170, '破木箱'], ['switch', 230, 430, 160, 230, '轉轍器']]);
-    setStep('移開擋住入口的礦車', [() => !hasBar ? '屋牆邊靠著一根鐵撬棒。' : chock ? '車輪底下卡著止輪器。選擇鐵撬棒「使用」，再點車輪。' : !hasGrip ? '右邊的破木箱裡，露出一截手柄。' : !gripOn ? '轉轍器少了扳桿。把扳桿手柄裝上去。' : '拉動轉轍器的扳桿，礦車就會滑開。'],
-      () => !hasBar ? ['bar'] : chock ? ['wheel'] : !hasGrip ? ['crate'] : ['switch'],
-      '礦車被止輪器卡在下坡軌道上。順序：撿鐵撬棒 → 撬掉止輪器 → 從破木箱拿扳桿手柄 → 裝回轉轍器 → 拉下扳桿，礦車就會滑進坑道的支線。');
+    // 礦車正面圖：車輪落在軌道上（輪距 273px 對應背景軌距 232px）；溜下去時沿軌道中線往消失點縮小
+    await chapter('本山六坑入口', 'S03', () => setScene('g01-s03.webp', '本山六坑入口，生鏽的礦車停在軌道上擋住坑口', [
+      ['cart', 'g01-cart-front.webp', 537, 292, 307, 291, 'z-index:2;transform-origin:158px 288px;transition:transform 2.6s cubic-bezier(.45,0,.8,.6),filter 2.6s ease-in,opacity .8s ease-in 1.9s'],
+      ['chock', 'g01-chock.webp', 786, 556, 58, 39, 'z-index:3'],
+      ['bar', 'g01-crowbar.webp', 176, 396, 52, 170, 'z-index:2;transform:rotate(-8deg)'],
+    ], `<div class="g1-clip" style="left:960px;top:230px;width:240px;height:222px"><img id="grip" class="g1-sp" src="${IMG('g01-lever.webp')}" alt="" style="left:119px;top:60px;width:22px;height:240px;transform-origin:50% 100%;transform:rotate(-30deg)"></div>
+<img id="lever" class="g1-sp" src="${IMG('g01-lever.webp')}" alt="" style="left:396px;top:392px;width:19px;height:200px;z-index:2;opacity:0;transform-origin:50% 95%;transition:transform .5s ease,opacity .3s">
+<div class="g1-scratch aw3" style="left:962px;top:318px">A.W.</div>`)); S();
+    let hasBar = false, chock = true, hasGrip = false, gripOn = false, rolled = false, awSeen = false;
+    setHs([['cart', 537, 292, 307, 291, '礦車'], ['wheel', 760, 520, 120, 90, '車輪'], ['bar', 130, 380, 120, 200, '鐵撬棒'], ['crate', 940, 260, 280, 360, '木箱'], ['ctrl', 260, 380, 210, 260, '控制機'], ['aw', 930, 270, 140, 130, '岩壁上的刻痕']]);
+    setStep('移開擋住入口的礦車', [() => !hasBar ? '小屋牆邊靠著一根鐵撬棒。' : chock ? '車輪底下卡著止輪器。點道具欄的鐵撬棒，再點車輪。' : !hasGrip ? '右邊的木箱裡斜插著一支扳桿。' : !gripOn ? '左下角的控制機少了扳桿。把扳桿插上去。' : '扳下控制機上的扳桿。'],
+      () => !hasBar ? ['bar'] : chock ? ['wheel'] : !hasGrip ? ['crate'] : ['ctrl'],
+      '礦車被止輪器卡在往下的軌道上。順序：撿鐵撬棒 → 撬掉車輪下的止輪器 → 從右邊木箱拿扳桿 → 插到左下角的控制機 → 扳下扳桿，礦車就會順著軌道溜進坑道。');
     await me('本山六坑……入口被一台礦車擋住了。', 'Shaft Six… a mine cart is blocking the entrance.'); S();
+    const awCu = async () => {
+      openCu(`<img class="bg" src="${IMG('g01-aw-cu.webp')}" alt="岩壁上刻著 A.W.">`, [], false);
+      await me('「A.W.」……刻痕很深，是用工具一筆一筆鑿出來的。是人名的縮寫嗎？', '“A.W.”… cut deep, stroke by stroke with a tool. Someone’s initials?', { pic: false }); S();
+      closeCu(); awSeen = true;
+    };
     await loop(async (id, item) => {
-      if (id === 'cart') return void await me(chock ? '太重了，完全推不動。軌道是往裡面傾斜的……它本來應該會自己滑下去。' : '止輪器拿掉了，可是前面的軌道還沒扳過去。', chock ? 'Too heavy to push. The track slopes inward… it should roll down by itself.' : 'The chock is out, but the switch ahead isn’t thrown yet.');
+      if (id === 'aw') { await awCu(); return rolled; }
+      if (id === 'cart') return void await me(chock ? '太重了，推不動。軌道往坑裡斜……車輪底下卡著東西。' : '止輪器拿掉了，可是控制機還鎖著車。', chock ? 'Too heavy to push. The track slopes inward… something is jammed under the wheel.' : 'The chock is out, but the control is still holding the cart.');
       if (id === 'wheel') {
         if (!chock) return void await me('止輪器已經拿掉了。', 'The chock is gone.');
         if (item !== 'bar') return void await me('輪子底下卡著止輪器。空手拉不出來。', 'A wheel chock is jammed under the wheel. I can’t pull it out by hand.');
         sfx('pry'); hide('chock'); chock = false;
-        return void await me('撬出來了。還是不動……前面的軌道是對著轉轍器合起來的。', 'It’s out. Still not moving… the track ahead is set by the switch.');
+        return void await me('撬出來了。車子還是被控制機鎖住……那台機器少了扳桿。', 'It’s out. The cart is still held by that machine… it’s missing its lever.');
       }
       if (id === 'bar') { if (hasBar) return; hasBar = true; hide('bar'); dropHs('bar'); addItem('bar'); return void await me('這個或許派得上用場。', 'This might come in handy.'); }
-      if (id === 'crate') { if (hasGrip) return void await me('箱子裡已經空了。', 'The crate is empty now.'); hasGrip = true; hide('grip'); addItem('grip'); return void await me('扳桿的手柄……末端的卡榫，剛好對得上。', 'A lever handle… the notch at its end should fit.'); }
-      if (id === 'switch') {
+      if (id === 'crate') { if (hasGrip) return void await me('箱子裡已經空了。', 'The crate is empty now.'); hasGrip = true; hide('grip'); addItem('grip'); return void await me('一支礦車扳桿……底座的轉軸，應該插得進左邊那台控制機。', 'A mine-cart lever… its pivot base should fit that control machine on the left.'); }
+      if (id === 'ctrl') {
         if (!gripOn) {
-          if (item !== 'grip') return void await me('轉轍器的扳桿手柄不見了。', 'The switch lever is missing its handle.');
+          if (item !== 'grip') return void await me('一台生鏽的控制機，上面有個插孔，少了扳桿。', 'A rusted control machine with an empty socket. Its lever is missing.');
           sfx('clang'); gripOn = true; dropItem('grip'); sp('lever').style.opacity = 1;
-          return void await me('裝上了。', 'It fits.');
+          return void await me('插上去了，卡得很緊。', 'It’s in, and it fits tight.');
         }
-        if (chock) return void await me('扳桿拉得動，但礦車還被止輪器卡著。', 'The lever moves, but the cart is still chocked.');
-        sfx('clang'); await wait(300); S();
+        if (chock) return void await me('扳桿扳不下去……礦車的輪子還被止輪器卡著。', 'The lever won’t go… the wheel is still chocked.');
+        if (rolled) return;
+        sp('lever').style.transform = 'rotate(38deg)'; sfx('clang'); await wait(500); S();
         const c = sp('cart'); sfx('whoosh');
-        c.style.transform = 'translate(66px,-118px) scale(0.32)'; c.style.filter = 'brightness(0.2)'; c.style.opacity = '0';
-        await wait(2300); S(); sfx('clang');
-        await me('坑道是往下的坡。扳過轉轍器，礦車就轉進裡面的支線……路讓出來了。', 'The tunnel slopes down. With the switch thrown, the cart turned off onto the inner siding… the way is clear.'); S();
-        return true;
+        c.style.transform = 'translate(-8px,-125px) scale(.48)'; c.style.filter = 'brightness(.15)'; c.style.opacity = '0';
+        await wait(2700); S(); sfx('clang'); rolled = true; dropHs('cart'); dropHs('wheel');
+        await me('坑道是往下的坡。煞車一放，礦車就順著軌道溜進去了……路讓出來了。', 'The tunnel slopes down. With the brake released, the cart rolled away down the track… the way is clear.'); S();
+        if (awSeen) return true;
+        await me('右上角的岩壁上……好像刻著什麼字。', 'Up on the rock to the right… something is carved there.'); S();
+        setStep('調查岩壁上的刻痕', ['右上角的岩壁上刻著字。'], ['aw'], '點右上角岩壁上的刻痕。');
       }
     }); S();
-    const aw = sp('aw'); aw.style.transition = 'opacity .3s'; aw.style.opacity = 1; sfx('tinnitus'); await wait(700); aw.style.opacity = 0; S();
-    await me('剛剛牆上……好像刮著「A.W.」？是人名的縮寫嗎？', 'On the wall just now… was that “A.W.”? Someone’s initials?'); S();
 
     // ---------- S04 礦工休息室 ----------
+    // 背景本身就有三座鐵櫃；03 號原本敞開，用同一張背景裡 02 號的門補成關著的門。照片是釘在黑板角落的一張小照片。
     await chapter('礦工休息室', 'S04', () => setScene('g01-s04.webp', '礦工休息室，黑板、木桌與三座鐵櫃', [
-      ['photoAart', 'it-photo.webp', 200, 175, 170, 120, 'z-index:4;object-fit:cover;box-shadow:0 10px 16px rgba(0,0,0,.55);transform:rotate(-2deg)'],
-      ['lk1', 'g01-s04-locker.webp', 596, 162, 124, 388, 'z-index:2;object-fit:cover'],
-      ['lk2', 'g01-s04-locker.webp', 724, 162, 124, 388, 'z-index:2;object-fit:cover'],
-      ['lk3', 'g01-s04-locker.webp', 852, 162, 124, 388, 'z-index:2;object-fit:cover'],
-    ], [1, 2, 3].map(i => `<div class="g1-engr lk" style="left:${596 + (i - 1) * 128 + 63}px;top:253px">0${i}</div>`).join(''))); S();
+      ['photoAart', 'it-photo.webp', 392, 146, 58, 44, 'z-index:2;object-fit:cover;filter:grayscale(1) sepia(.4) brightness(.8);box-shadow:0 3px 6px rgba(0,0,0,.6);transform:rotate(-5deg)'],
+      ['door3', 'g01-s04-door3.webp', 828, 164, 104, 388, 'z-index:2'],
+    ], [[652, '01'], [768, '02'], [880, '03']].map(([x, t]) => `<div class="g1-engr lk" style="left:${x}px;top:258px">${t}</div>`).join(''))); S();
     let gotPhotoA = false;
     const opened = new Set();
-    setHs([['board', 150, 125, 370, 250, '黑板'], ['photoA', 200, 175, 170, 120, '舊照片'], ['schedule', 278, 460, 160, 90, '桌上的紙'], ['helmet', 400, 385, 130, 70, '礦工帽'], ['lk1', 596, 162, 124, 388, '01 號鐵櫃'], ['lk2', 724, 162, 124, 388, '02 號鐵櫃'], ['lk3', 852, 162, 124, 388, '03 號鐵櫃']]);
-    setStep('找出藏著線索的鐵櫃', ['桌上那張紙，暗示了該打開哪一座鐵櫃。', '「所有人都睡著後」——那是哪一個班次？', '夜班的編號是 03。靠近鐵櫃，用鐵撬棒撬開 03 號。'], () => (got.has('schedule') ? ['lk3'] : ['schedule']), '班次表：早班 01、午班 02、夜班 03。手寫字：「我們只在所有人都睡著後，才能記下真正的數字。」所有人都睡著＝夜班＝03 號鐵櫃，用鐵撬棒撬開它。');
+    setHs([['board', 150, 200, 310, 150, '黑板'], ['photoA', 372, 128, 96, 80, '黑板角落的小照片'], ['schedule', 230, 452, 265, 100, '桌上攤開的紙'], ['helmet', 385, 380, 130, 80, '礦工帽'], ['manual4', 515, 440, 200, 80, '泡水的冊子'], ['lk1', 598, 165, 106, 280, '01 號鐵櫃'], ['lk2', 712, 165, 108, 390, '02 號鐵櫃'], ['lk3', 828, 164, 104, 388, '03 號鐵櫃']]);
+    setStep('找出藏著線索的鐵櫃', ['桌上那張攤開的紙，暗示了該打開哪一座鐵櫃。', '「所有人都睡著後」——那是哪一個班次？', '夜班的編號是 03。點道具欄的鐵撬棒，再點 03 號鐵櫃。'], () => (got.has('schedule') ? ['lk3'] : ['schedule']), '班次表：早班 01、午班 02、夜班 03。手寫字：「我們只在所有人都睡著後，才能記下真正的數字。」所有人都睡著＝夜班＝03 號鐵櫃，用鐵撬棒撬開它。');
     await me('礦工休息的地方……帽子、桌子都還在，好像人們只是暫時離開。', 'Where the miners rested… the helmets and table are still here, as if they just stepped out.'); S();
     await loop(async (id, item) => {
       if (id === 'back') { closeCu(); return; }
-      if (id === 'board') return void await me('黑板上寫著「安全第一」。字跡已經模糊了。', 'The blackboard reads “Safety First.” The chalk has almost faded.');
+      if (id === 'board') return void await me('黑板上的粉筆字早就糊成一片了。', 'The chalk on the board has long since smeared away.');
+      if (id === 'manual4') return void await me('一本泡過水的工作手冊，字都暈開了，看不出內容。', 'A water-soaked work manual. The ink has bled; nothing is legible.');
       if (id === 'helmet') return void await me('一頂舊礦工帽，帽燈早就不亮了。', 'An old miner’s helmet. The lamp died long ago.');
       if (id === 'photoA') {
         await getDoc('photoA'); S();
@@ -451,10 +465,9 @@ ${n > 1 ? `${page > 0 ? '<button type="button" class="turn prev" data-turn="-1">
         if (opened.has(n)) return void await me(n === 3 ? '櫃子已經打開了。' : '只有舊工作服。', n === 3 ? 'It’s already open.' : 'Only old work clothes.');
         if (item !== 'bar') return void await me('鎖扣都鏽死了，要撬開才行。', 'The latch has rusted shut. I’ll need to pry it.');
         sfx('pry'); opened.add(n);
-        sp('lk' + n).style.filter = 'brightness(.45)';
-        if (n !== 3) return void await me('只有舊工作服。不是這一個。', 'Only old work clothes. Not this one.');
-        sfx('door');
-        await me('一本日誌……封面寫著「A. WILLIAMS」。', 'A journal… “A. WILLIAMS” on the cover.'); S();
+        if (n !== 3) return void await me('撬開了……只有幾件發霉的工作服。不是這一個。', 'Pried open… only a few mouldy work clothes. Not this one.');
+        sfx('door'); hide('door3'); await wait(500); S();
+        await me('櫃底壓著一本日誌……封面寫著「A. WILLIAMS」。', 'A journal pressed at the bottom of the locker… “A. WILLIAMS” on the cover.'); S();
         await getDoc('journal'); return true;
       }
     }); S();
@@ -463,14 +476,12 @@ ${n > 1 ? `${page > 0 ? '<button type="button" class="turn prev" data-turn="-1">
 
     // ---------- S05 六坑運礦站 ----------
     await chapter('六坑運礦站', 'S05', () => setScene('g01-s05.webp', '六坑運礦站，兩條軌道、磅秤與一塊舊黑板', [
-      ['book1', 'g01-ledger.webp', 58, 400, 96, 64, 'z-index:3'],
-      ['book2', 'g01-ledger.webp', 162, 398, 96, 64, 'z-index:3'],
-      ['oldsw', 'g01-switch.webp', 568, 618, 108, 72, 'opacity:0;z-index:2'],
-      ['gravel', 'g01-gravel.webp', 520, 608, 216, 72, 'z-index:4'],
+      ['oldsw', 'g01-switch.webp', 676, 600, 108, 72, 'opacity:0;z-index:2'],
+      ['gravel', 'g01-gravel.webp', 622, 592, 216, 72, 'z-index:4'],
     ])); S();
     let circled = false, rubbed = false;
-    setHs([['ledger', 54, 390, 212, 82, '離站簿與到站簿'], ['scale', 900, 270, 220, 290, '磅秤'], ['board5', 740, 130, 270, 200, '舊黑板'], ['gravel', 510, 600, 240, 90, '鐵軌碎石']]);
-    setStep('找出對不上的那一天', [() => !circled ? '翻開桌上的離站簿與到站簿，同一天的數字應該一樣。' : !rubbed ? '黑板上的粉筆灰底下，好像還有字。用手指把灰抹掉。' : '黑板上的箭頭指向鐵軌旁的碎石。', () => !circled ? '二月十七日：離站 12、到站 9。在冊子上點那一行。' : !rubbed ? '在黑板上來回滑動，把整片粉筆灰擦掉。' : '點鐵軌旁的碎石。'],
+    setHs([['ledger', 956, 312, 190, 64, '桌上的帳簿'], ['scale', 820, 326, 80, 150, '磅秤'], ['board5', 844, 84, 300, 206, '黑板'], ['gravel', 612, 580, 240, 96, '鐵軌碎石']]);
+    setStep('找出對不上的那一天', [() => !circled ? '右邊桌上疊著帳簿，翻開離站簿與到站簿，同一天的數字應該一樣。' : !rubbed ? '黑板上的粉筆灰底下，好像還有字。用手指把灰抹掉。' : '黑板上的箭頭指向鐵軌旁的碎石。', () => !circled ? '二月十七日：離站 12、到站 9。在冊子上點那一行。' : !rubbed ? '在黑板上來回滑動，把整片粉筆灰擦掉。' : '點鐵軌旁的碎石。'],
       () => (!circled ? ['ledger'] : !rubbed ? ['board5'] : ['gravel']),
       () => (!circled ? '翻開離站簿與到站簿，只有 02/17 對不上：離站 12 車、到站 9 車。在冊子上點 02/17 那一行圈起來。' : !rubbed ? '黑板被粉筆灰蓋住了。點黑板，用手指或滑鼠來回抹，擦出底下的字。' : '黑板上的箭頭指向鐵軌旁的碎石，點碎石。'));
     await me('礦車在這裡秤重、登記，再送出去。每一車都會留下紀錄。', 'Carts were weighed and logged here before leaving. Every load left a record.'); S();
@@ -812,10 +823,11 @@ ${miss.length ? `<p style="font-size:16px;line-height:24px;color:var(--muted)">�
   // 黑板：用手指或滑鼠抹掉粉筆灰，露出夜班留下的字
   function rubBoard() {
     return new Promise(res => {
-      const k = 2.6, L = 239, T = 141, bx = 745, by = 136, W = 256 * k, H = 184 * k;
-      openCu(zoomBg('g01-s05.webp', bx, by, k, L, T) +
+      // 黑板近景：整張黑板圖（1672×941）縮成寬 1144，內框 75–1595 × 75–865
+      const k = 1144 / 1672, top0 = 56, L = 75 * k, T = top0 + 75 * k, W = 1520 * k, H = 790 * k;
+      openCu(`<div class="g1-crossbg"></div><img class="g1-sp" src="${IMG('g01-board-cu.webp')}" alt="黑板" style="left:0;top:${top0}px;width:1144px;height:${941 * k}px">` +
         `<div class="g1-chalkmsg2" style="left:${L}px;top:${T}px;width:${W}px;height:${H}px"><p>2／17　夜班</p><p>離 12　→　到 9</p><p class="big">三車　→　舊側線</p><svg viewBox="0 0 120 120" class="arrow" aria-hidden="true"><path d="M60 6 C 54 46, 66 70, 60 108 M 40 88 L 60 110 L 80 86" fill="none" stroke="rgba(236,232,220,.8)" stroke-width="5" stroke-linecap="round"/></svg></div>` +
-        `<canvas class="g1-dust" width="${Math.round(W)}" height="${Math.round(H)}" style="left:${L}px;top:${T}px;width:${W}px;height:${H}px"></canvas><div class="g1-kmsg" id="rbm">在黑板上來回抹，擦掉粉筆灰</div>`);
+        `<canvas class="g1-dust" width="${Math.round(W)}" height="${Math.round(H)}" style="left:${L}px;top:${T}px;width:${W}px;height:${H}px"></canvas><div class="g1-kmsg" id="rbm" style="top:${top0 + 941 * k - 56}px">在黑板上來回抹，擦掉粉筆灰</div>`);
       const cv = $(cu, '.g1-dust'), cx = cv.getContext('2d');
       // 粉筆灰：一層不均勻的灰白抹痕
       // 粉筆灰：深淺不一的抹痕，邊緣自然淡出，不是一塊色塊
