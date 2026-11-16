@@ -27,6 +27,8 @@ const fresh = () => ({
   rewardGiven: false,
   clues: [],
   records: [],
+  collection: [],             // 一般關卡收藏（信件影像、合照）
+  g01: null,                  // { photoA, photoB, letter }
   settings: { bgm: 0.6, sfx: 0.8, quality: 'mid', vibrate: true },
 });
 

@@ -69,6 +69,7 @@ const SFX = {
   whoosh() { noise(1.2, 'bandpass', 300, 0.3, 0, 1.5, 2400); },
   tinnitus() { tone(7800, 3.2, 'sine', 0.05); noise(3, 'lowpass', 400, 0.15, 0, 1, 120); },
   flash() { noise(1.6, 'highpass', 1200, 0.25, 0, 1, 8000); tone(5200, 1.8, 'sine', 0.04); },
+  drip() { tone(1400, 0.06, 'sine', 0.05); tone(680, 0.18, 'sine', 0.03, 0.04, 320); noise(0.12, 'highpass', 2400, 0.05, 0.02); },
   coin() { tone(1568, 0.12, 'triangle', 0.12); tone(2093, 0.3, 'triangle', 0.12, 0.08); },
   hint() { tone(523, 0.2, 'sine', 0.1); tone(784, 0.35, 'sine', 0.1, 0.12); },
   marquee() { tone(55, 0.6, 'sawtooth', 0.05); noise(0.5, 'highpass', 6000, 0.05); },
