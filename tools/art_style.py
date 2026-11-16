@@ -47,6 +47,9 @@ ALIASES = {
     "items": "item",
     "sprite": "sprite",
     "sprites": "sprite",
+    "closeup": "closeup",
+    "close-up": "closeup",
+    "cu": "closeup",
     "currency": "currency",
 }
 
@@ -58,6 +61,7 @@ NAME_PATTERNS = {
     "icon": re.compile(r"^ic-[a-z0-9]+(?:-[a-z0-9]+)*$"),
     "item": re.compile(r"^it-[a-z0-9]+(?:-[a-z0-9]+)*$"),
     "sprite": re.compile(r"^g[0-9]{2}(?:-[a-z0-9]+)+$"),
+    "closeup": re.compile(r"^g[0-9]{2}-cu(?:-[a-z0-9]+)+$"),
     "currency": re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$"),
 }
 
