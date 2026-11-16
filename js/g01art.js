@@ -133,11 +133,13 @@ export const PLACES = {
   },
   s04: {
     bg: 'g01-s04.webp', alt: '礦工休息室，黑板、木桌與三座鐵櫃', fallback: s04,
+    under: '<div class="g01-bay" style="left:596px;top:162px;width:124px;height:388px"></div><div class="g01-bay" style="left:724px;top:162px;width:124px;height:388px"></div><div class="g01-bay" style="left:852px;top:162px;width:124px;height:388px"></div>',
     sprites: [
-      sp('photoAart', 'it-photo.webp', 52, 318, 124, 96, { z: 3, fit: 'cover' }),
-      sp('lk3door', 'g01-s04-locker.webp', 796, 168, 168, 390, { z: 2, fit: 'cover' }),
+      sp('photoAart', 'it-photo.webp', 200, 175, 170, 120, { z: 4, fit: 'cover', extra: 'box-shadow:0 10px 16px rgba(0,0,0,.55);transform:rotate(-2deg)' }),
+      sp('lk1door', 'g01-s04-locker.webp', 596, 162, 124, 388, { z: 2, fit: 'cover' }),
+      sp('lk2door', 'g01-s04-locker.webp', 724, 162, 124, 388, { z: 2, fit: 'cover' }),
+      sp('lk3door', 'g01-s04-locker.webp', 852, 162, 124, 388, { z: 2, fit: 'cover' }),
     ],
-    tags: [{ x: 624, y: 232, text: '01' }, { x: 744, y: 232, text: '02' }, { x: 848, y: 214, text: '03' }],
   },
   s05: {
     bg: 'g01-s05.webp', alt: '六坑運礦站，兩條軌道與桌面上的紀錄簿', fallback: s05,
@@ -150,7 +152,6 @@ export const PLACES = {
   },
   s06: {
     bg: 'g01-s06.webp', alt: '封閉維修坑道的三條路線', fallback: s06, sprites: [],
-    tags: [{ x: 286, y: 248, text: 'A' }, { x: 612, y: 248, text: 'B' }, { x: 892, y: 248, text: 'C' }],
   },
   s06b: {
     bg: 'g01-s06b.webp', alt: '維修側線盡頭的鏽蝕鐵門', fallback: s06b,

@@ -97,6 +97,7 @@ UI 色票（`css/style.css`）就是畫面的顏色上限。新圖的主色停�
 | UI icon | `icon` | 256×256 | 透明 | 功能鍵 48×48 | `1024x1024` |
 | 道具 | `item` | 400×400 | 透明 | 背包格 72×72，檢視約 136–200 | `1024x1024` |
 | 關卡精靈 | `sprite` | 預設 1024×1024，可用 `--width` `--height` 覆寫 | 透明；矩形鋪滿的門板可以不透明 | 疊在場景上的物件，舞台座標見關卡 | 依交付比例計算，誤差 < 1% |
+| 近景 | `closeup` | 1280×720 | 不透明 | 點物件後鋪滿舞台的正面近景 | `1280x720` |
 | 貨幣 | `currency` | 160×160 | 透明 | 頂欄 32×32 | `1024x1024` |
 
 API 的自訂 size 兩邊都要是 16 的倍數，總像素要落在 655,360 到 8,294,400，長短邊比不超過 3:1。1600×900 的 900、850×1300 的兩邊，以及 256、400、160 都過不了這條線，所以腳本先要上表右側的尺寸，再用 Pillow 縮成交付尺寸。場景與立繪的 API 比例已對齊交付比例（誤差小於 1%），縮放時不會裁切主體。
@@ -115,6 +116,7 @@ API 的自訂 size 兩邊都要是 16 的倍數，總像素要落在 655,360 到
 | icon | 必須以 `ic-` 開頭 | `ic-bag`、`ic-map` |
 | item | 必須以 `it-` 開頭 | `it-lantern`、`it-compass` |
 | sprite | `g` 加兩位關卡號，再接至少一段連字號 | `g01-cart`、`g01-s08-door` |
+| closeup | `g` 加兩位關卡號，再接 `-cu-`，後面至少一段 | `g01-cu-locker-closed`、`g01-cu-paper` |
 | currency | 短名。不要用 `ic-` 或 `it-` | `coin`、`diamond` |
 
 `ic-` 只給 icon，`it-` 只給 item。關卡場景用 `nXX-` 加地點；全遊戲共用的背景可以用短名（`wild`、`load1`）。主角只有 `hero-f` 與 `hero-m`，情緒接在後面。NPC 立繪是 `npc-<拼音>`，頭像是同一個名字再加 `-av`。
@@ -128,6 +130,7 @@ avatar ^(?:avatar-[mf]|npc-[a-z0-9]+(?:-[a-z0-9]+)*-av)$
 icon ^ic-[a-z0-9]+(?:-[a-z0-9]+)*$
 item ^it-[a-z0-9]+(?:-[a-z0-9]+)*$
 sprite ^g[0-9]{2}(?:-[a-z0-9]+)+$
+closeup ^g[0-9]{2}-cu(?:-[a-z0-9]+)+$
 currency ^[a-z0-9]+(?:-[a-z0-9]+)*$
 ```
 
@@ -193,6 +196,13 @@ One inventory object for Seven Relics (秘寶真相), centered on a fully transp
 One compositing sprite for Seven Relics (秘寶真相), on a fully transparent background. Paint only the single object named in the subject, seen from the same eye-level angle as a dark mine interior. If the subject says full-bleed, the opaque surface must touch the canvas edges it names so the game can scale the file onto a hotspot without a gap; interior holes and any named gaps stay transparent. Otherwise keep a transparent silhouette and let the opaque pixels touch the bounding edges the subject names. Blood-red rim light, wet rust, near-black shadows, cream only as small specular highlights. No scenery, no floor, no cast shadow blob, no second object, no frame, no watermark, no checkerboard, and no text unless the subject quotes the exact characters.
 ```
 
+### closeup
+
+<!-- style-prefix: closeup -->
+```text
+A straight-on, frontal close-up for Seven Relics (秘寶真相), opaque full-bleed 16:9, as if the camera has moved squarely in front of one object. Not a cropped angle of a wide shot, not a three-quarter view, not a dutch tilt. The object faces the lens and fills the frame; its front surface is parallel to the picture plane. Dark cinematic semi-realistic painting: near-black shadows (#0a0607), blood-red rim light (#c4142c, #e5263a), worn rust and antique gold only as metal (#c9a27e, #d8b594), cream only as paper or a small specular (#f1e8e2). Wet iron, peeling paint, or yellowed paper, with a little fog at the edges. No border, no letterbox, no watermark, no modern UI, no hands, and no text or digits unless the subject line quotes the exact characters.
+```
+
 ### currency
 
 <!-- style-prefix: currency -->
@@ -243,5 +253,6 @@ avatar|256|256|transparent|1024x1024
 icon|256|256|transparent|1024x1024
 item|400|400|transparent|1024x1024
 sprite|1024|1024|transparent|1024x1024
+closeup|1280|720|opaque|1280x720
 currency|160|160|transparent|1024x1024
 ```
