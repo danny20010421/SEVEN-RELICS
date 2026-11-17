@@ -33,6 +33,12 @@ const DOCS = {
     [entry('1945 年 2 月 17 日', '三車貨物', '我們已經商量好了。三車貨物，不會抵達原本的終點。如果有人發現這本日誌，請記住今天的日期。數字會告訴你它們去了哪裡。'),
       entry('1945 年 2 月 21 日', '另一條路', '吳先生熟悉礦區所有的維修路線。他告訴我們，有一條舊升降路線通往上方的坑道，早就不在平常的運輸清單裡。或許我們還有機會。')],
     [entry('1945 年 2 月 28 日', '約定', '最後一批貨物已經安置好了。當所有人離開後，那裡不會再有人踏入。我不知道我們還能不能回來。但只要有人記得那一天，就能打開最後一道門。'), ''],
+ ], spreadsEn: [
+    [entry('12 December 1944', 'A Birthday Far From Home', 'Today is my birthday. The twelfth of December. Every year on this day, Mother would cook a grand supper. This year I spend it in a cold mine. I wonder whether, by my next birthday, I shall be home.'),
+      entry('15 February 1945', 'Wealth That Is Not Ours', 'Today we found a load of specially sealed metal cargo, far heavier than ore. The guards would not let us look, and it was never put on the ore list. I suspect those crates hold refined gold.')],
+    [entry('17 February 1945', 'Three Carts', 'It is agreed. Three carts will not reach their destination. If anyone finds this journal, remember this date. The numbers will tell you where they went.'),
+      entry('21 February 1945', 'Another Way', 'Mr Wu knows every maintenance route in the mine. He told us of an old lift line to the upper tunnels, long struck off the haulage lists. Perhaps we still have a chance.')],
+    [entry('28 February 1945', 'The Promise', 'The last of the cargo is in place. Once we all leave, no one will set foot there again. I do not know if we will ever return. But whoever remembers that day can open the last door.'), ''],
   ] },
   ledger: { title: '離站簿與到站簿', kind: 'book', spreads: [[`<h4>離站簿　1945 年 2 月</h4>${tab('離站', 1)}`, `<h4>到站簿　1945 年 2 月</h4>${tab('到站', 2)}`]] },
   photoA: { title: '戰俘合照', kind: 'photo', img: 'it-photo.webp', cap: 'Arthur　Edward　Thomas　吳清和' },
@@ -248,23 +254,26 @@ export function render(st, params, go) {
   });
 
   // ---------- 文件：一張紙或一本冊子浮在場景上，點旁邊收起 ----------
-  function docHtml(doc, page) {
+  function docHtml(doc, page, lang = 'zh') {
     if (doc.kind === 'letter') return `<div class="g1-paper letter"><img src="${IMG('g01-paper-letter.webp')}" alt=""><div class="ink">${doc.body}</div></div>`;
     if (doc.kind === 'sheet') return `<div class="g1-paper sheet"><img src="${IMG('g01-paper-sheet.webp')}" alt=""><div class="ink">${doc.body}</div></div>`;
     if (doc.kind === 'plate') return `<div class="g1-plate">${doc.body}</div>`;
     if (doc.kind === 'photo') return `<div class="g1-photo"><img src="${IMG(doc.img)}" alt=""><p>${doc.cap}</p></div>`;
     if (doc.kind === 'ledgerpick') return docHtml(DOCS.ledger, 0);
-    const [l, r] = doc.spreads[page]; const n = doc.spreads.length;
-    return `<div class="g1-book"><img src="${IMG('g01-book.webp')}" alt=""><div class="pg l">${l}</div><div class="pg r">${r}</div>
+    const sp2 = lang === 'en' && doc.spreadsEn ? doc.spreadsEn : doc.spreads;
+    const [l, r] = sp2[page]; const n = sp2.length;
+    return `<div class="g1-book${lang === 'en' && doc.spreadsEn ? ' en' : ''}"><img src="${IMG('g01-book.webp')}" alt=""><div class="pg l">${l}</div><div class="pg r">${r}</div>
 ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="curl r"></div>' : ''}</div>`;
   }
+  let docLang = 'en'; // 亞瑟的日誌原文是英文，玩家可以切換成中文
   function readDoc(id) {
     return new Promise(res => {
       const doc = DOCS[id]; let page = 0;
       const m = html(`<div class="g1-docback" role="dialog" aria-label="${doc.title}"></div>`);
       const multi = doc.kind === 'book' && doc.spreads.length > 1;
-      const paint = () => { m.innerHTML = docHtml(doc, page) + `<div class="g1-dochint">${multi ? '點書的右側翻到下一頁，點左側翻回上一頁　點旁邊收起' : '點旁邊收起'}</div>`; };
+      const paint = () => { m.innerHTML = docHtml(doc, page, docLang) + (doc.spreadsEn ? `<button type="button" class="g1-trans" data-lang aria-label="切換中文或英文">${docLang === 'en' ? '譯　中文' : 'EN　原文'}</button>` : '') + `<div class="g1-dochint">${multi ? '點書的右側翻到下一頁，點左側翻回上一頁　點旁邊收起' : '點旁邊收起'}</div>`; };
       m.addEventListener('click', e => {
+        if (e.target.closest('[data-lang]')) { sfx('tap'); docLang = docLang === 'en' ? 'zh' : 'en'; paint(); return; }
         const bk = e.target.closest('.g1-book');
         if (bk) {
           if (!multi) return;
@@ -600,12 +609,12 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     setStep('啟動升降機', [() => !hasCtl ? '工具架上有一支 T 型手柄。' : !ctlOn ? '把 T 型手柄裝到控制盤中間的插座。' : '照鐵牌上的順序操作控制盤：解除制動 → 接通電源 → 下降。'], () => (!hasCtl ? ['rack'] : ['manual', 'panel']), '工具架上拿 T 型手柄，裝到控制盤中間的插座。照鐵牌順序：解除制動 → 接通電源 → 下降，把鐵籠叫下來。');
     await me('一座豎井……鐵籠不在這裡，停在上面某一層。', 'A shaft… the cage isn’t here. It’s stopped somewhere above.'); S();
     let panelSeq = [];
-    const PANEL = { brake: [515, 438, '解除制動'], power: [770, 438, '接通電源'], down: [643, 526, '下降'] };
-    const panelCu = () => openCu(zoomBg(hasCtl && ctlOn ? 'g01-s07-empty-nh.webp' : hasCtl ? 'g01-s07-empty-nh.webp' : 'g01-s07-empty.webp', 30, 350, 2.6, 302, -862 + 350 * 2.6) +
-      `${ctlOn ? `<img class="g1-sp" src="${IMG('it-handle.webp')}" alt="" style="left:583px;top:292px;width:120px;height:120px;object-fit:contain">` : ''}` +
+    const PANEL = { brake: [437, 438, '解除制動'], power: [692, 438, '接通電源'], down: [565, 526, '下降'] };
+    const panelCu = () => openCu('<div class="g1-crossbg"></div>' + zoomBg(hasCtl && ctlOn ? 'g01-s07-empty-nh.webp' : hasCtl ? 'g01-s07-empty-nh.webp' : 'g01-s07-empty.webp', 30, 350, 2.6, 302, -862 + 350 * 2.6) +
+      `${ctlOn ? `<img class="g1-sp" src="${IMG('it-handle.webp')}" alt="" style="left:505px;top:292px;width:120px;height:120px;object-fit:contain">` : ''}` +
       Object.values(PANEL).map(([x, y, t]) => `<div class="g1-engr sm" style="left:${x}px;top:${y + 64}px">${t}</div>`).join('') +
       Object.entries(PANEL).map(([k, [x, y]]) => `<div class="g1-btnglow${panelSeq.includes(k) ? ' on' : ''}" style="left:${x}px;top:${y}px"></div>`).join(''),
-      [['socket', 583, 292, 120, 120, '中間的插座'], ...Object.entries(PANEL).map(([k, [x, y, t]]) => [k, x - 56, y - 56, 112, 112, t])]);
+      [['socket', 505, 292, 120, 120, '中間的插座'], ...Object.entries(PANEL).map(([k, [x, y, t]]) => [k, x - 56, y - 56, 112, 112, t])]);
     await loop(async (id, item) => {
       if (id === 'back') { closeCu(); return; }
       if (id === 'manual') { await getDoc('manual'); S(); return void await me('一般運轉不停靠的地方……就不會出現在任何運輸紀錄裡。', 'A level the lift never normally stops at… would never show up in any transport record.'); }
@@ -687,13 +696,23 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
       }
     }); S();
     el.classList.remove('g1-shake');
+    sfx('clang');
+    await say('鐵籠卡在三樓和四樓中間，晃了兩下才停住。', 'The cage jolts to a stop between three and four.', 'think'); S();
+    await me('門外是一條平台……沒有樓層編號。手電筒照到鐵網上，刻著一排日期。', 'A platform outside… no floor number. My light catches dates scratched into the mesh.', { pic: false }); S();
+    await me('二月二十二日、二十四日、二十六日、二十八日……四個晚上。他們來過不只一次。', 'February 22nd, 24th, 26th, 28th… four nights. They came here more than once.', { pic: false }); S();
     cine.classList.remove('hidden');
     cine.innerHTML = `<img class="bg" src="${IMG('g01-lift.webp')}" alt="" style="filter:brightness(.45) sepia(.5)"><img src="${IMG('npc-arthur.webp')}" alt="" class="g01-ghost" style="height:820px;top:30px"><div class="vignette"></div>`;
     sfx('flash'); await wait(1200); S();
-    await say('我們不知道戰爭什麼時候結束……', 'We don’t know when the war will end…', 'arthur'); S();
-    await say('但至少這一次，黃金不會再被他們帶走。', 'But this time, they won’t take the gold.', 'arthur'); S();
+    await say('吳先生說，這座升降機只有維修時才會停在三點五。帳上，不會有它的名字。', 'Mr Wu said this lift only stops at three-and-a-half for repairs. It has no name in any ledger.', 'arthur'); S();
+    await say('一個晚上只能推一車。Edward 守在豎井口，Thomas 數著巡邏的腳步聲，我和吳先生推車。', 'One cart a night. Edward kept watch at the shaft, Thomas counted the patrol’s footsteps, Mr Wu and I pushed.', 'arthur'); S();
+    await say('Cole 和陳先生沒能等到這一天。落盤那天，是他們把我們推出坑道的。', 'Cole and Mr Chen never saw this day. When the roof came down, they were the ones who pushed us out.', 'arthur'); S();
+    await say('我們在左邊的坑道替他們立了十字架，也在那裡發了誓。', 'We raised a cross for them in the left tunnel, and we made our vow there.', 'arthur'); S();
+    await say('這座山拿走了他們的命。它的黃金，不能再拿去換更多人的命。', 'This mountain took their lives. Its gold will not be traded for any more.', 'arthur'); S();
+    await say('我們不知道戰爭什麼時候結束……但至少這一次，黃金不會再被他們帶走。', 'We don’t know when the war will end… but this time, they won’t take the gold.', 'arthur'); S();
     cine.classList.add('hidden'); cine.innerHTML = '';
-    await me('一般運轉不停靠的地方……也就是沒有人會來的地方。', 'A level the lift never stops at… a place no one would ever come.', { pic: false }); S();
+    await me('……十字架不只是墓碑。那是他們欠下的兩條命，也是這個約定開始的地方。', '…The cross wasn’t just a grave. It was two lives they owed, and where this promise began.', { pic: false }); S();
+    await me('三個英國人推車，一個台灣人帶路。照片背面那句話……他們想四個人一起活著回來。', 'Three Englishmen pushing, one Taiwanese man leading the way. The words on the back of that photo… they wanted all four to come back alive.', { pic: false }); S();
+    await me('一般運轉不停靠的地方，也就是沒有人會來的地方。他們把秘密藏在帳本的縫隙裡。', 'A level the lift never stops at is a place no one comes. They hid their secret in the gaps of the ledgers.', { pic: false }); S();
     $(el, '#slots').classList.remove('hidden');
 
     // ---------- S08 被遺忘的金庫 ----------
