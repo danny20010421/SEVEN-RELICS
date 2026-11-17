@@ -793,3 +793,6 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 .g1-door.open { transform: perspective(900px) rotateY(108deg); filter: brightness(0.55); }
 .g1-lkin { position: absolute; z-index: 2; overflow: hidden; background: #0b0605; pointer-events: none; }
 .g1-lkin img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; filter: brightness(0.7); }
+.g1-door.open { z-index: 4; }
+.g1-kmsg { pointer-events: auto; z-index: 8; }
+.g1-freehint { height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid rgba(216, 181, 148, 0.6); background: rgba(20, 12, 10, 0.8); color: var(--gold-2); font-size: 16px; cursor: pointer; vertical-align: middle; }

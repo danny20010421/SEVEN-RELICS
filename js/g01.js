@@ -751,7 +751,12 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
         if (!ctlOn) return void await me(keyIn ? '按了沒有反應……鑰匙還沒轉。' : '按了沒有反應……要先用鑰匙啟動。', keyIn ? 'Nothing… the key hasn’t been turned.' : 'Nothing happens… it needs the key first.', { pic: false });
         if (panelSeq.includes(id)) return;
         sfx('clang'); panelSeq.push(id); panelCu();
-        if (['brake', 'power', 'down'][panelSeq.length - 1] !== id) { sfx('error'); await wait(500); panelSeq = []; panelCu(); return void await me('控制盤復位了。順序不對。', 'The panel reset. Wrong order.'); }
+        if (['brake', 'power', 'down'][panelSeq.length - 1] !== id) {
+          sfx('error'); await wait(500); S(); panelSeq = []; ctlOn = false; keyIn = 1; sp('ctlIn').style.opacity = 0; panelCu(); sfx('clang');
+          await me('順序不對……鑰匙「喀」一聲轉回原位，指針也掉回去了。得重新轉一次。', 'Wrong order… the key clicks back and the needle drops. I have to turn it again.', { pic: false }); S();
+          toast('點鑰匙左側或往左滑，重新轉動鑰匙。');
+          return;
+        }
         if (panelSeq.length < 3) return;
         closeCu(); sfx('whoosh'); await wait(600); S();
         scene.querySelector('img.bg').src = IMG('g01-s07-cage-nh.webp'); cageDown = true; s07hs(); sfx('clang');
@@ -764,7 +769,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
 
     // ---------- 鐵籠：同時按 3 與 4，停在 3.5 樓 ----------
     await fadeTo(() => { setDark(false); setScene('g01-lift.webp', '升降機鐵籠內部，右邊是樓層按鈕', [],
-      [5, 4, 3, 2].map(f => `<div class="g1-lglow" id="lf${f}" style="left:1120px;top:${{ 5: 165, 4: 200, 3: 237, 2: 270 }[f]}px"></div>`).join('')); $(el, '#slots').classList.add('hidden'); }); S();
+      [5, 4, 3, 2].map(f => `<div class="g1-lglow" id="lf${f}" style="left:1127px;top:${{ 5: 188, 4: 223, 3: 260, 2: 296 }[f]}px"></div>`).join('')); $(el, '#slots').classList.add('hidden'); }); S();
     setHs([['lpanel', 1080, 77, 114, 352, '樓層按鈕']]);
     setStep('停在 3.5 樓', ['鐵牌上寫著：3.5 在三樓和四樓之間，一般運轉不停靠。', '鐵牌最後一行：如需停靠，同時按下 3 與 4。', '打開樓層按鈕，同時按住 3 和 4（滑鼠就快速連點兩顆）。'], ['lpanel'], '樓層按鈕近景裡，同時按下 3 和 4（手機用兩指同時按，滑鼠就在一秒內先後點兩顆），鐵籠就會停在 3.5 樓。');
     await me('按鈕只有 1 到 5。鐵牌上寫著，要停在 3.5，得同時按下 3 和 4。', 'Buttons only go 1 to 5. The plate said: to stop at 3.5, press 3 and 4 together.', { pic: false }); S();
@@ -1024,7 +1029,7 @@ ${miss.length ? `<p style="font-size:16px;line-height:24px;color:var(--muted)">�
   function keypad() {
     return new Promise(res => {
       let val = '', wrong = 0;
-      const H = ['不對。日誌裡，好像有人提過某個特別的日子。', '不對。他最想回家的那一天……', '不對。月份兩位、日期兩位。'];
+      const H = ['日誌裡，好像有人提過某個特別的日子。', '他最想回家的那一天……', '日誌第一篇的日期，月份兩位、日期兩位。'];
       const KEYS = { 1: [551, 260], 2: [643, 260], 3: [731, 260], 4: [551, 345], 5: [643, 345], 6: [731, 345], 7: [551, 425], 8: [643, 425], 9: [731, 425], 0: [643, 509] };
       const SLOT = [577, 620, 661, 704];
       const paint = () => { $(cu, '#lcd').innerHTML = [...val].map((c, i) => `<div class="g1-lcdpatch" style="left:${SLOT[i]}px;top:161px"></div><div class="g1-lcd" style="left:${SLOT[i]}px;top:161px">${c}</div>`).join(''); };
@@ -1038,7 +1043,10 @@ ${miss.length ? `<p style="font-size:16px;line-height:24px;color:var(--muted)">�
         sfx('key'); val += a.id[1]; paint();
         if (val.length < 4) return;
         if (val === '1212') { off(); sfx('unlock'); await wait(800); closeCu(); res(true); return; }
-        sfx('error'); $(cu, '#km').textContent = H[Math.min(wrong, 2)]; wrong++;
+        sfx('error'); wrong++;
+        $(cu, '#km').innerHTML = '不對。　<button type="button" class="g1-freehint">免費提示</button>';
+        const fb = $(cu, '.g1-freehint'), lv = Math.min(wrong - 1, 2);
+        fb.addEventListener('click', ev => { ev.stopPropagation(); sfx('hint'); $(cu, '#km').textContent = H[lv]; });
         await wait(600); val = ''; paint();
       };
       const off = () => { listeners = listeners.filter(l => l !== L); };
