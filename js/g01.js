@@ -10,6 +10,7 @@ const ITEMS = {
   grip: { name: '礦車扳桿', src: IMG('it-lever.webp'), desc: '木箱裡斜插著的一支鐵扳桿，底座有轉軸。', hint: '插到控制機上，扳下去就能放開礦車。' },
   fl: { name: '手電筒', src: IMG('it-flashlight.webp'), desc: '一支舊手電筒，換上自己帶的備用電池後還能亮。', hint: '對著黑暗的地方使用，就能照亮。' },
   tr: { name: '翻譯筆', src: IMG('it-translator.webp'), desc: '林館長給的翻譯筆，掃過英文就會顯示中文。', hint: '看英文文件時，點它就能翻譯。' },
+  pick: { name: '十字鎬', src: IMG('it-pickaxe.webp'), desc: '柄上纏著破布的舊十字鎬，鎬尖還很利。', hint: '能敲碎擋路的石塊。' },
   ctl: { name: '舊鑰匙', src: IMG('it-key.webp'), desc: '掉在十字架底下的舊鑰匙，柄上繫著一段紅布。', hint: '插進控制盤中間的鑰匙孔，轉動就能啟動。' },
 };
 const ICO = {
@@ -498,10 +499,10 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
         if (item !== 'bar') return void await me('鎖扣都鏽死了，要撬開才行。', 'The latch has rusted shut. I’ll need to pry it.');
         sfx('pry'); opened.add(n);
         if (n !== 3) {
-          const v = html(`<div class="g1-docback" role="dialog" aria-label="${n} 號鐵櫃內部"><img class="g1-lockerview" src="${IMG('g01-locker-open.webp')}" alt="鐵櫃裡掛著一件破舊的工作服"><div class="g1-dochint">點旁邊收起</div></div>`);
-          el.appendChild(v);
-          await me('撬開了……裡面只掛著一件發霉的工作服。不是這一個。', 'Pried open… only a mouldy coverall hanging inside. Not this one.', { pic: false }); S();
-          await new Promise(r => v.addEventListener('click', () => { sfx('tap'); v.remove(); r(); })); S();
+          const R0 = { 1: [598, 165, 106, 280], 2: [712, 165, 108, 390] }[n];
+          scene.insertAdjacentHTML('beforeend', `<div class="g1-lkopen" style="left:${R0[0]}px;top:${R0[1]}px;width:${R0[2]}px;height:${R0[3]}px"><img src="${IMG('g01-locker-open.webp')}" alt="鐵櫃裡掛著一件破舊的工作服"></div>`);
+          sfx('door'); await wait(400); S();
+          await me('撬開了……裡面只掛著一件發霉的工作服。不是這一個。', 'Pried open… only a mouldy coverall hanging inside. Not this one.'); S();
           return;
         }
         sfx('door'); hide('door3'); await wait(500); S();
@@ -514,16 +515,18 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
 
     // ---------- S05 六坑運礦站 ----------
     await chapter('六坑運礦站', 'S05', () => setScene('g01-s05.webp', '六坑運礦站，兩條軌道、磅秤與一塊舊黑板', [
-      ['oldsw', 'g01-switch.webp', 690, 600, 130, 86, 'opacity:0;z-index:2;filter:brightness(.8) contrast(1.1)'],
+      ['oldsw', 'g01-switch2.webp', 596, 598, 300, 0, 'opacity:0;z-index:2;filter:brightness(.75)'],
+      ['rubble', 'g01-rubble.webp', 452, 296, 330, 0, 'z-index:2;filter:brightness(.55);transform-origin:50% 100%;transition:transform .25s,opacity .6s,filter .25s'],
+      ['pick', 'g01-pickaxe.webp', 330, 596, 150, 0, 'z-index:3;transform:rotate(-58deg);filter:brightness(.7)'],
       ['rag', 'g01-rag.webp', 612, 566, 290, 0, 'z-index:4;filter:brightness(.6)'],
     ])); S();
-    let circled = false, rubbed = false;
-    setHs([['ledger', 956, 312, 190, 64, '桌上的帳簿'], ['scale', 820, 326, 80, 150, '磅秤'], ['board5', 844, 84, 300, 206, '黑板'], ['gravel', 600, 556, 310, 150, '軌道上的破布']]);
+    let circled = false, rubbed = false, switchFound = false, hasPick = false, hits = 0;
+    setHs([['ledger', 956, 312, 190, 64, '桌上的帳簿'], ['scale', 820, 326, 80, 150, '磅秤'], ['board5', 844, 84, 300, 206, '黑板'], ['gravel', 600, 556, 310, 150, '軌道上的破布'], ['pick', 320, 560, 180, 120, '地上的十字鎬'], ['rubble', 452, 296, 330, 190, '堵住坑道的碎石']]);
     setStep('找出對不上的那一天', [() => !circled ? '右邊桌上疊著帳簿，翻開離站簿與到站簿，同一天的數字應該一樣。' : !rubbed ? '黑板上的粉筆灰底下，好像還有字。用手指把灰抹掉。' : '軌道上蓋著一塊破布，把它移開。', () => !circled ? '二月十七日：離站 12、到站 9。在冊子上點那一行。' : !rubbed ? '在黑板上來回滑動，把整片粉筆灰擦掉。' : '點鐵軌旁的碎石。'],
       () => (!circled ? ['ledger'] : !rubbed ? ['board5'] : ['gravel']),
       () => (!circled ? '翻開離站簿與到站簿，只有 02/17 對不上：離站 12 車、到站 9 車。在冊子上點 02/17 那一行圈起來。' : !rubbed ? '黑板被粉筆灰蓋住了。點黑板，用手指或滑鼠來回抹，擦出底下的字。' : '絆倒主角的是軌道上的一塊破布。點破布把它移開。'));
     await me('礦車在這裡秤重、登記，再送出去。每一車都會留下紀錄。', 'Carts were weighed and logged here before leaving. Every load left a record.'); S();
-    await loop(async id => {
+    await loop(async (id, item) => {
       if (id === 'back') { closeCu(); return; }
       if (id === 'ledger') {
         got.add('ledger');
@@ -544,6 +547,13 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
         const ok = await rubBoard(); S();
         if (!ok) return;
         rubbed = true; hintLv = 0;
+        await me('是日文……用翻譯筆掃一下。', 'It’s Japanese… let me scan it with the pen.', { pic: false }); S();
+        toast('點道具欄的翻譯筆翻譯黑板上的字。');
+        await new Promise(r => { curTrans = () => {
+          curTrans = null; sfx('hint');
+          cu.insertAdjacentHTML('beforeend', '<div class="g1-scan board"></div>');
+          setTimeout(() => { $(cu, '#bl1').textContent = '必須找到遺失的黃金'; $(cu, '#bl2').textContent = '否則所有人一起陪葬'; $(cu, '#bl1').classList.remove('jp'); $(cu, '#bl2').classList.remove('jp'); r(); }, 900);
+        }; }); S();
         $(el, '#goal').textContent = '目標　檢查鐵軌';
         await me('「必須找到遺失的黃金，否則所有人一起陪葬」……', '“Find the missing gold, or every one of you will be buried with it”…', { pic: false }); S();
         await me('這不是礦工寫的，是寫給礦工看的。三車貨不見了，監工就拿所有人的命來逼。', 'The miners didn’t write this—it was written for them. Three carts went missing, and the overseers threatened every life to get them back.', { pic: false }); S();
@@ -561,6 +571,25 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
         sp('oldsw').style.opacity = 1; await wait(400); S();
         await me('破布底下……是一個轉轍器，被人砸壞了。扳桿斷在側線那一邊，只能通往旁邊那條舊軌道。', 'Under the cloth… a switch, smashed. The lever snapped off toward the siding, so it can only send carts down the old track.'); S();
         await me('有人故意弄壞它、再用破布蓋住。三車貨物沒有離開礦坑，而是從這裡轉進去了。', 'Someone broke it on purpose and hid it under the cloth. The three loads never left the mine; they were switched off here.'); S();
+        await me('可是軌道前面……坑道被一堆碎石堵住了。得想辦法把它敲開。', 'But further down the track… the tunnel is choked with rubble. I need to break through.'); S();
+        switchFound = true; hintLv = 0;
+        setStep('清除坑道裡的碎石', [() => hasPick ? '點道具欄的十字鎬，再點碎石，多敲幾下。' : '左邊地上躺著一把十字鎬。'], () => (hasPick ? ['rubble'] : ['pick']), '撿起左下地上的十字鎬，點道具欄的十字鎬後點坑道裡的碎石，敲三下就能清出通道。');
+        return;
+      }
+      if (id === 'pick') {
+        if (hasPick) return;
+        hasPick = true; hide('pick'); dropHs('pick'); addItem('pick');
+        return void await me('一把十字鎬，柄上纏的布都磨爛了。', 'A pickaxe, the cloth on its handle worn to shreds.');
+      }
+      if (id === 'rubble') {
+        if (!switchFound) return void await me('坑道深處堆著碎石……', 'Rubble piled deep in the tunnel…');
+        if (item !== 'pick') return void await me(hasPick ? '空手搬不動，用十字鎬敲敲看。' : '石頭太大了，空手搬不動。', hasPick ? 'Too heavy by hand. Try the pickaxe.' : 'Too big to move by hand.');
+        hits++; const rb = sp('rubble'); sfx('pry');
+        el.classList.add('g1-shake1'); setTimeout(() => el.classList.remove('g1-shake1'), 450);
+        rb.style.transform = `scale(${1 - hits * 0.18}, ${1 - hits * 0.25})`; rb.style.filter = 'brightness(.8)'; setTimeout(() => { rb.style.filter = 'brightness(.55)'; }, 200);
+        if (hits < 3) return void await me(['敲裂了一塊。再來。', '碎了不少……再一下。'][hits - 1], ['One cracked. Again.', 'Lots of it broke apart… one more.'][hits - 1], { pic: false });
+        rb.style.opacity = 0; dropItem('pick'); await wait(600); S();
+        await me('通了。碎石後面，軌道一路往裡延伸。', 'It’s clear. Past the rubble, the track runs on inside.'); S();
         return true;
       }
     }); S();
@@ -947,7 +976,7 @@ ${miss.length ? `<p style="font-size:16px;line-height:24px;color:var(--muted)">�
       // 黑板近景：整張黑板圖（1672×941）縮成寬 1144，內框 75–1595 × 75–865
       const k = 1144 / 1672, top0 = 56, L = 75 * k, T = top0 + 75 * k, W = 1520 * k, H = 790 * k;
       openCu(`<div class="g1-crossbg"></div><img class="g1-sp" src="${IMG('g01-board-cu.webp')}" alt="黑板" style="left:0;top:${top0}px;width:1144px;height:${941 * k}px">` +
-        `<div class="g1-chalkmsg2" style="left:${L}px;top:${T}px;width:${W}px;height:${H}px"><p>必須找到遺失的黃金</p><p class="big">否則所有人一起陪葬</p></div>` +
+        `<div class="g1-chalkmsg2" style="left:${L}px;top:${T}px;width:${W}px;height:${H}px"><p class="jp" id="bl1">失われた金を必ず見つけ出せ</p><p class="big jp" id="bl2">さもなくば全員道連れだ</p></div>` +
         `<canvas class="g1-dust" width="${Math.round(W)}" height="${Math.round(H)}" style="left:${L}px;top:${T}px;width:${W}px;height:${H}px"></canvas><div class="g1-kmsg" id="rbm" style="top:${top0 + 941 * k - 56}px">在黑板上來回抹，擦掉粉筆灰</div>`);
       const cv = $(cu, '.g1-dust'), cx = cv.getContext('2d');
       // 擦拭前的黑板（滿是粉筆灰的同一塊黑板）畫在畫布上，抹掉的地方露出底下的字

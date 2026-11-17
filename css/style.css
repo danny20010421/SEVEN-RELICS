@@ -655,3 +655,11 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 .g1-rag { transition: transform 0.7s ease, opacity 0.7s ease; }
 .g1-touch { position: absolute; z-index: 30; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; pointer-events: none; border: 2px solid rgba(255, 255, 255, 0.25); animation: g1touch 0.7s ease-out forwards; }
 @keyframes g1touch { from { transform: scale(0.3); opacity: 1; } to { transform: scale(1.2); opacity: 0; } }
+@font-face { font-family: 'G01Jp'; src: url('../assets/fonts/g01-jp.woff2') format('woff2'); font-display: swap; }
+.g1-chalkmsg2 p.jp { font-family: 'G01Jp', 'G01Hand', serif; letter-spacing: 0.04em; }
+.g1-scan.board { top: 80px; bottom: 120px; z-index: 5; }
+@keyframes g1scanb { from { left: 60px; } to { left: 1080px; } }
+.g1-scan.board { animation-name: g1scanb; }
+.g1-lkopen { position: absolute; z-index: 2; overflow: hidden; transform-origin: 0 50%; animation: g1lkopen 0.4s ease-out both; }
+.g1-lkopen img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; filter: brightness(0.75); }
+@keyframes g1lkopen { from { transform: perspective(600px) rotateY(-70deg); opacity: 0.4; } to { transform: none; opacity: 1; } }
