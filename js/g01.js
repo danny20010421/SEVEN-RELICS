@@ -452,7 +452,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
         }
         if (chock) return void await me('扳桿扳不下去……礦車的輪子還被止輪器卡著。', 'The lever won’t go… the wheel is still chocked.');
         if (rolled) return;
-        sp('lever').style.transform = 'rotate(-40deg)'; sfx('clang'); await wait(500); S();
+        sp('lever').style.transform = 'rotate(-62deg)'; sfx('clang'); await wait(500); S();
         const c = sp('cart'); sfx('whoosh');
         c.style.transform = 'translate(-8px,-125px) scale(.48)'; c.style.filter = 'brightness(.15)'; c.style.opacity = '0';
         await wait(2700); S(); sfx('clang'); rolled = true; dropHs('cart'); dropHs('wheel');
@@ -499,10 +499,8 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
         if (item !== 'bar') return void await me('鎖扣都鏽死了，要撬開才行。', 'The latch has rusted shut. I’ll need to pry it.');
         sfx('pry'); opened.add(n);
         if (n !== 3) {
-          const R0 = { 1: [598, 165, 106, 280], 2: [712, 165, 108, 390] }[n];
-          scene.insertAdjacentHTML('beforeend', `<div class="g1-lkopen" style="left:${R0[0]}px;top:${R0[1]}px;width:${R0[2]}px;height:${R0[3]}px"><img src="${IMG('g01-locker-open.webp')}" alt="鐵櫃裡掛著一件破舊的工作服"></div>`);
-          sfx('door'); await wait(400); S();
-          await me('撬開了……裡面只掛著一件發霉的工作服。不是這一個。', 'Pried open… only a mouldy coverall hanging inside. Not this one.'); S();
+          sfx('door'); await wait(300); S();
+          await me('撬開了……裡面只掛著一件發霉的工作服。不是這一個。', 'Pried open… only a mouldy coverall hanging inside. Not this one.', { pic: false }); S();
           return;
         }
         sfx('door'); hide('door3'); await wait(500); S();
