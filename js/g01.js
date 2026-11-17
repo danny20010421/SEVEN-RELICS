@@ -9,6 +9,7 @@ const ITEMS = {
   bar: { name: '鐵撬棒', src: IMG('it-crowbar.webp'), desc: '靠在屋牆邊的鐵撬棒，扁口還很結實。', hint: '能撬開卡住或鏽死的東西。' },
   grip: { name: '礦車扳桿', src: IMG('it-lever.webp'), desc: '木箱裡斜插著的一支鐵扳桿，底座有轉軸。', hint: '插到控制機上，扳下去就能放開礦車。' },
   fl: { name: '手電筒', src: IMG('it-flashlight.webp'), desc: '一支舊手電筒，換上自己帶的備用電池後還能亮。', hint: '對著黑暗的地方使用，就能照亮。' },
+  tr: { name: '翻譯筆', src: IMG('it-translator.webp'), desc: '林館長給的翻譯筆，掃過英文就會顯示中文。', hint: '看英文文件時，點它就能翻譯。' },
   ctl: { name: '舊鑰匙', src: IMG('it-key.webp'), desc: '掉在十字架底下的舊鑰匙，柄上繫著一段紅布。', hint: '插進控制盤中間的鑰匙孔，轉動就能啟動。' },
 };
 const ICO = {
@@ -93,7 +94,7 @@ export function render(st, params, go) {
       const id = inv[i];
       if (!id) { s.appendChild(html('<span class="slot" role="img" aria-label="空的道具欄"></span>')); continue; }
       const b = html(`<button type="button" class="slot has${selected === id ? ' sel' : ''}${ping === id ? ' ping' : ''}" aria-label="${ITEMS[id].name}"><img src="${ITEMS[id].src}" alt=""></button>`);
-      b.addEventListener('click', () => { sfx('tap'); selected = selected === id ? null : id; paintSlots(); });
+      b.addEventListener('click', () => { sfx('tap'); if (id === 'tr') { if (curTrans) curTrans(); else toast('看英文文件時，點翻譯筆就能翻譯。'); return; } selected = selected === id ? null : id; paintSlots(); });
       s.appendChild(b);
     }
     const ban = $(el, '.use-banner'); if (ban) ban.remove();
@@ -267,22 +268,25 @@ export function render(st, params, go) {
     return `<div class="g1-book${lang === 'en' && doc.spreadsEn ? ' en' : ''}"><img src="${IMG('g01-book.webp')}" alt=""><div class="pg l">${l}</div><div class="pg r">${r}</div>
 ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="curl r"></div>' : ''}</div>`;
   }
-  let docLang = 'en', hasTr = false; // 亞瑟的日誌原文是英文；林館長給的翻譯筆掃過就看得到中文
+  let docLang = 'en', curTrans = null; // 亞瑟的日誌原文是英文；看文件時點道具欄的翻譯筆就會翻成中文
   function readDoc(id) {
     return new Promise(res => {
       const doc = DOCS[id]; let page = 0, scanning = false;
       const m = html(`<div class="g1-docback" role="dialog" aria-label="${doc.title}"></div>`);
       const multi = doc.kind === 'book' && doc.spreads.length > 1;
-      const pen = doc.spreadsEn && hasTr;
-      const paint = () => { m.innerHTML = docHtml(doc, page, docLang) + (pen ? `<button type="button" class="g1-pen${docLang === 'zh' ? ' on' : ''}" data-lang aria-label="${docLang === 'en' ? '用翻譯筆掃描翻譯' : '看英文原文'}"><img src="${IMG('it-translator.webp')}" alt=""></button>` : '') + `<div class="g1-dochint">${pen ? (docLang === 'en' ? '點翻譯筆掃描翻譯　' : '再點翻譯筆看原文　') : ''}${multi ? '點書的右側翻頁，左側翻回　' : ''}點旁邊收起</div>`; };
-      m.addEventListener('click', e => {
-        if (e.target.closest('[data-lang]')) {
+      const pen = doc.spreadsEn && inv.includes('tr');
+      const paint = () => { m.innerHTML = docHtml(doc, page, docLang) + `<div class="g1-dochint">${pen ? (docLang === 'en' ? '點道具欄的翻譯筆翻譯　' : '再點翻譯筆看原文　') : ''}${multi ? '點書的右側翻頁，左側翻回　' : ''}點旁邊收起</div>`; };
+      if (pen) {
+        el.classList.add('g1-docopen');
+        curTrans = () => {
           if (scanning) return;
-          sfx('tap');
           if (docLang === 'zh') { docLang = 'en'; paint(); return; }
           scanning = true; const bk0 = $(m, '.g1-book'); bk0.insertAdjacentHTML('beforeend', '<div class="g1-scan"></div>'); sfx('hint');
-          setTimeout(() => { scanning = false; docLang = 'zh'; paint(); }, 900); return;
-        }
+          setTimeout(() => { scanning = false; docLang = 'zh'; paint(); }, 900);
+        };
+      }
+      const close = () => { curTrans = null; el.classList.remove('g1-docopen'); m.remove(); res(); };
+      m.addEventListener('click', e => {
         const bk = e.target.closest('.g1-book');
         if (bk) {
           if (!multi) return;
@@ -291,7 +295,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
           if (np < 0 || np >= doc.spreads.length) return;
           sfx('tap'); page = np; paint(); return;
         }
-        sfx('tap'); m.remove(); res();
+        sfx('tap'); close();
       });
       paint(); el.appendChild(m);
     });
@@ -399,7 +403,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     await say('工程隊上個月剛把幾條舊坑道的電恢復，方便調查，但裡面很多地方還沒人進去過。如果發現什麼，請務必告訴我。', 'The engineers restored power to a few old tunnels last month for the survey, but much of it hasn’t been entered yet. If you find anything, please tell me.', 'lin'); S();
     await say('對了，這個你帶著。礦場的舊文件有不少是英文寫的，有些是當年戰俘留下的。用這支翻譯筆掃過去，就看得到中文。', 'Oh, and take this. Many of the old mine papers are in English, some left by the prisoners. Scan them with this pen and you’ll see the Chinese.', 'lin'); S();
     await me('翻譯筆……謝謝，應該派得上用場。', 'A translation pen… thanks. It’ll come in handy.'); S();
-    got.add('survey'); hasTr = true; sfx('pick');
+    got.add('survey'); addItem('tr');
     await sys(['任務更新：前往本山六坑，查明異常的運輸紀錄。', '獲得「本山礦區調查資料」「翻譯筆」'], 2600); S();
 
     // ---------- S03 本山六坑入口 ----------
@@ -627,7 +631,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     }); S();
 
     // ---------- S07 五坑舊運輸區 ----------
-    await chapter('五坑舊運輸區', 'S07', () => { setScene('g01-s07-empty-nh.webp', '五坑舊運輸區的空豎井，左邊是控制盤', [['ctlIn', 'g01-key-bow.webp', 120, 455, 24, 0, 'opacity:0;z-index:3']]); setDark(true, 'torch'); }); S();
+    await chapter('五坑舊運輸區', 'S07', () => { setScene('g01-s07-empty-nh.webp', '五坑舊運輸區的空豎井，左邊是控制盤', [['ctlIn', 'g01-key-end.webp', 127, 460, 8, 0, 'opacity:0;z-index:3;transform-origin:50% 18%;rotate:45deg']]); setDark(true, 'torch'); }); S();
     let ctlOn = false, cageDown = false;
     const s07hs = () => setHs([['manual', 191, 207, 74, 114, '操作須知鐵牌'], ['panel', 46, 367, 168, 207, '控制盤'], cageDown ? ['cage', 498, 306, 237, 299, '鐵籠'] : ['shaft', 470, 60, 300, 520, '豎井']]);
     s07hs();
@@ -636,7 +640,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     let panelSeq = [];
     const PANEL = { brake: [437, 438, '解除制動'], power: [692, 438, '接通電源'], down: [565, 526, '下降'] };
     const panelCu = () => openCu('<div class="g1-crossbg"></div>' + zoomBg('g01-s07-empty-nh.webp', 30, 350, 2.6, 302, -862 + 350 * 2.6) +
-      `${ctlOn ? `<img class="g1-sp g1-keyin turned" src="${IMG('g01-key-bow.webp')}" alt="" style="left:521px;top:309px;width:88px">` : ''}` +
+      `${ctlOn ? `<img class="g1-sp g1-keyin turned" src="${IMG('g01-key-end.webp')}" alt="" style="left:539px;top:316px;height:200px">` : ''}` +
       Object.values(PANEL).map(([x, y, t]) => `<div class="g1-engr sm" style="left:${x}px;top:${y + 64}px">${t}</div>`).join('') +
       Object.entries(PANEL).map(([k, [x, y]]) => `<div class="g1-btnglow${panelSeq.includes(k) ? ' on' : ''}" style="left:${x}px;top:${y}px"></div>`).join(''),
       [['socket', 505, 292, 120, 120, '中間的鑰匙孔'], ...Object.entries(PANEL).map(([k, [x, y, t]]) => [k, x - 56, y - 56, 112, 112, t])]);
@@ -649,7 +653,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
         if (ctlOn) return;
         if (item !== 'ctl') return void await me('中間是一個鑰匙孔，孔緣磨得發亮。', 'A keyhole in the middle, its rim worn shiny.', { pic: false });
         dropItem('ctl');
-        cu.insertAdjacentHTML('beforeend', `<img class="g1-sp g1-keyin" src="${IMG('g01-key-bow.webp')}" alt="" style="left:521px;top:309px;width:88px">`);
+        cu.insertAdjacentHTML('beforeend', `<img class="g1-sp g1-keyin" src="${IMG('g01-key-end.webp')}" alt="" style="left:539px;top:316px;height:200px">`);
         const kk = cu.querySelector('.g1-keyin:last-of-type'); sfx('key'); await wait(450); S();
         kk.classList.add('turned'); sfx('clang'); await wait(600); S();
         ctlOn = true; sp('ctlIn').style.opacity = 1; panelCu();
