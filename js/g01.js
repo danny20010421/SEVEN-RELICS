@@ -9,7 +9,7 @@ const ITEMS = {
   bar: { name: '鐵撬棒', src: IMG('it-crowbar.webp'), desc: '靠在屋牆邊的鐵撬棒，扁口還很結實。', hint: '能撬開卡住或鏽死的東西。' },
   grip: { name: '礦車扳桿', src: IMG('it-lever.webp'), desc: '木箱裡斜插著的一支鐵扳桿，底座有轉軸。', hint: '插到控制機上，扳下去就能放開礦車。' },
   fl: { name: '手電筒', src: IMG('it-flashlight.webp'), desc: '一支舊手電筒，換上自己帶的備用電池後還能亮。', hint: '對著黑暗的地方使用，就能照亮。' },
-  ctl: { name: 'T 型手柄', src: IMG('it-handle.webp'), desc: '工具架上的 T 型手柄，握把磨得發亮。', hint: '形狀跟控制盤上的插座一樣。' },
+  ctl: { name: '舊鑰匙', src: IMG('it-key.webp'), desc: '掉在十字架底下的舊鑰匙，柄上繫著一段紅布。', hint: '插進控制盤中間的鑰匙孔，轉動就能啟動。' },
 };
 const ICO = {
   hint: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d8b594" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"></path></svg>',
@@ -41,12 +41,12 @@ const DOCS = {
     [entry('28 February 1945', 'The Promise', 'The last of the cargo is in place. Once we all leave, no one will set foot there again. I do not know if we will ever return. But whoever remembers that day can open the last door.'), ''],
   ] },
   ledger: { title: '離站簿與到站簿', kind: 'book', spreads: [[`<h4>離站簿　1945 年 2 月</h4>${tab('離站', 1)}`, `<h4>到站簿　1945 年 2 月</h4>${tab('到站', 2)}`]] },
-  photoA: { title: '戰俘合照', kind: 'photo', img: 'it-photo.webp', cap: 'Arthur　Edward　Thomas　吳清和' },
-  photoB: { title: '四人合照（背面）', kind: 'photo', img: 'it-photo.webp', cap: '我希望我們四個人，都能活著回到這裡。' },
-  manual: { title: '升降機操作須知', kind: 'plate', body: '<h4>升降機操作須知</h4><p>一、解除制動</p><p>二、接通電源</p><p>三、選擇上升或下降</p><p class="warn">三樓與四樓之間設有維修平台（3.5），一般運轉不停靠。</p><p class="warn">如需停靠：通過三樓後，拉下手動制動桿。</p>' },
+  photoA: { title: '四人合照', kind: 'photo4', img: 'g01-photo4.webp' },
+  photoB: { title: '四人合照（背面）', kind: 'photoback', img: 'g01-photo4-back.webp', cap: '我希望我們四個人，<br>都能活著回到這裡。<br><span>1944　冬</span>' },
+  manual: { title: '升降機操作須知', kind: 'plate', body: '<h4>升降機操作須知</h4><p>一、解除制動</p><p>二、接通電源</p><p>三、選擇上升或下降</p><p class="warn">三樓與四樓之間設有維修平台（3.5），一般運轉不停靠。</p><p class="warn">如需停靠：同時按下 3 與 4。</p>' },
   letter: { title: '亞瑟最後的信', kind: 'letter', body: '<p class="i">如果你正在讀這封信，代表我們成功了。</p><p class="i">我們不知道自己還能活多久。每天都有同伴倒下，而那些人只在乎明天還能挖出多少礦石。</p><p class="i">這些黃金足以讓我們任何一個人過上富裕的生活，但沒有人打算獨自帶走它們。我們決定把黃金藏在這裡，直到這場戰爭結束。若我們沒能回來，希望找到它們的人，能記住曾經在這座山裡受苦的人。</p><p class="i">黃金屬於活著的人，但請別忘了那些死去的人。願 H. Cole 和陳金水安息。</p><p class="i">如果有一天，這些黃金再次被人發現，我只希望它們不會成為下一場貪婪的開始。</p><p class="sig">Arthur Williams</p><p class="r">1945 年 3 月</p>' },
 };
-const DOC_ICON = { journal: 'it-journal.webp', letter: 'it-letter.webp', photoA: 'it-photo.webp', photoB: 'it-photo.webp', survey: 'it-survey.webp', ledger: 'it-ledger.webp', manual: 'it-manual.webp' };
+const DOC_ICON = { journal: 'it-journal.webp', letter: 'it-letter.webp', photoA: 'g01-photo4.webp', photoB: 'g01-photo4-back.webp', survey: 'it-survey.webp', ledger: 'it-ledger.webp', manual: 'it-manual.webp' };
 
 export function render(st, params, go) {
   const replay = !!(params && params.replay);
@@ -259,21 +259,30 @@ export function render(st, params, go) {
     if (doc.kind === 'sheet') return `<div class="g1-paper sheet"><img src="${IMG('g01-paper-sheet.webp')}" alt=""><div class="ink">${doc.body}</div></div>`;
     if (doc.kind === 'plate') return `<div class="g1-plate">${doc.body}</div>`;
     if (doc.kind === 'photo') return `<div class="g1-photo"><img src="${IMG(doc.img)}" alt=""><p>${doc.cap}</p></div>`;
+    if (doc.kind === 'photo4') return `<div class="g1-photo4"><img src="${IMG(doc.img)}" alt=""></div>`;
+    if (doc.kind === 'photoback') return `<div class="g1-photo4 back"><img src="${IMG(doc.img)}" alt=""><p>${doc.cap}</p></div>`;
     if (doc.kind === 'ledgerpick') return docHtml(DOCS.ledger, 0);
     const sp2 = lang === 'en' && doc.spreadsEn ? doc.spreadsEn : doc.spreads;
     const [l, r] = sp2[page]; const n = sp2.length;
     return `<div class="g1-book${lang === 'en' && doc.spreadsEn ? ' en' : ''}"><img src="${IMG('g01-book.webp')}" alt=""><div class="pg l">${l}</div><div class="pg r">${r}</div>
 ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="curl r"></div>' : ''}</div>`;
   }
-  let docLang = 'en'; // 亞瑟的日誌原文是英文，玩家可以切換成中文
+  let docLang = 'en', hasTr = false; // 亞瑟的日誌原文是英文；林館長給的翻譯筆掃過就看得到中文
   function readDoc(id) {
     return new Promise(res => {
-      const doc = DOCS[id]; let page = 0;
+      const doc = DOCS[id]; let page = 0, scanning = false;
       const m = html(`<div class="g1-docback" role="dialog" aria-label="${doc.title}"></div>`);
       const multi = doc.kind === 'book' && doc.spreads.length > 1;
-      const paint = () => { m.innerHTML = docHtml(doc, page, docLang) + (doc.spreadsEn ? `<button type="button" class="g1-trans" data-lang aria-label="切換中文或英文">${docLang === 'en' ? '譯　中文' : 'EN　原文'}</button>` : '') + `<div class="g1-dochint">${multi ? '點書的右側翻到下一頁，點左側翻回上一頁　點旁邊收起' : '點旁邊收起'}</div>`; };
+      const pen = doc.spreadsEn && hasTr;
+      const paint = () => { m.innerHTML = docHtml(doc, page, docLang) + (pen ? `<button type="button" class="g1-pen${docLang === 'zh' ? ' on' : ''}" data-lang aria-label="${docLang === 'en' ? '用翻譯筆掃描翻譯' : '看英文原文'}"><img src="${IMG('it-translator.webp')}" alt=""></button>` : '') + `<div class="g1-dochint">${pen ? (docLang === 'en' ? '點翻譯筆掃描翻譯　' : '再點翻譯筆看原文　') : ''}${multi ? '點書的右側翻頁，左側翻回　' : ''}點旁邊收起</div>`; };
       m.addEventListener('click', e => {
-        if (e.target.closest('[data-lang]')) { sfx('tap'); docLang = docLang === 'en' ? 'zh' : 'en'; paint(); return; }
+        if (e.target.closest('[data-lang]')) {
+          if (scanning) return;
+          sfx('tap');
+          if (docLang === 'zh') { docLang = 'en'; paint(); return; }
+          scanning = true; const bk0 = $(m, '.g1-book'); bk0.insertAdjacentHTML('beforeend', '<div class="g1-scan"></div>'); sfx('hint');
+          setTimeout(() => { scanning = false; docLang = 'zh'; paint(); }, 900); return;
+        }
         const bk = e.target.closest('.g1-book');
         if (bk) {
           if (!multi) return;
@@ -388,8 +397,10 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     await say('也許。但我們還找到一份沒有登記在正式目錄中的舊礦圖。圖上有一條路線，在其他版本裡完全不存在。', 'Perhaps. But we also found an old mine map that isn’t in the official catalogue. It shows a route no other version has.', 'lin'); S();
     await me('若只是登記錯誤，不會有人特地畫一份不列入目錄的圖。', 'A clerical error doesn’t explain someone drawing a map that was kept out of the catalogue.'); S();
     await say('工程隊上個月剛把幾條舊坑道的電恢復，方便調查，但裡面很多地方還沒人進去過。如果發現什麼，請務必告訴我。', 'The engineers restored power to a few old tunnels last month for the survey, but much of it hasn’t been entered yet. If you find anything, please tell me.', 'lin'); S();
-    got.add('survey'); sfx('pick');
-    await sys(['任務更新：前往本山六坑，查明異常的運輸紀錄。', '獲得「本山礦區調查資料」'], 2600); S();
+    await say('對了，這個你帶著。礦場的舊文件有不少是英文寫的，有些是當年戰俘留下的。用這支翻譯筆掃過去，就看得到中文。', 'Oh, and take this. Many of the old mine papers are in English, some left by the prisoners. Scan them with this pen and you’ll see the Chinese.', 'lin'); S();
+    await me('翻譯筆……謝謝，應該派得上用場。', 'A translation pen… thanks. It’ll come in handy.'); S();
+    got.add('survey'); hasTr = true; sfx('pick');
+    await sys(['任務更新：前往本山六坑，查明異常的運輸紀錄。', '獲得「本山礦區調查資料」「翻譯筆」'], 2600); S();
 
     // ---------- S03 本山六坑入口 ----------
     bgm('g01mine');
@@ -399,10 +410,9 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
       ['chock', 'g01-chock.webp', 786, 556, 58, 39, 'z-index:3'],
       ['bar', 'g01-crowbar.webp', 176, 396, 52, 170, 'z-index:2;transform:rotate(-8deg)'],
     ], `<div class="g1-clip" style="left:960px;top:230px;width:240px;height:222px"><img id="grip" class="g1-sp" src="${IMG('g01-lever.webp')}" alt="" style="left:119px;top:60px;width:22px;height:240px;transform-origin:50% 100%;transform:rotate(-30deg)"></div>
-<img id="lever" class="g1-sp" src="${IMG('g01-lever.webp')}" alt="" style="left:396px;top:392px;width:19px;height:200px;z-index:2;opacity:0;transform-origin:50% 95%;transition:transform .5s ease,opacity .3s">
-<div class="g1-scratch aw3" style="left:962px;top:318px">A.W.</div>`)); S();
-    let hasBar = false, chock = true, hasGrip = false, gripOn = false, rolled = false, awSeen = false;
-    setHs([['cart', 537, 292, 307, 291, '礦車'], ['wheel', 760, 520, 120, 90, '車輪'], ['bar', 130, 380, 120, 200, '鐵撬棒'], ['crate', 940, 260, 280, 360, '木箱'], ['ctrl', 260, 380, 210, 260, '控制機'], ['aw', 930, 270, 140, 130, '岩壁上的刻痕']]);
+<img id="lever" class="g1-sp" src="${IMG('g01-lever.webp')}" alt="" style="left:396px;top:392px;width:19px;height:200px;z-index:2;opacity:0;transform-origin:50% 95%;transition:transform .5s ease,opacity .3s">`)); S();
+    let hasBar = false, chock = true, hasGrip = false, gripOn = false, rolled = false;
+    setHs([['cart', 537, 292, 307, 291, '礦車'], ['wheel', 760, 520, 120, 90, '車輪'], ['bar', 130, 380, 120, 200, '鐵撬棒'], ['crate', 940, 260, 280, 360, '木箱'], ['ctrl', 260, 380, 210, 260, '控制機']]);
     setStep('移開擋住入口的礦車', [() => !hasBar ? '小屋牆邊靠著一根鐵撬棒。' : chock ? '車輪底下卡著止輪器。點道具欄的鐵撬棒，再點車輪。' : !hasGrip ? '右邊的木箱裡斜插著一支扳桿。' : !gripOn ? '左下角的控制機少了扳桿。把扳桿插上去。' : '扳下控制機上的扳桿。'],
       () => !hasBar ? ['bar'] : chock ? ['wheel'] : !hasGrip ? ['crate'] : ['ctrl'],
       '礦車被止輪器卡在往下的軌道上。順序：撿鐵撬棒 → 撬掉車輪下的止輪器 → 從右邊木箱拿扳桿 → 插到左下角的控制機 → 扳下扳桿，礦車就會順著軌道溜進坑道。');
@@ -410,10 +420,10 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     const awCu = async () => {
       openCu(`<img class="bg" src="${IMG('g01-aw-cu.webp')}" alt="岩壁上刻著 A.W.">`, [], false);
       await me('「A.W.」……刻痕很深，是用工具一筆一筆鑿出來的。是人名的縮寫嗎？', '“A.W.”… cut deep, stroke by stroke with a tool. Someone’s initials?', { pic: false }); S();
-      closeCu(); awSeen = true;
+      closeCu();
     };
     await loop(async (id, item) => {
-      if (id === 'aw') { await awCu(); return rolled; }
+      if (id === 'aw') { await awCu(); return true; }
       if (id === 'cart') return void await me(chock ? '太重了，推不動。軌道往坑裡斜……車輪底下卡著東西。' : '止輪器拿掉了，可是控制機還鎖著車。', chock ? 'Too heavy to push. The track slopes inward… something is jammed under the wheel.' : 'The chock is out, but the control is still holding the cart.');
       if (id === 'wheel') {
         if (!chock) return void await me('止輪器已經拿掉了。', 'The chock is gone.');
@@ -436,33 +446,36 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
         c.style.transform = 'translate(-8px,-125px) scale(.48)'; c.style.filter = 'brightness(.15)'; c.style.opacity = '0';
         await wait(2700); S(); sfx('clang'); rolled = true; dropHs('cart'); dropHs('wheel');
         await me('坑道是往下的坡。煞車一放，礦車就順著軌道溜進去了……路讓出來了。', 'The tunnel slopes down. With the brake released, the cart rolled away down the track… the way is clear.'); S();
-        if (awSeen) return true;
-        await me('右上角的岩壁上……好像刻著什麼字。', 'Up on the rock to the right… something is carved there.'); S();
-        setStep('調查岩壁上的刻痕', ['右上角的岩壁上刻著字。'], ['aw'], '點右上角岩壁上的刻痕。');
+        await me('嗯？礦車原本擋著的岩壁……那裡好像刻著什麼……', 'Hm? On the rock the cart was hiding… something seems to be carved there…', { pic: false }); S();
+        setHs([['aw', 920, 260, 160, 150, '岩壁']]);
+        setStep('調查右邊的岩壁', ['點右邊木箱上方的岩壁。'], ['aw'], '點右邊木箱上方的岩壁，看看刻了什麼。');
+        flash(['aw'], 5000); toast('點右邊的岩壁看看。');
       }
     }); S();
 
     // ---------- S04 礦工休息室 ----------
     // 背景本身就有三座鐵櫃；03 號原本敞開，用同一張背景裡 02 號的門補成關著的門。照片是釘在黑板角落的一張小照片。
     await chapter('礦工休息室', 'S04', () => setScene('g01-s04.webp', '礦工休息室，黑板、木桌與三座鐵櫃', [
-      ['photoAart', 'it-photo.webp', 392, 146, 58, 44, 'z-index:2;object-fit:cover;filter:grayscale(1) sepia(.4) brightness(.8);box-shadow:0 3px 6px rgba(0,0,0,.6);transform:rotate(-5deg)'],
       ['door3', 'g01-s04-door3.webp', 828, 164, 104, 388, 'z-index:2'],
     ], [[652, '01'], [768, '02'], [880, '03']].map(([x, t]) => `<div class="g1-engr lk" style="left:${x}px;top:258px">${t}</div>`).join(''))); S();
     let gotPhotoA = false;
     const opened = new Set();
-    setHs([['board', 150, 200, 310, 150, '黑板'], ['photoA', 372, 128, 96, 80, '黑板角落的小照片'], ['schedule', 230, 452, 265, 100, '桌上攤開的紙'], ['helmet', 385, 380, 130, 80, '礦工帽'], ['manual4', 515, 440, 200, 80, '泡水的冊子'], ['lk1', 598, 165, 106, 280, '01 號鐵櫃'], ['lk2', 712, 165, 108, 390, '02 號鐵櫃'], ['lk3', 828, 164, 104, 388, '03 號鐵櫃']]);
+    setHs([['board', 150, 115, 320, 240, '黑板'], ['schedule', 230, 452, 265, 100, '桌上攤開的紙'], ['helmet', 385, 380, 130, 80, '礦工帽'], ['manual4', 515, 440, 200, 80, '泡水的冊子'], ['lk1', 598, 165, 106, 280, '01 號鐵櫃'], ['lk2', 712, 165, 108, 390, '02 號鐵櫃'], ['lk3', 828, 164, 104, 388, '03 號鐵櫃']]);
     setStep('找出藏著線索的鐵櫃', ['桌上那張攤開的紙，暗示了該打開哪一座鐵櫃。', '「所有人都睡著後」——那是哪一個班次？', '夜班的編號是 03。點道具欄的鐵撬棒，再點 03 號鐵櫃。'], () => (got.has('schedule') ? ['lk3'] : ['schedule']), '班次表：早班 01、午班 02、夜班 03。手寫字：「我們只在所有人都睡著後，才能記下真正的數字。」所有人都睡著＝夜班＝03 號鐵櫃，用鐵撬棒撬開它。');
     await me('礦工休息的地方……帽子、桌子都還在，好像人們只是暫時離開。', 'Where the miners rested… the helmets and table are still here, as if they just stepped out.'); S();
     await loop(async (id, item) => {
       if (id === 'back') { closeCu(); return; }
-      if (id === 'board') return void await me('黑板上的粉筆字早就糊成一片了。', 'The chalk on the board has long since smeared away.');
-      if (id === 'manual4') return void await me('一本泡過水的工作手冊，字都暈開了，看不出內容。', 'A water-soaked work manual. The ink has bled; nothing is legible.');
-      if (id === 'helmet') return void await me('一頂舊礦工帽，帽燈早就不亮了。', 'An old miner’s helmet. The lamp died long ago.');
-      if (id === 'photoA') {
-        await getDoc('photoA'); S();
-        if (!gotPhotoA) { gotPhotoA = true; await me('三個英國名字，一個台灣名字……他們是一起的。', 'Three English names and one Taiwanese name… they were together.'); }
+      if (id === 'board') {
+        const found = await photoPile(gotPhotoA); S();
+        if (found && !gotPhotoA) {
+          gotPhotoA = true; got.add('photoA');
+          await me('三個英國名字，一個台灣名字……Arthur，是 A.W. 嗎？', 'Three English names and one Taiwanese… Arthur. Could he be A.W.?'); S();
+          await me('陳金水……他們是一起的。這張照片被夾在一堆礦場照片裡，像是有人刻意藏起來。', 'Chen Jinshui… they were together. Tucked among the mine photos, as if someone hid it on purpose.'); S();
+        }
         return;
       }
+      if (id === 'manual4') return void await me('一本泡過水的工作手冊，字都暈開了，看不出內容。', 'A water-soaked work manual. The ink has bled; nothing is legible.');
+      if (id === 'helmet') return void await me('一頂舊礦工帽，帽燈早就不亮了。', 'An old miner’s helmet. The lamp died long ago.');
       if (id === 'schedule') {
         const first = !got.has('schedule');
         await getDoc('schedule'); S();
@@ -476,7 +489,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
         sfx('pry'); opened.add(n);
         if (n !== 3) return void await me('撬開了……只有幾件發霉的工作服。不是這一個。', 'Pried open… only a few mouldy work clothes. Not this one.');
         sfx('door'); hide('door3'); await wait(500); S();
-        await me('櫃底壓著一本日誌……封面寫著「A. WILLIAMS」。', 'A journal pressed at the bottom of the locker… “A. WILLIAMS” on the cover.'); S();
+        await me('櫃底壓著一本日誌……封面寫著「A. WILLIAMS」。裡面是英文，用館長給的翻譯筆掃一下。', 'A journal pressed at the bottom of the locker… “A. WILLIAMS” on the cover. It’s in English; the director’s pen can scan it.'); S();
         await getDoc('journal'); return true;
       }
     }); S();
@@ -533,8 +546,8 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     // ---------- S06 三岔路 ----------
     const fork = () => { setScene('g01-s06-fork.webp', '三條坑道的岔路口'); setHs([['A', 84, 210, 222, 300, '左邊的坑道'], ['B', 536, 180, 214, 300, '中間的坑道'], ['C', 972, 210, 170, 300, '右邊的坑道']]); };
     await chapter('封閉維修坑道', 'S06', fork); S();
-    let seenA = false, gotPhotoB = false;
-    setStep('選一條路', ['右邊是出坑的路，每一車都會被登記。', '左邊的支撐木比較新，先看看左邊。'], () => (seenA ? ['B'] : ['A']), () => (seenA ? '左邊是死路，十字架是有人為落盤罹難者立的墓。走中間那條。' : '右邊通往出坑口，每車都要登記，不會是藏貨的路。左邊的支撐木最新，有人修過，先走左邊。'));
+    let seenA = false, gotPhotoB = false, hasKey = false;
+    setStep('選一條路', ['右邊是出坑的路，每一車都會被登記。', '左邊的支撐木比較新，先看看左邊。', '左坑道的十字架底下掉著一把鑰匙。'], () => (seenA && hasKey ? ['B'] : ['A']), () => (seenA ? '左邊是死路，十字架是有人為落盤罹難者立的墓。走中間那條。' : '右邊通往出坑口，每車都要登記，不會是藏貨的路。左邊的支撐木最新，有人修過，先走左邊。'));
     await me('側線通到一個三岔路口。三條坑道，軌道都還在。', 'The siding leads to a three-way fork. Rails run into all three.'); S();
     await me('右邊那條通往出坑口，每一車都要登記。要藏起三車貨，不會走那裡。', 'The right one leads out, where every cart is logged. Nobody hiding three loads would go that way.'); S();
     await me('左邊的支撐木是新的……礦場封閉後，還有人進來修過。先從左邊看看。', 'The left one has new timber… someone came back after the mine closed. I’ll check the left first.'); S();
@@ -543,8 +556,8 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
       if (a.id === 'C') { await me('出坑的路，每一車都會被登記……不是這裡。', 'The way out—every cart gets logged. Not here.'); continue; }
       if (a.id === 'B' && !seenA) { await me('中間那條的軌道最舊……先確認左邊是誰修的。', 'The middle track is the oldest… first, I want to know who repaired the left one.'); continue; }
       if (a.id === 'A') {
-        await fadeTo(() => setScene('g01-s06-left.webp', '塌陷的左坑道，一座纏著紅布的木十字架')); S();
-        setHs([['cross', 245, 222, 176, 237, '十字架'], ['chest', 4, 429, 240, 122, '木箱']]);
+        await fadeTo(() => setScene('g01-s06-left.webp', '塌陷的左坑道，一座纏著紅布的木十字架', hasKey ? [] : [['key', 'g01-key.webp', 404, 486, 64, 0, 'z-index:2;transform:rotate(14deg);filter:brightness(.85)']])); S();
+        setHs([['cross', 245, 222, 176, 237, '十字架'], ['chest', 4, 429, 240, 122, '木箱'], ...(hasKey ? [] : [['key', 384, 462, 110, 70, '十字架底下的東西']])]);
         exitBtn('‹ 回到岔路口');
         await me('前面塌了……過不去。那修這裡的人，是來做什麼的？', 'It’s collapsed ahead… no way through. Then why did someone repair this?'); S();
         for (;;) {
@@ -556,6 +569,13 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
             await me('原來修這條路，是為了替他們立一座墓。這不是礦場立的……是他們的同伴偷偷做的。', 'So the repairs were for a grave. The mine didn’t raise this… their companions did, in secret.'); S();
             closeCu(); seenA = true; continue;
           }
+          if (b.id === 'key') {
+            if (hasKey) continue;
+            hasKey = true; hide('key'); dropHs('key'); addItem('ctl');
+            await me('十字架底下掉著一把舊鑰匙……柄上繫著紅布，跟十字架上的是同一塊。', 'An old key lying under the cross… a strip of red cloth tied to it, the same cloth as on the cross.'); S();
+            await me('是有人留給來祭拜的人？還是……留給找到這裡的人？', 'Left for whoever came to pay respects? Or… for whoever found this place?'); S();
+            continue;
+          }
           if (b.id === 'chest') {
             await getDoc('photoB'); S();
             if (!gotPhotoB) { gotPhotoB = true; await me('他們知道，自己也可能躺在這裡。', 'They knew they might end up lying here too.'); S(); }
@@ -563,6 +583,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
           }
           if (b.id === 'exit') {
             if (!seenA) { await me('先看看那座十字架。', 'Let me look at that cross first.'); continue; }
+            if (!hasKey) { await me('十字架底下……好像有東西在反光。', 'Something is glinting under the cross…'); flash(['key'], 4000); continue; }
             await me('這裡沒有路了。回去走中間那條。', 'No way on from here. Back to the middle path.'); S();
             await fadeTo(fork); S();
             break;
@@ -576,59 +597,66 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     // ---------- S06-B 中坑道：幾乎全黑，用手電筒找出神秘通道 ----------
     await fadeTo(() => { setScene('g01-s06-mid.webp', '中間的坑道，一片漆黑', [
       ['flash', 'it-flashlight.webp', 560, 560, 130, 0, 'z-index:5;transform:rotate(-12deg)'],
-    ], '<div id="aw2" class="g1-scratch" style="left:1000px;top:318px;opacity:0;z-index:5">A.W.</div>'); setDark(true, 'pitch'); }); S();
+      ['sign', 'g01-sign.webp', 744, 470, 190, 0, 'z-index:2;transform:rotate(9deg);filter:brightness(.8)'],
+    ]); setDark(true, 'pitch'); }); S();
     let hasFl = false;
-    setHs([['flash', 540, 530, 170, 110, '地上發亮的東西'], ['end', 380, 240, 260, 200, '軌道盡頭'], ['side', 880, 290, 160, 220, '岩壁']]);
-    setStep('調查中間的坑道', [() => !hasFl ? '黑暗中，地上有個東西在反光。' : '移動手電筒的光，照遍整條坑道。', () => !hasFl ? '畫面下方中間，那個反光的東西。' : '右邊的岩壁後面，好像有一個缺口。'], () => (!hasFl ? ['flash'] : ['side']), '先撿起地上反光的手電筒。打開後，用滑鼠或手指移動光線，照到右邊岩壁的缺口，點它。');
+    setHs([['flash', 540, 530, 170, 110, '地上發亮的東西'], ['end', 380, 240, 260, 200, '軌道盡頭'], ['sign', 740, 470, 200, 120, '倒在地上的木牌'], ['side', 880, 270, 180, 200, '岩壁']]);
+    setStep('調查中間的坑道', [() => !hasFl ? '黑暗中，地上有個東西在反光。' : '移動手電筒的光，照遍整條坑道。', () => !hasFl ? '畫面下方中間，那個反光的東西。' : '地上倒著一塊方向牌，箭頭指向右邊的岩壁。'], () => (!hasFl ? ['flash'] : ['sign', 'side']), '先撿起地上反光的手電筒。打開後移動光線，照到地上那塊指向右邊的方向牌，再點右邊岩壁的缺口。');
     await me('好黑……什麼都看不見。', 'So dark… I can’t see a thing.', { pic: false }); S();
     await loop(async id => {
       if (id === 'end') return void await me(hasFl ? '落石把整條坑道堵死了。' : '前面黑漆漆的，伸手不見五指。', hasFl ? 'The rockfall has sealed the tunnel completely.' : 'Pitch black ahead.', { pic: false });
+      if (id === 'sign') {
+        if (!hasFl) return void await me('太暗了，什麼也看不見。', 'Too dark to see anything.', { pic: false });
+        return void await me('一塊倒在地上的方向牌，木頭都爛了……箭頭指著右邊。右邊只有岩壁？', 'A fallen direction sign, the wood rotten through… the arrow points right. But there’s only rock to the right?', { pic: false });
+      }
       if (id === 'flash') {
         if (hasFl) return;
         hasFl = true; hide('flash'); dropHs('flash'); addItem('fl');
         await me('一支舊手電筒……電池早就爛了。換上我帶的備用電池。', 'An old flashlight… the battery rotted long ago. I’ll swap in my spare.', { pic: false }); S();
-        sfx('flash'); setDark(true, 'torch deep'); lightProbe = (x, y) => { const d = Math.hypot(x - 960, y - 400); sp('aw2').style.opacity = d < 230 ? Math.min(1, (230 - d) / 120) : 0; };
+        sfx('flash'); setDark(true, 'torch deep');
         toast('移動滑鼠或手指，用光照亮四周。');
         return;
       }
       if (id === 'side') {
         if (!hasFl) return void await me('太暗了，什麼也看不見。', 'Too dark to see anything.', { pic: false });
-        moveLight(960, 400);
-        await me('岩壁後面有一條小坑道……地上有礦車輪子壓過的痕跡。牆上，又是 A.W.。', 'A narrow passage behind the rock… cart-wheel ruts in the dirt. And on the wall, A.W. again.', { pic: false }); S();
+        moveLight(970, 380);
+        await me('岩壁後面有一條小坑道……地上有礦車輪子壓過的痕跡。', 'A narrow passage behind the rock… cart-wheel ruts in the dirt.', { pic: false }); S();
         await me('三車貨物，就是從這裡推進去的。', 'This is where the three cartloads were pushed through.', { pic: false }); S();
-        lightProbe = null;
         return true;
       }
     }); S();
 
     // ---------- S07 五坑舊運輸區 ----------
-    await chapter('五坑舊運輸區', 'S07', () => { setScene('g01-s07-empty.webp', '五坑舊運輸區的空豎井，左邊是控制盤，右邊是工具架', [['ctlIn', 'it-handle.webp', 104, 438, 60, 60, 'opacity:0;z-index:3;object-fit:contain']]); setDark(true, 'torch'); }); S();
-    let hasCtl = false, ctlOn = false, cageDown = false;
-    const s07hs = () => setHs([['manual', 191, 207, 74, 114, '操作須知鐵牌'], ['panel', 46, 367, 168, 207, '控制盤'], ...(hasCtl ? [] : [['rack', 980, 190, 90, 90, '工具架上的手柄']]), cageDown ? ['cage', 498, 306, 237, 299, '鐵籠'] : ['shaft', 470, 60, 300, 520, '豎井']]);
+    await chapter('五坑舊運輸區', 'S07', () => { setScene('g01-s07-empty-nh.webp', '五坑舊運輸區的空豎井，左邊是控制盤', [['ctlIn', 'g01-key-bow.webp', 120, 455, 24, 0, 'opacity:0;z-index:3']]); setDark(true, 'torch'); }); S();
+    let ctlOn = false, cageDown = false;
+    const s07hs = () => setHs([['manual', 191, 207, 74, 114, '操作須知鐵牌'], ['panel', 46, 367, 168, 207, '控制盤'], cageDown ? ['cage', 498, 306, 237, 299, '鐵籠'] : ['shaft', 470, 60, 300, 520, '豎井']]);
     s07hs();
-    setStep('啟動升降機', [() => !hasCtl ? '工具架上有一支 T 型手柄。' : !ctlOn ? '把 T 型手柄裝到控制盤中間的插座。' : '照鐵牌上的順序操作控制盤：解除制動 → 接通電源 → 下降。'], () => (!hasCtl ? ['rack'] : ['manual', 'panel']), '工具架上拿 T 型手柄，裝到控制盤中間的插座。照鐵牌順序：解除制動 → 接通電源 → 下降，把鐵籠叫下來。');
+    setStep('啟動升降機', [() => !ctlOn ? '控制盤中間有個鑰匙孔。十字架底下撿到的鑰匙，也許對得上。' : '照鐵牌上的順序操作控制盤：解除制動 → 接通電源 → 下降。'], ['manual', 'panel'], '打開控制盤，點道具欄的舊鑰匙，再點中間的鑰匙孔。之後照鐵牌順序：解除制動 → 接通電源 → 下降，把鐵籠叫下來。');
     await me('一座豎井……鐵籠不在這裡，停在上面某一層。', 'A shaft… the cage isn’t here. It’s stopped somewhere above.'); S();
     let panelSeq = [];
     const PANEL = { brake: [437, 438, '解除制動'], power: [692, 438, '接通電源'], down: [565, 526, '下降'] };
-    const panelCu = () => openCu('<div class="g1-crossbg"></div>' + zoomBg(hasCtl && ctlOn ? 'g01-s07-empty-nh.webp' : hasCtl ? 'g01-s07-empty-nh.webp' : 'g01-s07-empty.webp', 30, 350, 2.6, 302, -862 + 350 * 2.6) +
-      `${ctlOn ? `<img class="g1-sp" src="${IMG('it-handle.webp')}" alt="" style="left:505px;top:292px;width:120px;height:120px;object-fit:contain">` : ''}` +
+    const panelCu = () => openCu('<div class="g1-crossbg"></div>' + zoomBg('g01-s07-empty-nh.webp', 30, 350, 2.6, 302, -862 + 350 * 2.6) +
+      `${ctlOn ? `<img class="g1-sp g1-keyin turned" src="${IMG('g01-key-bow.webp')}" alt="" style="left:521px;top:309px;width:88px">` : ''}` +
       Object.values(PANEL).map(([x, y, t]) => `<div class="g1-engr sm" style="left:${x}px;top:${y + 64}px">${t}</div>`).join('') +
       Object.entries(PANEL).map(([k, [x, y]]) => `<div class="g1-btnglow${panelSeq.includes(k) ? ' on' : ''}" style="left:${x}px;top:${y}px"></div>`).join(''),
-      [['socket', 505, 292, 120, 120, '中間的插座'], ...Object.entries(PANEL).map(([k, [x, y, t]]) => [k, x - 56, y - 56, 112, 112, t])]);
+      [['socket', 505, 292, 120, 120, '中間的鑰匙孔'], ...Object.entries(PANEL).map(([k, [x, y, t]]) => [k, x - 56, y - 56, 112, 112, t])]);
     await loop(async (id, item) => {
       if (id === 'back') { closeCu(); return; }
       if (id === 'manual') { await getDoc('manual'); S(); return void await me('一般運轉不停靠的地方……就不會出現在任何運輸紀錄裡。', 'A level the lift never normally stops at… would never show up in any transport record.'); }
       if (id === 'shaft') return void await me('鐵籠停在上面。得先把它叫下來。', 'The cage is up there. I need to call it down.');
-      if (id === 'rack') { hasCtl = true; scene.querySelector('img.bg').src = IMG('g01-s07-empty-nh.webp'); addItem('ctl'); s07hs(); return void await me('一支 T 型手柄……跟控制盤上的插座一樣形狀。', 'A T-shaped handle… the same shape as the socket on the panel.'); }
       if (id === 'panel') { panelCu(); return; }
       if (id === 'socket') {
         if (ctlOn) return;
-        if (item !== 'ctl') return void await me('中間有個插座，少了一支手柄。', 'There’s an empty socket in the middle.');
-        sfx('clang'); ctlOn = true; dropItem('ctl'); sp('ctlIn').style.opacity = 1; panelCu();
-        return void await me('裝上了。', 'It fits.');
+        if (item !== 'ctl') return void await me('中間是一個鑰匙孔，孔緣磨得發亮。', 'A keyhole in the middle, its rim worn shiny.', { pic: false });
+        dropItem('ctl');
+        cu.insertAdjacentHTML('beforeend', `<img class="g1-sp g1-keyin" src="${IMG('g01-key-bow.webp')}" alt="" style="left:521px;top:309px;width:88px">`);
+        const kk = cu.querySelector('.g1-keyin:last-of-type'); sfx('key'); await wait(450); S();
+        kk.classList.add('turned'); sfx('clang'); await wait(600); S();
+        ctlOn = true; sp('ctlIn').style.opacity = 1; panelCu();
+        return void await me('鑰匙插進去，轉得動……儀表的指針跳了一下。有電了。', 'The key goes in and turns… the gauge needle jumps. There’s power.', { pic: false });
       }
       if (PANEL[id]) {
-        if (!ctlOn) return void await me('按了沒有反應……中間的插座少了手柄。', 'Nothing happens… the socket in the middle needs a handle.');
+        if (!ctlOn) return void await me('按了沒有反應……要先用鑰匙啟動。', 'Nothing happens… it needs the key first.', { pic: false });
         if (panelSeq.includes(id)) return;
         sfx('clang'); panelSeq.push(id); panelCu();
         if (['brake', 'power', 'down'][panelSeq.length - 1] !== id) { sfx('error'); await wait(500); panelSeq = []; panelCu(); return void await me('控制盤復位了。順序不對。', 'The panel reset. Wrong order.'); }
@@ -642,62 +670,56 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
       if (id === 'cage') return true;
     }); S();
 
-    // ---------- 鐵籠：停在 3.5 樓 ----------
-    await fadeTo(() => { setDark(false); setScene('g01-lift.webp', '升降機鐵籠內部，右邊是樓層按鈕', [
-      ['brake', 'it-handle.webp', 930, 380, 110, 110, 'z-index:3;object-fit:contain;transform:rotate(25deg);transition:transform .2s'],
-    ], [5, 4, 3, 2].map(f => `<div class="g1-lglow" id="lf${f}" style="left:1120px;top:${{ 5: 165, 4: 200, 3: 237, 2: 270 }[f]}px"></div>`).join('')); $(el, '#slots').classList.add('hidden'); }); S();
-    setHs([['lpanel', 1080, 77, 114, 352, '樓層按鈕'], ['brakeHs', 910, 360, 150, 150, '手動制動桿']]);
-    setStep('停在 3.5 樓', ['鐵牌說：3.5 在三樓和四樓之間，過了三樓後拉下制動桿。', '按 4 往上，等三樓的燈亮過之後，馬上拉制動桿。'], ['lpanel', 'brakeHs'], '按 4 讓鐵籠上升。三樓的燈亮過、四樓的燈還沒亮之前，拉下手動制動桿，就會停在 3.5。');
-    await me('按鈕只有 1 到 5。要停在 3.5，得在過了三樓之後，自己拉制動桿。', 'The buttons only go 1 to 5. To stop at 3.5, I have to pull the brake myself after passing three.'); S();
-    let floor = 1, riding = false, stopped = false;
-    const lights = () => [2, 3, 4, 5].forEach(f => $(el, '#lf' + f).classList.toggle('on', Math.floor(floor) === f));
+    // ---------- 鐵籠：同時按 3 與 4，停在 3.5 樓 ----------
+    await fadeTo(() => { setDark(false); setScene('g01-lift.webp', '升降機鐵籠內部，右邊是樓層按鈕', [],
+      [5, 4, 3, 2].map(f => `<div class="g1-lglow" id="lf${f}" style="left:1120px;top:${{ 5: 165, 4: 200, 3: 237, 2: 270 }[f]}px"></div>`).join('')); $(el, '#slots').classList.add('hidden'); }); S();
+    setHs([['lpanel', 1080, 77, 114, 352, '樓層按鈕']]);
+    setStep('停在 3.5 樓', ['鐵牌上寫著：3.5 在三樓和四樓之間，一般運轉不停靠。', '鐵牌最後一行：如需停靠，同時按下 3 與 4。', '打開樓層按鈕，同時按住 3 和 4（滑鼠就快速連點兩顆）。'], ['lpanel'], '樓層按鈕近景裡，同時按下 3 和 4（手機用兩指同時按，滑鼠就在一秒內先後點兩顆），鐵籠就會停在 3.5 樓。');
+    await me('按鈕只有 1 到 5。鐵牌上寫著，要停在 3.5，得同時按下 3 和 4。', 'Buttons only go 1 to 5. The plate said: to stop at 3.5, press 3 and 4 together.', { pic: false }); S();
+    const lights = f => [2, 3, 4, 5].forEach(n => $(el, '#lf' + n).classList.toggle('on', Array.isArray(f) ? f.includes(n) : f === n));
     const LBTN = { 5: 205, 4: 266, 3: 338, 2: 405, 1: 477 };
-    const liftCu = () => openCu(`<div class="g1-crossbg"></div><img class="g1-sp" src="${IMG('g01-lift-panel.webp')}" alt="" style="left:512px;top:50px;height:620px">`,
+    let held = {}, liftBusy = false;
+    const liftCu = () => openCu(`<div class="g1-crossbg"></div><img class="g1-sp" src="${IMG('g01-lift-panel.webp')}" alt="" style="left:512px;top:50px;height:620px">` +
+      Object.entries(LBTN).map(([f, y]) => `<div class="g1-btnglow sm" id="lb${f}" style="left:639px;top:${y}px"></div>`).join(''),
       Object.entries(LBTN).map(([f, y]) => [`f${f}`, 597, y - 28, 84, 56, `${f} 樓`]));
-    let rideRes = null;
-    async function ride() {
-      riding = true; stopped = false; el.classList.add('g1-shake'); sfx('whoosh');
-      const BL = a => {
-        if (a.type !== 'hs' || a.id !== 'brakeHs' || stopped) return;
-        if (floor < 3) { sfx('error'); toast('還沒過三樓。'); return; }
-        stopped = true; sfx('clang'); sp('brake').style.transform = 'rotate(70deg)';
-      };
-      listeners.unshift(BL);
-      for (const [f, ms] of [[2, 1300], [3, 1300], [3.5, 2200], [4, 0]]) {
-        floor = f === 3.5 ? 3.2 : f; lights();
-        if (f === 4) break;
-        const t0 = Date.now();
-        while (Date.now() - t0 < ms) { await wait(50); S(); if (stopped) break; }
-        if (stopped) break;
-      }
-      listeners = listeners.filter(x => x !== BL);
-      el.classList.remove('g1-shake'); riding = false;
-      return stopped;
+    // 鐵籠上下擺動著上升
+    async function ride(stops) {
+      el.classList.add('g1-bob'); sfx('whoosh');
+      for (const f of stops) { lights(f); await wait(1300); S(); }
+      el.classList.remove('g1-bob');
     }
-    await loop(async id => {
-      if (id === 'back') { closeCu(); return; }
-      if (id === 'lpanel') { if (!riding) liftCu(); return; }
-      if (id === 'brakeHs') {
-        if (!riding) return void await me('制動桿……要在上升的途中拉。', 'The brake… I have to pull it while we’re moving.', { pic: false });
-        if (floor < 3) { sfx('error'); toast('還沒過三樓。'); return; }
-        stopped = true; sfx('clang'); sp('brake').style.transform = 'rotate(70deg)';
-        return;
-      }
-      if (/^f\d$/.test(id)) {
-        const f = +id[1]; closeCu();
-        if (f === 1) return void await me('已經在一樓了。', 'We’re already on one.', { pic: false });
-        if (f < 4) return void await me(`${f} 樓的出口被封死了。`, `The exit on ${f} is sealed.`, { pic: false });
-        floor = 1; lights();
-        const ok = await ride(); S();
-        if (ok) return true;
-        sfx('clang'); await me('四樓……門外是封死的岩壁。太遠了。', 'Four… a sealed rock wall outside. Too far.', { pic: false }); S();
-        sfx('whoosh'); await sys(['鐵籠慢慢降回一樓。'], 1600); S();
-        floor = 1; lights(); sp('brake').style.transform = 'rotate(25deg)';
-      }
+    // 樓層按鈕不走 loop：兩顆鍵要能在一秒內先後按到，所以直接聽點擊
+    await new Promise(resolve => {
+      const LP = a => {
+        if (a.type !== 'hs' || !alive) return;
+        if (a.id === 'back') { closeCu(); return; }
+        if (a.id === 'lpanel') { if (!liftBusy) { held = {}; liftCu(); } return; }
+        if (!/^f\d$/.test(a.id) || liftBusy) return;
+        const f = +a.id[1], now = Date.now();
+        held[f] = now; const g0 = cu.querySelector('#lb' + f); if (g0) g0.classList.add('on'); sfx('key');
+        if (held[3] && held[4] && Math.abs(held[3] - held[4]) < 1000) {
+          liftBusy = true; listeners = listeners.filter(x => x !== LP);
+          setTimeout(async () => { try { closeCu(); await ride([2, 3, [3, 4]]); resolve(); } catch (e) { /* 離開關卡 */ } }, 300);
+          return;
+        }
+        setTimeout(async () => {
+          try {
+            const g1 = cu.querySelector('#lb' + f); if (g1) g1.classList.remove('on');
+            if (held[f] !== now || liftBusy || !cuOpen()) return;
+            if (f === 1) { await me('已經在一樓了。', 'We’re already on one.', { pic: false }); return; }
+            liftBusy = true; closeCu();
+            await ride(Array.from({ length: f - 1 }, (_, i) => i + 2)); S();
+            sfx('clang');
+            await me(`${f} 樓……門外是封死的岩壁。不是這裡。`, `Floor ${f}… a sealed rock wall outside. Not here.`, { pic: false }); S();
+            sfx('whoosh'); await sys(['鐵籠慢慢降回一樓。'], 1600); S();
+            lights(0); liftBusy = false; held = {};
+          } catch (e) { /* 離開關卡 */ }
+        }, 1000);
+      };
+      listeners.push(LP);
     }); S();
-    el.classList.remove('g1-shake');
     sfx('clang');
-    await say('鐵籠卡在三樓和四樓中間，晃了兩下才停住。', 'The cage jolts to a stop between three and four.', 'think'); S();
+    await say('三和四的燈一起亮著。鐵籠停在兩層中間，上下晃了幾下才穩住。', 'Both the 3 and 4 lights glow. The cage stops between floors, bobbing a few times before it settles.', 'think'); S();
     await me('門外是一條平台……沒有樓層編號。手電筒照到鐵網上，刻著一排日期。', 'A platform outside… no floor number. My light catches dates scratched into the mesh.', { pic: false }); S();
     await me('二月二十二日、二十四日、二十六日、二十八日……四個晚上。他們來過不只一次。', 'February 22nd, 24th, 26th, 28th… four nights. They came here more than once.', { pic: false }); S();
     cine.classList.remove('hidden');
@@ -711,7 +733,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     await say('我們不知道戰爭什麼時候結束……但至少這一次，黃金不會再被他們帶走。', 'We don’t know when the war will end… but this time, they won’t take the gold.', 'arthur'); S();
     cine.classList.add('hidden'); cine.innerHTML = '';
     await me('……十字架不只是墓碑。那是他們欠下的兩條命，也是這個約定開始的地方。', '…The cross wasn’t just a grave. It was two lives they owed, and where this promise began.', { pic: false }); S();
-    await me('三個英國人推車，一個台灣人帶路。照片背面那句話……他們想四個人一起活著回來。', 'Three Englishmen pushing, one Taiwanese man leading the way. The words on the back of that photo… they wanted all four to come back alive.', { pic: false }); S();
+    await me('黑板上那張合照裡的四個人……陳金水已經不在了。照片背面那句話，他們終究沒能做到。', 'The four men in that photo from the blackboard… Chen Jinshui was already gone. The words on the back were a wish they couldn’t keep.', { pic: false }); S();
     await me('一般運轉不停靠的地方，也就是沒有人會來的地方。他們把秘密藏在帳本的縫隙裡。', 'A level the lift never stops at is a place no one comes. They hid their secret in the gaps of the ledgers.', { pic: false }); S();
     $(el, '#slots').classList.remove('hidden');
 
@@ -785,7 +807,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     dd.g01.photoA = dd.g01.photoA || gotPhotoA; dd.g01.photoB = dd.g01.photoB || gotPhotoB; dd.g01.letter = true;
     const upsert = (id, name, img, desc) => { const i = dd.collection.findIndex(c => c.id === id); if (i < 0) dd.collection.push({ id, name, img, desc }); else dd.collection[i].desc = desc; };
     upsert('g01-letter', '亞瑟的最後一封信', 'it-letter.webp', '1945 年 3 月留在木箱裡的信，影像檔。原信留在原處，黃金沒有帶走。');
-    if (dd.g01.photoA || dd.g01.photoB) upsert('g01-photo', '戰俘四人合照', 'it-photo.webp', [dd.g01.photoA && '休息室那張寫著 Arthur、Edward、Thomas、吳清和', dd.g01.photoB && '左坑道木箱裡那張背面寫著：我希望我們四個人，都能活著回到這裡'].filter(Boolean).join('。') + '。');
+    if (dd.g01.photoA || dd.g01.photoB) upsert('g01-photo', '四人合照', 'g01-photo4.webp', [dd.g01.photoA && '休息室黑板那疊照片裡找到的合照，寫著 Arthur、Edward、Thomas、陳金水', dd.g01.photoB && '左坑道木箱裡那張背面寫著：我希望我們四個人，都能活著回到這裡'].filter(Boolean).join('。') + '。');
     const first = !replay && !dd.records.includes('g01');
     const collected = gotPhotoA && gotPhotoB;
     const rows = [];
@@ -797,7 +819,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
       dd.records.push('g01'); taskDone('stage'); sfx('coin');
     }
     save();
-    const miss = [!gotPhotoA && '休息室的合照', !gotPhotoB && '左坑道木箱裡的合照'].filter(Boolean);
+    const miss = [!gotPhotoA && '休息室黑板上的合照', !gotPhotoB && '左坑道木箱裡的合照'].filter(Boolean);
     card.remove();
     const res = html(`<div class="modal-back" style="z-index:60"><div class="modal g01-clear" role="dialog" aria-label="破關結算" style="width:720px">
 <div class="col" style="align-items:center;gap:8px"><div class="label">一般關卡 · G01</div><h2 style="font-size:40px;line-height:56px;letter-spacing:0.16em">破解完成</h2></div>
@@ -811,6 +833,30 @@ ${miss.length ? `<p style="font-size:16px;line-height:24px;color:var(--muted)">�
     go(a === 'lobby' ? 'lobby' : 'stages', a === 'lobby' ? {} : { tab: 1 });
   }
 
+  // 黑板上的一疊舊照片：關鍵的四人合照混在裡面
+  function photoPile(already) {
+    return new Promise(res => {
+      const LINES = [['礦車推進坑道的照片……不是這張。', 'Men pushing a cart into the tunnel… not this one.'], ['坑口、豎井、煙囪……都是礦場的紀錄照。', 'Tunnel mouths, a headframe, a chimney… records of the mine.'], ['這張只拍到礦工的背影。', 'Only the miners’ backs in this one.'], ['一塊礦石……這是宣傳用的照片吧。', 'A lump of ore… probably a publicity shot.']];
+      let n = 0, busy = false;
+      const m = html(`<div class="g1-docback" role="dialog" aria-label="黑板上的舊照片">
+<img class="g1-pile" src="${IMG('g01-photopile.webp')}" alt="一疊礦場舊照片">
+<button type="button" class="g1-key4" aria-label="一張四個人的合照"><img src="${IMG('g01-photo4.webp')}" alt=""></button>
+<div class="g1-dochint">${already ? '點旁邊收起' : '從這疊照片裡找找看　點旁邊收起'}</div></div>`);
+      m.addEventListener('click', async e => {
+        if (busy) return;
+        if (e.target.closest('.g1-key4')) {
+          busy = true; sfx('tap'); m.remove();
+          await readDoc('photoA'); res(true); return;
+        }
+        if (e.target.closest('.g1-pile')) {
+          busy = true; sfx('tap'); const [cn, en] = LINES[n++ % LINES.length];
+          await me(cn, en, { pic: false }); busy = false; return;
+        }
+        sfx('tap'); m.remove(); res(false);
+      });
+      el.appendChild(m);
+    });
+  }
   // 冊子：直接點出對不上的那一天，紅筆圈起來
   function ledgerPick() {
     return new Promise(res => {
@@ -848,29 +894,26 @@ ${miss.length ? `<p style="font-size:16px;line-height:24px;color:var(--muted)">�
         `<div class="g1-chalkmsg2" style="left:${L}px;top:${T}px;width:${W}px;height:${H}px"><p>2／17　夜班</p><p>離 12　→　到 9</p><p class="big">三車　→　舊側線</p><svg viewBox="0 0 120 120" class="arrow" aria-hidden="true"><path d="M60 6 C 54 46, 66 70, 60 108 M 40 88 L 60 110 L 80 86" fill="none" stroke="rgba(236,232,220,.8)" stroke-width="5" stroke-linecap="round"/></svg></div>` +
         `<canvas class="g1-dust" width="${Math.round(W)}" height="${Math.round(H)}" style="left:${L}px;top:${T}px;width:${W}px;height:${H}px"></canvas><div class="g1-kmsg" id="rbm" style="top:${top0 + 941 * k - 56}px">在黑板上來回抹，擦掉粉筆灰</div>`);
       const cv = $(cu, '.g1-dust'), cx = cv.getContext('2d');
-      // 粉筆灰：一層不均勻的灰白抹痕
-      // 粉筆灰：深淺不一的抹痕，邊緣自然淡出，不是一塊色塊
-      for (let i = 0; i < 1400; i++) {
-        const a = 0.02 + Math.random() * 0.07, v = 180 + Math.random() * 50 | 0, r = 8 + Math.random() * 46;
-        cx.fillStyle = `rgba(${v},${v},${v - 6},${a})`;
-        cx.beginPath(); cx.ellipse(40 + Math.random() * (cv.width - 80), 30 + Math.random() * (cv.height - 60), r * (1.5 + Math.random() * 2), r, (Math.random() - 0.5) * 0.6, 0, 7); cx.fill();
-      }
-      cx.globalCompositeOperation = 'destination-in';
-      const fade = cx.createRadialGradient(cv.width / 2, cv.height / 2, Math.min(cv.width, cv.height) * 0.25, cv.width / 2, cv.height / 2, cv.width * 0.56);
-      fade.addColorStop(0, 'rgba(0,0,0,1)'); fade.addColorStop(1, 'rgba(0,0,0,0)');
-      cx.fillStyle = fade; cx.fillRect(0, 0, cv.width, cv.height);
-      const base = cx.getImageData(0, 0, cv.width, cv.height).data; let base0 = 0;
-      for (let i = 3; i < base.length; i += 4 * 97) if (base[i] > 30) base0++;
-      cx.globalCompositeOperation = 'destination-out';
+      // 擦拭前的黑板（滿是粉筆灰的同一塊黑板）畫在畫布上，抹掉的地方露出底下的字
+      let base0 = 0, ready = false;
+      const dusty = new Image();
+      dusty.onload = () => {
+        cx.drawImage(dusty, 75, 75, 1520, 790, 0, 0, cv.width, cv.height);
+        const base = cx.getImageData(0, 0, cv.width, cv.height).data;
+        for (let i = 3; i < base.length; i += 4 * 97) if (base[i] > 30) base0++;
+        cx.globalCompositeOperation = 'destination-out'; ready = true;
+      };
+      dusty.src = IMG('g01-board-dusty.webp');
       let done = false, n = 0, down = false;
       const rub = e => {
-        if (done) return;
+        if (done || !ready) return;
         const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * cv.width / r.width, y = (e.clientY - r.top) * cv.height / r.height;
         const g = cx.createRadialGradient(x, y, 0, x, y, 54); g.addColorStop(0, 'rgba(0,0,0,0.9)'); g.addColorStop(1, 'rgba(0,0,0,0)');
         cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, 54, 0, 7); cx.fill();
         if (++n % 12 === 0) check();
       };
       const check = () => {
+        if (!ready) return;
         const d = cx.getImageData(0, 0, cv.width, cv.height).data; let c = 0;
         for (let i = 3; i < d.length; i += 4 * 97) if (d[i] > 30) c++;
         if (c < base0 * 0.3) finish();
