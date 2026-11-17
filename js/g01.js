@@ -480,7 +480,7 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
       requestAnimationFrame(() => d.classList.add('open'));
       await wait(700);
     }
-    setHs([['board', 150, 115, 320, 240, '黑板'], ['schedule', 230, 452, 265, 100, '桌上攤開的紙'], ['helmet', 385, 380, 130, 80, '礦工帽'], ['manual4', 515, 440, 200, 80, '泡水的冊子'], ['lk1', 598, 165, 106, 280, '01 號鐵櫃'], ['lk2', 712, 165, 108, 390, '02 號鐵櫃'], ['lk3', 828, 164, 104, 388, '03 號鐵櫃']]);
+    setHs([['board', 150, 115, 320, 240, '黑板'], ['schedule', 230, 452, 265, 100, '桌上攤開的紙'], ['helmet', 385, 380, 130, 80, '礦工帽'], ['manual4', 515, 440, 200, 80, '泡水的冊子'], ['shelf', 980, 180, 150, 370, '書櫃'], ['lk1', 598, 165, 106, 280, '01 號鐵櫃'], ['lk2', 712, 165, 108, 390, '02 號鐵櫃'], ['lk3', 828, 164, 104, 388, '03 號鐵櫃']]);
     setStep('找出藏著線索的鐵櫃', ['桌上那張攤開的紙，暗示了該打開哪一座鐵櫃。', '「所有人都睡著後」——那是哪一個班次？', '夜班的編號是 03。點道具欄的鐵撬棒，再點 03 號鐵櫃。'], () => (got.has('schedule') ? ['lk3'] : ['schedule']), '班次表：早班 01、午班 02、夜班 03。手寫字：「我們只在所有人都睡著後，才能記下真正的數字。」所有人都睡著＝夜班＝03 號鐵櫃，用鐵撬棒撬開它。');
     await me('礦工休息的地方……帽子、桌子都還在，好像人們只是暫時離開。', 'Where the miners rested… the helmets and table are still here, as if they just stepped out.'); S();
     await loop(async (id, item) => {
@@ -494,6 +494,27 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
         }
         return;
       }
+      if (id === 'shelf') {
+        // 書櫃近景：整張書櫃畫面，書和兩個鐵盒都可以點
+        openCu(`<img class="bg" src="${IMG('g01-s04-shelf.webp')}" alt="礦工休息室的書櫃：幾排舊書與兩個鐵盒">`, [
+          ['bookA', 498, 134, 132, 40, '最上層的書'], ['bookB', 534, 294, 130, 26, '平放的書'], ['bookC', 682, 200, 194, 120, '中層的一排書'],
+          ['bookD', 464, 342, 220, 122, '下層的一排書'], ['bookE', 692, 400, 148, 64, '疊著的書'],
+          ['boxTop', 668, 80, 178, 92, '上面的鐵盒'], ['boxLow', 568, 506, 212, 132, '下面的鐵盒'], ['lockerX', 64, 40, 320, 640, '鐵櫃']]);
+        return;
+      }
+      if (id.startsWith('book') && id.length === 5) {
+        const L = [['書頁發霉黏在一起，翻開只聞到一股霉味。', 'The pages have mildewed together. Only the smell of mould.'], ['是一本舊的採礦手冊，字都糊掉了，看不出什麼。', 'An old mining handbook. The print has run; nothing useful.'], ['裡面被蟲蛀空了一半，什麼也沒寫。', 'Half of it is eaten through by worms. Nothing written.'], ['只是普通的帳冊封皮，裡面的紙早就爛光了。', 'Just an empty ledger cover; the paper inside rotted away.']];
+        const [cn, en] = L['ABCDE'.indexOf(id[4]) % L.length];
+        return void await me(cn, en, { pic: false });
+      }
+      if (id === 'boxTop' || id === 'boxLow') {
+        const v = html(`<div class="g1-docback" role="dialog" aria-label="打開的鐵盒"><img class="g1-boxview" src="${IMG(id === 'boxTop' ? 'g01-box-top.webp' : 'g01-box-low.webp')}" alt="打開的鐵盒，裡面是空的"><div class="g1-dochint">點旁邊收起</div></div>`);
+        sfx('door'); el.appendChild(v);
+        await me(id === 'boxTop' ? '提箱打開了……裡面是空的。' : '鐵盒裡什麼都沒有，只有鏽。', id === 'boxTop' ? 'The case opens… empty.' : 'Nothing in the box but rust.', { pic: false }); S();
+        await new Promise(r => v.addEventListener('click', () => { sfx('tap'); v.remove(); r(); })); S();
+        return;
+      }
+      if (id === 'lockerX') return void await me('鐵櫃回去那邊就能看。', 'I can check the lockers from over there.', { pic: false });
       if (id === 'manual4') return void await me('一本泡過水的工作手冊，字都暈開了，看不出內容。', 'A water-soaked work manual. The ink has bled; nothing is legible.');
       if (id === 'helmet') return void await me('一頂舊礦工帽，帽燈早就不亮了。', 'An old miner’s helmet. The lamp died long ago.');
       if (id === 'schedule') {
