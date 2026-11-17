@@ -50,6 +50,7 @@ const DOCS = {
 };
 const DOC_ICON = { journal: 'it-journal.webp', letter: 'it-letter.webp', photoA: 'g01-photo4.webp', photoB: 'g01-photo4-back.webp', survey: 'it-survey.webp', ledger: 'it-ledger.webp', manual: 'it-manual.webp' };
 
+const LOCK = [[598, 165, 104, 388], [708, 165, 110, 388], [828, 164, 104, 388]];
 export function render(st, params, go) {
   const replay = !!(params && params.replay);
   const d = get();
@@ -467,10 +468,18 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     // ---------- S04 礦工休息室 ----------
     // 背景本身就有三座鐵櫃；03 號原本敞開，用同一張背景裡 02 號的門補成關著的門。照片是釘在黑板角落的一張小照片。
     await chapter('礦工休息室', 'S04', () => setScene('g01-s04.webp', '礦工休息室，黑板、木桌與三座鐵櫃', [
-      ['door3', 'g01-s04-door3.webp', 828, 164, 104, 388, 'z-index:2'],
-    ], [[652, '01'], [768, '02'], [880, '03']].map(([x, t]) => `<div class="g1-engr lk" style="left:${x}px;top:258px">${t}</div>`).join(''))); S();
+      ['tablefg', 'g01-s04-table-fg.webp', 556, 430, 246, 170, 'z-index:5'],
+    ], LOCK.map(([x, y, w, h], i) => `<div class="g1-door" id="door${i + 1}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"><img src="${IMG('g01-s04-door3.webp')}" alt=""><div class="g1-engr lk">0${i + 1}</div></div>`).join(''))); S();
     let gotPhotoA = false;
     const opened = new Set();
+    // 鐵櫃門以右側為鉸鏈，往玩家方向轉開；01、02 打開後露出裡面的工作服，03 是背景本身的空櫃
+    async function swingOpen(n) {
+      const [x, y, w, h] = LOCK[n - 1];
+      if (n !== 3) scene.insertAdjacentHTML('beforeend', `<div class="g1-lkin" style="left:${x + 4}px;top:${y + 4}px;width:${w - 8}px;height:${h - 8}px"><img src="${IMG('g01-locker-inside.webp')}" alt="鐵櫃裡掛著一件破舊的工作服"></div>`);
+      const d = scene.querySelector('#door' + n); sfx('door');
+      requestAnimationFrame(() => d.classList.add('open'));
+      await wait(700);
+    }
     setHs([['board', 150, 115, 320, 240, '黑板'], ['schedule', 230, 452, 265, 100, '桌上攤開的紙'], ['helmet', 385, 380, 130, 80, '礦工帽'], ['manual4', 515, 440, 200, 80, '泡水的冊子'], ['lk1', 598, 165, 106, 280, '01 號鐵櫃'], ['lk2', 712, 165, 108, 390, '02 號鐵櫃'], ['lk3', 828, 164, 104, 388, '03 號鐵櫃']]);
     setStep('找出藏著線索的鐵櫃', ['桌上那張攤開的紙，暗示了該打開哪一座鐵櫃。', '「所有人都睡著後」——那是哪一個班次？', '夜班的編號是 03。點道具欄的鐵撬棒，再點 03 號鐵櫃。'], () => (got.has('schedule') ? ['lk3'] : ['schedule']), '班次表：早班 01、午班 02、夜班 03。手寫字：「我們只在所有人都睡著後，才能記下真正的數字。」所有人都睡著＝夜班＝03 號鐵櫃，用鐵撬棒撬開它。');
     await me('礦工休息的地方……帽子、桌子都還在，好像人們只是暫時離開。', 'Where the miners rested… the helmets and table are still here, as if they just stepped out.'); S();
@@ -499,13 +508,11 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
         if (item !== 'bar') return void await me('鎖扣都鏽死了，要撬開才行。', 'The latch has rusted shut. I’ll need to pry it.');
         sfx('pry'); opened.add(n);
         if (n !== 3) {
-          const R0 = { 1: [598, 165, 106, 280], 2: [712, 165, 108, 390] }[n];
-          scene.insertAdjacentHTML('beforeend', `<div class="g1-lkopen" style="left:${R0[0]}px;top:${R0[1]}px;width:${R0[2]}px;height:${R0[3]}px"><img src="${IMG('g01-locker-open.webp')}" alt="鐵櫃裡掛著一件破舊的工作服"></div>`);
-          sfx('door'); await wait(400); S();
+          await swingOpen(n); S();
           await me('撬開了……裡面只掛著一件發霉的工作服。不是這一個。', 'Pried open… only a mouldy coverall hanging inside. Not this one.', { pic: false }); S();
           return;
         }
-        sfx('door'); hide('door3'); await wait(500); S();
+        await swingOpen(3); S();
         await me('櫃底壓著一本日誌……封面寫著「A. WILLIAMS」。裡面是英文，用館長給的翻譯筆掃一下。', 'A journal pressed at the bottom of the locker… “A. WILLIAMS” on the cover. It’s in English; the director’s pen can scan it.'); S();
         await getDoc('journal'); return true;
       }

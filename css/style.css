@@ -787,3 +787,9 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 @font-face { font-family: 'G01Jp'; src: url('../assets/fonts/g01-jp-4.woff2') format('woff2'); font-display: swap; unicode-range: U+5168,U+51FA,U+898B; }
 @font-face { font-family: 'G01Jp'; src: url('../assets/fonts/g01-jp-5.woff2') format('woff2'); font-display: swap; unicode-range: U+3001,U+3002,U+304F,U+3051,U+3055,U+305A,U+305B,U+305F,U+3060,U+3064,U+306A,U+3070,U+3082,U+308C,U+308F,U+3092; }
 @font-face { font-family: 'G01Jp'; src: url('../assets/fonts/g01-jp-6.woff2') format('woff2'); font-display: swap; unicode-range: U+3001,U+3002,U+304F,U+3051,U+3055,U+305A,U+305B,U+305F,U+3060,U+3064,U+306A,U+3070,U+3082,U+308C,U+308F,U+3092,U+5168,U+51FA,U+54E1,U+5931,U+5FC5,U+898B,U+9023,U+9053,U+91D1; }
+.g1-door { position: absolute; z-index: 3; transform-origin: 100% 50%; transform: perspective(900px) rotateY(0deg); transition: transform 0.7s cubic-bezier(.3, .1, .3, 1), filter 0.7s; pointer-events: none; }
+.g1-door > img { width: 100%; height: 100%; display: block; }
+.g1-door .g1-engr.lk { left: 50%; top: 24%; }
+.g1-door.open { transform: perspective(900px) rotateY(108deg); filter: brightness(0.55); }
+.g1-lkin { position: absolute; z-index: 2; overflow: hidden; background: #0b0605; pointer-events: none; }
+.g1-lkin img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; filter: brightness(0.7); }
