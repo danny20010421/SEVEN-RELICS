@@ -226,7 +226,7 @@ export function render(st, params, go) {
   $(el, '#hintBtn').addEventListener('click', async () => {
     sfx('tap');
     if (!step.hints.length) { toast('這裡不需要提示，往下看劇情吧。'); return; }
-    if (step.free) { sfx('hint'); flash(hlIds()); const h0 = step.hints[Math.min(hintLv, step.hints.length - 1)]; hintLv++; sys([(typeof h0 === 'function' ? h0() : h0) + '（免費提示）'], 3600); return; }
+    if (step.free) { sfx('hint'); $(el, '#hintBtn').classList.remove('g1-wiggle'); flash(hlIds()); const h0 = step.hints[Math.min(hintLv, step.hints.length - 1)]; hintLv++; sys([(typeof h0 === 'function' ? h0() : h0) + '（免費提示）'], 3600); return; }
     const dd = get();
     const ok = await modal({ title: '使用提示', body: '消耗鑽石，取得一個小幫助。', bodyHtml: `<div class="col" style="align-items:center;gap:4px"><div class="row" style="height:48px;gap:12px;font-size:18px"><span style="color:var(--text-2)">消耗</span><img src="${IMG('diamond.webp')}" alt="鑽石" style="width:40px;height:40px"><b style="font-size:24px">×1</b></div><div style="font-size:14px;line-height:24px;color:var(--muted)">目前持有 ${fmt(dd.diamonds)} 顆鑽石</div></div>`, buttons: [{ label: '取消', kind: 'btn-line', value: false }, { label: '使用提示', kind: 'btn', value: true }] });
     if (!ok || !alive) return;
@@ -1035,7 +1035,7 @@ ${miss.length ? `<p style="font-size:16px;line-height:24px;color:var(--muted)">�
       const paint = () => { $(cu, '#lcd').innerHTML = [...val].map((c, i) => `<div class="g1-lcdpatch" style="left:${SLOT[i]}px;top:161px"></div><div class="g1-lcd" style="left:${SLOT[i]}px;top:161px">${c}</div>`).join(''); };
       openCu(`<img class="bg" src="${IMG('g01-s08-keypad-cu.webp')}" alt="密碼鎖"><div id="lcd"></div><div class="g1-kmsg" id="km"></div>`,
         Object.entries(KEYS).map(([k, [x, y]]) => [`k${k}`, x - 40, y - 40, 80, 80, k]));
-      lockApi = { reveal() { const i = val.length; if (i >= 4) return false; val += '1212'[i]; paint(); $(cu, '#km').textContent = `解析完成：第 ${i + 1} 位是 ${'1212'[i]}。`; return true; } };
+      lockApi = { reveal() { const i = val.length; if (i >= 4) return false; val += '1212'[i]; paint(); return true; } };
       const L = async a => {
         if (a.type !== 'hs') return;
         if (a.id === 'back') { off(); closeCu(); res(false); return; }
@@ -1044,9 +1044,9 @@ ${miss.length ? `<p style="font-size:16px;line-height:24px;color:var(--muted)">�
         if (val.length < 4) return;
         if (val === '1212') { off(); sfx('unlock'); await wait(800); closeCu(); res(true); return; }
         sfx('error'); wrong++;
-        $(cu, '#km').innerHTML = '不對。　<button type="button" class="g1-freehint">免費提示</button>';
-        const fb = $(cu, '.g1-freehint'), lv = Math.min(wrong - 1, 2);
-        fb.addEventListener('click', ev => { ev.stopPropagation(); sfx('hint'); $(cu, '#km').textContent = H[lv]; });
+        // 不在畫面下方出字：右上角的「提示」晃一下，這一步的提示免費
+        step.hints = H; step.free = true;
+        const hb = $(el, '#hintBtn'); hb.classList.remove('g1-wiggle'); void hb.offsetWidth; hb.classList.add('g1-wiggle');
         await wait(600); val = ''; paint();
       };
       const off = () => { listeners = listeners.filter(l => l !== L); };
