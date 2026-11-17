@@ -160,6 +160,8 @@ export function render(st, params, go) {
     if (on) moveLight(640, 400);
   }
   function moveLight(x, y) { dark.style.setProperty('--lx', x + 'px'); dark.style.setProperty('--ly', y + 'px'); if (lightProbe) lightProbe(x, y); }
+  let lastPt = [640, 400];
+  el.addEventListener('pointerdown', e => { const r = el.getBoundingClientRect(); const k = r.width / 1280; lastPt = [(e.clientX - r.left) / k, (e.clientY - r.top) / k]; }, true);
   el.addEventListener('pointermove', e => {
     if (!lightOn) return;
     const r = el.getBoundingClientRect(); const k = r.width / 1280;
@@ -222,6 +224,7 @@ export function render(st, params, go) {
   $(el, '#hintBtn').addEventListener('click', async () => {
     sfx('tap');
     if (!step.hints.length) { toast('這裡不需要提示，往下看劇情吧。'); return; }
+    if (step.free) { sfx('hint'); flash(hlIds()); const h0 = step.hints[Math.min(hintLv, step.hints.length - 1)]; hintLv++; sys([(typeof h0 === 'function' ? h0() : h0) + '（免費提示）'], 3600); return; }
     const dd = get();
     const ok = await modal({ title: '使用提示', body: '消耗鑽石，取得一個小幫助。', bodyHtml: `<div class="col" style="align-items:center;gap:4px"><div class="row" style="height:48px;gap:12px;font-size:18px"><span style="color:var(--text-2)">消耗</span><img src="${IMG('diamond.webp')}" alt="鑽石" style="width:40px;height:40px"><b style="font-size:24px">×1</b></div><div style="font-size:14px;line-height:24px;color:var(--muted)">目前持有 ${fmt(dd.diamonds)} 顆鑽石</div></div>`, buttons: [{ label: '取消', kind: 'btn-line', value: false }, { label: '使用提示', kind: 'btn', value: true }] });
     if (!ok || !alive) return;
@@ -370,9 +373,11 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     await me('所以你要我去找黃金？', 'So you want me to find gold?'); S();
     await say('不。我要你去找真相。黃金博物館的館長已經同意讓你參與這次調查。至於報酬……他們會替你安排的。', 'No. I want you to find the truth. The museum’s director has agreed to let you join. As for payment… they’ll see to it.', 'ind'); S();
     await say('記住，歷史最有趣的地方，從來不是人們記錄了什麼，而是他們選擇留下什麼，又遺漏了什麼。', 'Remember: what makes history interesting is never what people recorded, but what they chose to leave, and what they left out.', 'ind'); S();
-    setStep('調查桌上的資料', ['書桌上和牆上的照片、信、報告都可以點開來看。'], ['photo', 'invite', 'report'], '研究室裡有三份資料：牆上的舊照片、桌上的館長邀請函、攤開的礦山報告。全部看過後，就能接受委託。');
+    const s01n = () => ['photo', 'invite', 'report'].filter(k => got.has(k)).length;
+    setStep('調查研究室裡的資料　0／3', [() => `這個房間有 3 樣東西值得注意：牆上的照片、桌上的信、攤開的報告。還差 ${3 - s01n()} 樣。`], () => ['photo', 'invite', 'report'].filter(k => !got.has(k)), '研究室裡有三份資料：牆上的舊照片、桌上的館長邀請函、攤開的礦山報告。全部看過後，就能接受委託。');
+    step.free = true;
     setHs([['photo', 624, 96, 152, 180, '金瓜石舊照片'], ['invite', 700, 548, 140, 48, '館長邀請函'], ['report', 470, 470, 330, 76, '礦山報告摘要']]);
-    toast('點畫面上的物品就能調查。點道具欄的道具，再點目標就能使用。');
+    sys(['這個房間有 3 樣東西值得注意。', '找不到的話，右上角的「提示」這一關可以免費使用。'], 3600);
     const s01Talk = {
       photo: ['坑道裡鑿岩的礦工……他們大概沒想到，八十年後還有人在看這張照片。', 'Miners drilling in the tunnel… they never imagined anyone would look at this eighty years later.'],
       invite: ['未列入目錄的舊礦圖……有人刻意不讓它被登記？', 'A mine map left out of the catalogue… did someone keep it off the books on purpose?'],
@@ -381,7 +386,8 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     await loop(async id => {
       await getDoc(id); S();
       await me(...s01Talk[id]); S();
-      if (['photo', 'invite', 'report'].every(k => got.has(k))) return true;
+      $(el, '#goal').textContent = `目標　調查研究室裡的資料　${s01n()}／3`;
+      if (s01n() === 3) return true;
     }); S();
     untip();
     await me('運出去的和運到的對不上，差的那一點，就是我要找的東西。', 'What left and what arrived don’t match. That small gap is what I’m looking for.'); S();
@@ -414,10 +420,10 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
       ['chock', 'g01-chock.webp', 786, 556, 58, 39, 'z-index:3'],
       ['bar', 'g01-crowbar.webp', 176, 396, 52, 170, 'z-index:2;transform:rotate(-8deg)'],
     ], `<div class="g1-clip" style="left:960px;top:230px;width:240px;height:222px"><img id="grip" class="g1-sp" src="${IMG('g01-lever.webp')}" alt="" style="left:119px;top:60px;width:22px;height:240px;transform-origin:50% 100%;transform:rotate(-30deg)"></div>
-<img id="lever" class="g1-sp" src="${IMG('g01-lever.webp')}" alt="" style="left:396px;top:392px;width:19px;height:200px;z-index:2;opacity:0;transform-origin:50% 95%;transition:transform .5s ease,opacity .3s">`)); S();
+<div class="g1-clip" style="left:100px;top:300px;width:300px;height:222px"><img id="lever" class="g1-sp" src="${IMG('g01-lever.webp')}" alt="" style="left:163px;top:57px;width:18px;height:190px;opacity:0;transform-origin:50% 87%;transition:transform .6s ease,opacity .3s"></div>`)); S();
     let hasBar = false, chock = true, hasGrip = false, gripOn = false, rolled = false;
     setHs([['cart', 537, 292, 307, 291, '礦車'], ['wheel', 760, 520, 120, 90, '車輪'], ['bar', 130, 380, 120, 200, '鐵撬棒'], ['crate', 940, 260, 280, 360, '木箱'], ['ctrl', 260, 380, 210, 260, '控制機']]);
-    setStep('移開擋住入口的礦車', [() => !hasBar ? '小屋牆邊靠著一根鐵撬棒。' : chock ? '車輪底下卡著止輪器。點道具欄的鐵撬棒，再點車輪。' : !hasGrip ? '右邊的木箱裡斜插著一支扳桿。' : !gripOn ? '左下角的控制機少了扳桿。把扳桿插上去。' : '扳下控制機上的扳桿。'],
+    setStep('移開擋住入口的礦車', [() => !hasBar ? '小屋牆邊靠著一根鐵撬棒。' : chock ? '車輪底下卡著止輪器。點道具欄的鐵撬棒，再點車輪。' : !hasGrip ? '右邊的木箱裡斜插著一支扳桿。' : !gripOn ? '左下角齒輪機上有個孔，把扳桿插進去。' : '把扳桿往左下扳。'],
       () => !hasBar ? ['bar'] : chock ? ['wheel'] : !hasGrip ? ['crate'] : ['ctrl'],
       '礦車被止輪器卡在往下的軌道上。順序：撿鐵撬棒 → 撬掉車輪下的止輪器 → 從右邊木箱拿扳桿 → 插到左下角的控制機 → 扳下扳桿，礦車就會順著軌道溜進坑道。');
     await me('本山六坑……入口被一台礦車擋住了。', 'Shaft Six… a mine cart is blocking the entrance.'); S();
@@ -439,13 +445,13 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
       if (id === 'crate') { if (hasGrip) return void await me('箱子裡已經空了。', 'The crate is empty now.'); hasGrip = true; hide('grip'); addItem('grip'); return void await me('一支礦車扳桿……底座的轉軸，應該插得進左邊那台控制機。', 'A mine-cart lever… its pivot base should fit that control machine on the left.'); }
       if (id === 'ctrl') {
         if (!gripOn) {
-          if (item !== 'grip') return void await me('一台生鏽的控制機，上面有個插孔，少了扳桿。', 'A rusted control machine with an empty socket. Its lever is missing.');
+          if (item !== 'grip') return void await me('一台生鏽的齒輪機，齒輪旁邊有個孔，少了扳桿。', 'A rusted control machine with an empty socket. Its lever is missing.');
           sfx('clang'); gripOn = true; dropItem('grip'); sp('lever').style.opacity = 1;
-          return void await me('插上去了，卡得很緊。', 'It’s in, and it fits tight.');
+          return void await me('插進齒輪旁的孔裡了，卡得很緊。往左下扳應該就行。', 'It’s in, and it fits tight.');
         }
         if (chock) return void await me('扳桿扳不下去……礦車的輪子還被止輪器卡著。', 'The lever won’t go… the wheel is still chocked.');
         if (rolled) return;
-        sp('lever').style.transform = 'rotate(38deg)'; sfx('clang'); await wait(500); S();
+        sp('lever').style.transform = 'rotate(-40deg)'; sfx('clang'); await wait(500); S();
         const c = sp('cart'); sfx('whoosh');
         c.style.transform = 'translate(-8px,-125px) scale(.48)'; c.style.filter = 'brightness(.15)'; c.style.opacity = '0';
         await wait(2700); S(); sfx('clang'); rolled = true; dropHs('cart'); dropHs('wheel');
@@ -488,10 +494,16 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
       }
       if (id.startsWith('lk')) {
         const n = +id[2];
-        if (opened.has(n)) return void await me(n === 3 ? '櫃子已經打開了。' : '只有舊工作服。', n === 3 ? 'It’s already open.' : 'Only old work clothes.');
+        if (opened.has(n)) return void await me(n === 3 ? '櫃子已經打開了。' : '只有那件舊工作服。', n === 3 ? 'It’s already open.' : 'Only that old coverall.');
         if (item !== 'bar') return void await me('鎖扣都鏽死了，要撬開才行。', 'The latch has rusted shut. I’ll need to pry it.');
         sfx('pry'); opened.add(n);
-        if (n !== 3) return void await me('撬開了……只有幾件發霉的工作服。不是這一個。', 'Pried open… only a few mouldy work clothes. Not this one.');
+        if (n !== 3) {
+          const v = html(`<div class="g1-docback" role="dialog" aria-label="${n} 號鐵櫃內部"><img class="g1-lockerview" src="${IMG('g01-locker-open.webp')}" alt="鐵櫃裡掛著一件破舊的工作服"><div class="g1-dochint">點旁邊收起</div></div>`);
+          el.appendChild(v);
+          await me('撬開了……裡面只掛著一件發霉的工作服。不是這一個。', 'Pried open… only a mouldy coverall hanging inside. Not this one.', { pic: false }); S();
+          await new Promise(r => v.addEventListener('click', () => { sfx('tap'); v.remove(); r(); })); S();
+          return;
+        }
         sfx('door'); hide('door3'); await wait(500); S();
         await me('櫃底壓著一本日誌……封面寫著「A. WILLIAMS」。裡面是英文，用館長給的翻譯筆掃一下。', 'A journal pressed at the bottom of the locker… “A. WILLIAMS” on the cover. It’s in English; the director’s pen can scan it.'); S();
         await getDoc('journal'); return true;
@@ -502,14 +514,14 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
 
     // ---------- S05 六坑運礦站 ----------
     await chapter('六坑運礦站', 'S05', () => setScene('g01-s05.webp', '六坑運礦站，兩條軌道、磅秤與一塊舊黑板', [
-      ['oldsw', 'g01-switch.webp', 676, 600, 108, 72, 'opacity:0;z-index:2'],
-      ['gravel', 'g01-gravel.webp', 622, 592, 216, 72, 'z-index:4'],
+      ['oldsw', 'g01-switch.webp', 690, 600, 130, 86, 'opacity:0;z-index:2;filter:brightness(.8) contrast(1.1)'],
+      ['rag', 'g01-rag.webp', 612, 566, 290, 0, 'z-index:4;filter:brightness(.6)'],
     ])); S();
     let circled = false, rubbed = false;
-    setHs([['ledger', 956, 312, 190, 64, '桌上的帳簿'], ['scale', 820, 326, 80, 150, '磅秤'], ['board5', 844, 84, 300, 206, '黑板'], ['gravel', 612, 580, 240, 96, '鐵軌碎石']]);
-    setStep('找出對不上的那一天', [() => !circled ? '右邊桌上疊著帳簿，翻開離站簿與到站簿，同一天的數字應該一樣。' : !rubbed ? '黑板上的粉筆灰底下，好像還有字。用手指把灰抹掉。' : '黑板上的箭頭指向鐵軌旁的碎石。', () => !circled ? '二月十七日：離站 12、到站 9。在冊子上點那一行。' : !rubbed ? '在黑板上來回滑動，把整片粉筆灰擦掉。' : '點鐵軌旁的碎石。'],
+    setHs([['ledger', 956, 312, 190, 64, '桌上的帳簿'], ['scale', 820, 326, 80, 150, '磅秤'], ['board5', 844, 84, 300, 206, '黑板'], ['gravel', 600, 556, 310, 150, '軌道上的破布']]);
+    setStep('找出對不上的那一天', [() => !circled ? '右邊桌上疊著帳簿，翻開離站簿與到站簿，同一天的數字應該一樣。' : !rubbed ? '黑板上的粉筆灰底下，好像還有字。用手指把灰抹掉。' : '軌道上蓋著一塊破布，把它移開。', () => !circled ? '二月十七日：離站 12、到站 9。在冊子上點那一行。' : !rubbed ? '在黑板上來回滑動，把整片粉筆灰擦掉。' : '點鐵軌旁的碎石。'],
       () => (!circled ? ['ledger'] : !rubbed ? ['board5'] : ['gravel']),
-      () => (!circled ? '翻開離站簿與到站簿，只有 02/17 對不上：離站 12 車、到站 9 車。在冊子上點 02/17 那一行圈起來。' : !rubbed ? '黑板被粉筆灰蓋住了。點黑板，用手指或滑鼠來回抹，擦出底下的字。' : '黑板上的箭頭指向鐵軌旁的碎石，點碎石。'));
+      () => (!circled ? '翻開離站簿與到站簿，只有 02/17 對不上：離站 12 車、到站 9 車。在冊子上點 02/17 那一行圈起來。' : !rubbed ? '黑板被粉筆灰蓋住了。點黑板，用手指或滑鼠來回抹，擦出底下的字。' : '絆倒主角的是軌道上的一塊破布。點破布把它移開。'));
     await me('礦車在這裡秤重、登記，再送出去。每一車都會留下紀錄。', 'Carts were weighed and logged here before leaving. Every load left a record.'); S();
     await loop(async id => {
       if (id === 'back') { closeCu(); return; }
@@ -527,22 +539,28 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
       }
       if (id === 'scale') return void await me('磅秤的指針早就卡死了。', 'The scale’s needle is stuck fast.');
       if (id === 'board5') {
-        if (rubbed) return void await me('「三車　→　舊側線」。箭頭指著鐵軌旁的碎石。', '“Three carts → old siding.” The arrow points at the gravel.');
+        if (rubbed) return void await me('「必須找到遺失的黃金，否則所有人一起陪葬」……', '“Find the missing gold, or every one of you will be buried with it”…');
         if (!circled) return void await me('一塊舊黑板，上面積滿了粉筆灰。', 'An old blackboard, thick with chalk dust.');
         const ok = await rubBoard(); S();
         if (!ok) return;
         rubbed = true; hintLv = 0;
         $(el, '#goal').textContent = '目標　檢查鐵軌';
-        await me('夜班留下的字……「三車　→　舊側線」。只有在所有人睡著後，他們才敢寫下真正的數字。', 'Words left by the night shift… “Three carts → old siding.” Only when everyone slept did they dare write the real numbers.', { pic: false }); S();
+        await me('「必須找到遺失的黃金，否則所有人一起陪葬」……', '“Find the missing gold, or every one of you will be buried with it”…', { pic: false }); S();
+        await me('這不是礦工寫的，是寫給礦工看的。三車貨不見了，監工就拿所有人的命來逼。', 'The miners didn’t write this—it was written for them. Three carts went missing, and the overseers threatened every life to get them back.', { pic: false }); S();
+        await me('可是他們沒找到。表示藏貨的人，寧可被這樣對待，也沒說出去。', 'But they never found it. Whoever hid the cargo kept silent, even under that.', { pic: false }); S();
         closeCu();
-        await me('箭頭指著鐵軌旁那堆碎石。', 'The arrow points at that pile of gravel by the track.'); S();
+        await me('或許前方有什麼？', 'Maybe there’s something further along?'); S();
+        el.classList.add('g1-shake1'); sfx('clang'); await wait(480); el.classList.remove('g1-shake1'); S();
+        await me('哇——！咦？這個是什麼？', 'Whoa—! Huh? What’s this?', { pic: false }); S();
+        flash(['gravel'], 4000);
         return;
       }
       if (id === 'gravel') {
-        if (!rubbed) return void await me('鐵軌旁堆著一些碎石。', 'Some loose gravel beside the track.');
-        sfx('pry'); hide('gravel'); sp('oldsw').style.opacity = 1; await wait(500); S();
-        await me('碎石底下藏著一個舊轉轍器……有人刻意蓋住它。這條側線，不在任何一份圖上。', 'An old switch hidden under the gravel… someone covered it on purpose. This siding isn’t on any map.'); S();
-        await me('三車貨物沒有離開礦坑，而是從這裡轉進去了。', 'The three loads never left the mine. They were switched off here.'); S();
+        if (!rubbed) return void await me('軌道上蓋著一塊又髒又破的布。', 'A filthy, torn cloth lying over the track.');
+        const rg = sp('rag'); rg.classList.add('g1-rag'); rg.style.transform = 'translate(-260px,40px) rotate(-14deg)'; rg.style.opacity = '.85'; sfx('whoosh'); await wait(500); S();
+        sp('oldsw').style.opacity = 1; await wait(400); S();
+        await me('破布底下……是一個轉轍器，被人砸壞了。扳桿斷在側線那一邊，只能通往旁邊那條舊軌道。', 'Under the cloth… a switch, smashed. The lever snapped off toward the siding, so it can only send carts down the old track.'); S();
+        await me('有人故意弄壞它、再用破布蓋住。三車貨物沒有離開礦坑，而是從這裡轉進去了。', 'Someone broke it on purpose and hid it under the cloth. The three loads never left the mine; they were switched off here.'); S();
         return true;
       }
     }); S();
@@ -600,26 +618,36 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
 
     // ---------- S06-B 中坑道：幾乎全黑，用手電筒找出神秘通道 ----------
     await fadeTo(() => { setScene('g01-s06-mid.webp', '中間的坑道，一片漆黑', [
-      ['flash', 'it-flashlight.webp', 560, 560, 130, 0, 'z-index:5;transform:rotate(-12deg)'],
+      ['flash', 'it-flashlight.webp', 560, 560, 130, 0, 'z-index:5;opacity:0;transform:rotate(-12deg)'],
       ['sign', 'g01-sign.webp', 744, 470, 190, 0, 'z-index:2;transform:rotate(9deg);filter:brightness(.8)'],
     ]); setDark(true, 'pitch'); }); S();
     let hasFl = false;
-    setHs([['flash', 540, 530, 170, 110, '地上發亮的東西'], ['end', 380, 240, 260, 200, '軌道盡頭'], ['sign', 740, 470, 200, 120, '倒在地上的木牌'], ['side', 880, 270, 180, 200, '岩壁']]);
-    setStep('調查中間的坑道', [() => !hasFl ? '黑暗中，地上有個東西在反光。' : '移動手電筒的光，照遍整條坑道。', () => !hasFl ? '畫面下方中間，那個反光的東西。' : '地上倒著一塊方向牌，箭頭指向右邊的岩壁。'], () => (!hasFl ? ['flash'] : ['sign', 'side']), '先撿起地上反光的手電筒。打開後移動光線，照到地上那塊指向右邊的方向牌，再點右邊岩壁的缺口。');
-    await me('好黑……什麼都看不見。', 'So dark… I can’t see a thing.', { pic: false }); S();
+    setHs([['grope', 0, 80, 1140, 640, '在黑暗中摸索']]);
+    setStep('調查中間的坑道', [() => !hasFl ? '什麼都看不見。在畫面上到處點點看，用手摸索地面。' : '移動手電筒的光，照遍整條坑道。', () => !hasFl ? '往畫面下方中間的地面摸摸看。' : '地上倒著一塊方向牌，箭頭指向右邊的岩壁。'], () => (!hasFl ? [] : ['sign', 'side']), '在黑暗中點畫面摸索，往下方中間的地面摸，就會摸到手電筒。打開後移動光線，照到地上那塊指向右邊的方向牌，再點右邊岩壁的缺口。');
+    await me('好黑……什麼都看不見。只能用手摸著走了。', 'So dark… I can’t see a thing. I’ll have to feel my way.', { pic: false }); S();
+    toast('在畫面上到處點點看，摸索四周。');
+    let gropes = 0;
     await loop(async id => {
+      if (id === 'grope') {
+        const [x, y] = lastPt; gropes++;
+        const rp = html(`<div class="g1-touch" style="left:${x}px;top:${y}px"></div>`); el.appendChild(rp); setTimeout(() => rp.remove(), 700);
+        const dx = 625 - x, dy = 598 - y;
+        if (Math.hypot(dx, dy) < 150 || gropes >= 9) {
+          sfx('pick'); hasFl = true; addItem('fl');
+          await me('手指碰到一個冰冷的圓筒……是手電筒！電池早就爛了，換上我帶的備用電池。', 'My fingers touch a cold cylinder… a flashlight! The battery rotted long ago; I’ll swap in my spare.', { pic: false }); S();
+          sfx('flash'); setDark(true, 'torch deep');
+          setHs([['end', 380, 240, 260, 200, '軌道盡頭'], ['sign', 740, 470, 200, 120, '倒在地上的木牌'], ['side', 880, 270, 180, 200, '岩壁']]);
+          toast('移動滑鼠或手指，用光照亮四周。');
+          return;
+        }
+        const dir = Math.abs(dx) > 160 ? (dx > 0 ? '右邊' : '左邊') : '';
+        if (y < 430) return void await me(['摸到的是冰冷、潮濕的岩壁……東西應該不會在牆上。', '頭頂是粗糙的支撐木。往地上摸摸看。'][gropes % 2], ['Cold, wet rock… nothing up here.', 'Rough timber overhead. I should feel along the ground.'][gropes % 2], { pic: false });
+        return void await me(`腳邊是枕木和碎石……${dir ? `再往${dir}一點摸摸看。` : '應該就在附近。'}`, `Sleepers and loose stones underfoot… ${dir ? `a little more to the ${dx > 0 ? 'right' : 'left'}.` : 'it must be close.'}`, { pic: false });
+      }
       if (id === 'end') return void await me(hasFl ? '落石把整條坑道堵死了。' : '前面黑漆漆的，伸手不見五指。', hasFl ? 'The rockfall has sealed the tunnel completely.' : 'Pitch black ahead.', { pic: false });
       if (id === 'sign') {
         if (!hasFl) return void await me('太暗了，什麼也看不見。', 'Too dark to see anything.', { pic: false });
         return void await me('一塊倒在地上的方向牌，木頭都爛了……箭頭指著右邊。右邊只有岩壁？', 'A fallen direction sign, the wood rotten through… the arrow points right. But there’s only rock to the right?', { pic: false });
-      }
-      if (id === 'flash') {
-        if (hasFl) return;
-        hasFl = true; hide('flash'); dropHs('flash'); addItem('fl');
-        await me('一支舊手電筒……電池早就爛了。換上我帶的備用電池。', 'An old flashlight… the battery rotted long ago. I’ll swap in my spare.', { pic: false }); S();
-        sfx('flash'); setDark(true, 'torch deep');
-        toast('移動滑鼠或手指，用光照亮四周。');
-        return;
       }
       if (id === 'side') {
         if (!hasFl) return void await me('太暗了，什麼也看不見。', 'Too dark to see anything.', { pic: false });
@@ -631,36 +659,60 @@ ${page > 0 ? '<div class="curl l"></div>' : ''}${page < n - 1 ? '<div class="cur
     }); S();
 
     // ---------- S07 五坑舊運輸區 ----------
-    await chapter('五坑舊運輸區', 'S07', () => { setScene('g01-s07-empty-nh.webp', '五坑舊運輸區的空豎井，左邊是控制盤', [['ctlIn', 'g01-key-end.webp', 127, 460, 8, 0, 'opacity:0;z-index:3;transform-origin:50% 18%;rotate:45deg']]); setDark(true, 'torch'); }); S();
+    await chapter('五坑舊運輸區', 'S07', () => { setScene('g01-s07-empty-nh.webp', '五坑舊運輸區的空豎井，左邊是控制盤', [['ctlIn', 'g01-key-end.webp', 127, 460, 8, 0, 'opacity:0;z-index:3;transform-origin:50% 18%;rotate:-45deg']]); setDark(true, 'torch'); }); S();
     let ctlOn = false, cageDown = false;
     const s07hs = () => setHs([['manual', 191, 207, 74, 114, '操作須知鐵牌'], ['panel', 46, 367, 168, 207, '控制盤'], cageDown ? ['cage', 498, 306, 237, 299, '鐵籠'] : ['shaft', 470, 60, 300, 520, '豎井']]);
     s07hs();
-    setStep('啟動升降機', [() => !ctlOn ? '控制盤中間有個鑰匙孔。十字架底下撿到的鑰匙，也許對得上。' : '照鐵牌上的順序操作控制盤：解除制動 → 接通電源 → 下降。'], ['manual', 'panel'], '打開控制盤，點道具欄的舊鑰匙，再點中間的鑰匙孔。之後照鐵牌順序：解除制動 → 接通電源 → 下降，把鐵籠叫下來。');
+    setStep('啟動升降機', [() => !ctlOn ? '控制盤中間有個鑰匙孔。十字架底下撿到的鑰匙，也許對得上。' : '照鐵牌上的順序操作控制盤：解除制動 → 接通電源 → 下降。'], ['manual', 'panel'], '打開控制盤，點道具欄的舊鑰匙，再點中間的鑰匙孔；插進去後點鑰匙左側或往左滑，把鑰匙轉開。之後照鐵牌順序：解除制動 → 接通電源 → 下降，把鐵籠叫下來。');
     await me('一座豎井……鐵籠不在這裡，停在上面某一層。', 'A shaft… the cage isn’t here. It’s stopped somewhere above.'); S();
     let panelSeq = [];
-    const PANEL = { brake: [437, 438, '解除制動'], power: [692, 438, '接通電源'], down: [565, 526, '下降'] };
-    const panelCu = () => openCu('<div class="g1-crossbg"></div>' + zoomBg('g01-s07-empty-nh.webp', 30, 350, 2.6, 302, -862 + 350 * 2.6) +
-      `${ctlOn ? `<img class="g1-sp g1-keyin turned" src="${IMG('g01-key-end.webp')}" alt="" style="left:539px;top:316px;height:200px">` : ''}` +
-      Object.values(PANEL).map(([x, y, t]) => `<div class="g1-engr sm" style="left:${x}px;top:${y + 64}px">${t}</div>`).join('') +
-      Object.entries(PANEL).map(([k, [x, y]]) => `<div class="g1-btnglow${panelSeq.includes(k) ? ' on' : ''}" style="left:${x}px;top:${y}px"></div>`).join(''),
-      [['socket', 505, 292, 120, 120, '中間的鑰匙孔'], ...Object.entries(PANEL).map(([k, [x, y, t]]) => [k, x - 56, y - 56, 112, 112, t])]);
+    // 控制盤近景：整張高解析控制盤圖，按鈕與刻字都在圖上
+    const PANEL = { brake: [484, 435], power: [804, 435], down: [645, 545] };
+    let keyIn = 0; // 0 沒插、1 插著還沒轉、2 已轉動
+    const KEYST = 'left:615px;top:289px;height:230px';
+    const panelCu = () => {
+      openCu(`<img class="bg" src="${IMG('g01-panel-cu.webp')}" alt="升降機控制盤：儀表、鑰匙孔與三顆按鈕">` +
+        (keyIn ? `<img class="g1-sp g1-keyin${keyIn === 2 ? ' turned' : ' still'}" src="${IMG('g01-key-end.webp')}" alt="插在鑰匙孔裡的鑰匙" style="${KEYST}">` : '') +
+        Object.entries(PANEL).map(([k, [x, y]]) => panelSeq.includes(k) ? `<div class="g1-panelglow" style="left:${x}px;top:${y}px"></div>` : '').join(''),
+        [...(keyIn ? [] : [['socket', 595, 280, 100, 130, '中間的鑰匙孔']]), ...Object.entries(PANEL).map(([k, [x, y]]) => [k, x - 56, y - 56, 112, 112, { brake: '解除制動', power: '接通電源', down: '下降' }[k]])]);
+      if (keyIn === 1) armTurn();
+    };
+    // 鑰匙插著時：點鑰匙左側或往左滑，才會逆時針轉 45 度
+    function armTurn() {
+      const z = html('<div class="g1-turnzone" aria-label="轉動鑰匙：點左側或往左滑"></div>');
+      cu.appendChild(z);
+      let x0 = null;
+      z.addEventListener('pointerdown', e => { const r = el.getBoundingClientRect(); x0 = (e.clientX - r.left) * 1280 / r.width; });
+      z.addEventListener('pointerup', async e => {
+        if (x0 === null || keyIn !== 1) return;
+        const r = el.getBoundingClientRect(), x1 = (e.clientX - r.left) * 1280 / r.width;
+        const swipeL = x1 - x0 < -30, tapL = Math.abs(x1 - x0) <= 30 && x1 < 645;
+        x0 = null;
+        if (!(swipeL || tapL)) { toast('轉不動……試試往另一個方向。'); return; }
+        keyIn = 2; const kk = cu.querySelector('.g1-keyin'); if (kk) { kk.classList.remove('still'); kk.classList.add('turned'); }
+        z.remove(); sfx('clang');
+        setTimeout(() => emit({ type: 'hs', id: 'keyturned', item: null }), 650);
+      });
+    }
     await loop(async (id, item) => {
       if (id === 'back') { closeCu(); return; }
       if (id === 'manual') { await getDoc('manual'); S(); return void await me('一般運轉不停靠的地方……就不會出現在任何運輸紀錄裡。', 'A level the lift never normally stops at… would never show up in any transport record.'); }
       if (id === 'shaft') return void await me('鐵籠停在上面。得先把它叫下來。', 'The cage is up there. I need to call it down.');
       if (id === 'panel') { panelCu(); return; }
-      if (id === 'socket') {
-        if (ctlOn) return;
-        if (item !== 'ctl') return void await me('中間是一個鑰匙孔，孔緣磨得發亮。', 'A keyhole in the middle, its rim worn shiny.', { pic: false });
-        dropItem('ctl');
-        cu.insertAdjacentHTML('beforeend', `<img class="g1-sp g1-keyin" src="${IMG('g01-key-end.webp')}" alt="" style="left:539px;top:316px;height:200px">`);
-        const kk = cu.querySelector('.g1-keyin:last-of-type'); sfx('key'); await wait(450); S();
-        kk.classList.add('turned'); sfx('clang'); await wait(600); S();
+      if (id === 'keyturned') {
         ctlOn = true; sp('ctlIn').style.opacity = 1; panelCu();
-        return void await me('鑰匙插進去，轉得動……儀表的指針跳了一下。有電了。', 'The key goes in and turns… the gauge needle jumps. There’s power.', { pic: false });
+        return void await me('鑰匙轉過去了……儀表的指針跳了一下。有電了。', 'The key turns… the gauge needle jumps. There’s power.', { pic: false });
+      }
+      if (id === 'socket') {
+        if (keyIn) return;
+        if (item !== 'ctl') return void await me('中間是一個鑰匙孔，孔緣磨得發亮。', 'A keyhole in the middle, its rim worn shiny.', { pic: false });
+        dropItem('ctl'); keyIn = 1; sfx('key'); panelCu();
+        await me('鑰匙插進去了。要往哪邊轉……？', 'The key is in. Which way does it turn…?', { pic: false }); S();
+        toast('點鑰匙的左側，或往左滑動來轉動鑰匙。');
+        return;
       }
       if (PANEL[id]) {
-        if (!ctlOn) return void await me('按了沒有反應……要先用鑰匙啟動。', 'Nothing happens… it needs the key first.', { pic: false });
+        if (!ctlOn) return void await me(keyIn ? '按了沒有反應……鑰匙還沒轉。' : '按了沒有反應……要先用鑰匙啟動。', keyIn ? 'Nothing… the key hasn’t been turned.' : 'Nothing happens… it needs the key first.', { pic: false });
         if (panelSeq.includes(id)) return;
         sfx('clang'); panelSeq.push(id); panelCu();
         if (['brake', 'power', 'down'][panelSeq.length - 1] !== id) { sfx('error'); await wait(500); panelSeq = []; panelCu(); return void await me('控制盤復位了。順序不對。', 'The panel reset. Wrong order.'); }
@@ -895,7 +947,7 @@ ${miss.length ? `<p style="font-size:16px;line-height:24px;color:var(--muted)">�
       // 黑板近景：整張黑板圖（1672×941）縮成寬 1144，內框 75–1595 × 75–865
       const k = 1144 / 1672, top0 = 56, L = 75 * k, T = top0 + 75 * k, W = 1520 * k, H = 790 * k;
       openCu(`<div class="g1-crossbg"></div><img class="g1-sp" src="${IMG('g01-board-cu.webp')}" alt="黑板" style="left:0;top:${top0}px;width:1144px;height:${941 * k}px">` +
-        `<div class="g1-chalkmsg2" style="left:${L}px;top:${T}px;width:${W}px;height:${H}px"><p>2／17　夜班</p><p>離 12　→　到 9</p><p class="big">三車　→　舊側線</p><svg viewBox="0 0 120 120" class="arrow" aria-hidden="true"><path d="M60 6 C 54 46, 66 70, 60 108 M 40 88 L 60 110 L 80 86" fill="none" stroke="rgba(236,232,220,.8)" stroke-width="5" stroke-linecap="round"/></svg></div>` +
+        `<div class="g1-chalkmsg2" style="left:${L}px;top:${T}px;width:${W}px;height:${H}px"><p>必須找到遺失的黃金</p><p class="big">否則所有人一起陪葬</p></div>` +
         `<canvas class="g1-dust" width="${Math.round(W)}" height="${Math.round(H)}" style="left:${L}px;top:${T}px;width:${W}px;height:${H}px"></canvas><div class="g1-kmsg" id="rbm" style="top:${top0 + 941 * k - 56}px">在黑板上來回抹，擦掉粉筆灰</div>`);
       const cv = $(cu, '.g1-dust'), cx = cv.getContext('2d');
       // 擦拭前的黑板（滿是粉筆灰的同一塊黑板）畫在畫布上，抹掉的地方露出底下的字
