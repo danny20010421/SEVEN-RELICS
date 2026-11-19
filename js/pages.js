@@ -23,7 +23,7 @@ export function stages(st, p, go) {
     const d = get(), n00Done = d.records.includes('n00');
     const item = (id, name, sub, right, on) => `<button type="button" class="ch${on ? ' on' : ''}" data-ch="${id}" role="listitem"><span class="row" style="gap:12px"><b>${name}</b><span>${sub}</span></span>${right}</button>`;
     const list = item('n00', '序章', '記憶的終點', `<span style="font-size:14px;color:var(--gold-2)">${n00Done ? '已破關' : '0 / 1'}</span>`, sel === 'n00') +
-      Array.from({ length: 12 }, (_, i) => item(i, chName(i), i === 0 ? '******' : '尚未解鎖', i === 0 ? '<span style="font-size:14px;color:var(--gold-2)">0 / 9</span>' : ICON.lock, sel === 0 && i === 0)).join('');
+      Array.from({ length: 12 }, (_, i) => item(i, chName(i), i === 0 ? '******' : '尚未解鎖', i === 0 ? `<span style="font-size:14px;color:var(--gold-2)">${d.records.includes('n01') ? 1 : 0} / 9</span>` : ICON.lock, sel === 0 && i === 0)).join('');
     const tries = `<div class="row" style="height:48px;gap:16px"><span style="font-size:16px;color:var(--text-2)">今日剩餘次數</span><b style="font-size:24px;line-height:32px">${triesLeft()} / 2</b><button type="button" class="btn-line sm" id="more" style="width:144px">${ICON.plus}<span style="margin-left:8px">增加次數</span></button></div>`;
     const panel = sel === 'n00' ? `<div class="panel stage-panel">
   <div class="col" style="gap:16px">
@@ -46,10 +46,10 @@ export function stages(st, p, go) {
     </div>
     <p style="margin:0;font-size:16px;line-height:24px;color:var(--muted)">九個小節環環相扣，須依序限時破解。每日可挑戰 2 次，額外次數需消耗鑽石；已破關的小節再次挑戰不扣次數，但不會再獲得獎勵。</p>
   </div>
-  <div class="nodes">${Array.from({ length: 9 }, (_, i) => `<span class="node">${ICON.lock}</span>${i < 8 ? '<span class="link-line"></span>' : ''}`).join('')}</div>
+  <div class="nodes">${Array.from({ length: 9 }, (_, i) => `<span class="node${i === 0 && d.records.includes('n01') ? ' done' : ''}">${i === 0 ? (d.records.includes('n01') ? ICON.check : '1') : ICON.lock}</span>${i < 8 ? '<span class="link-line"></span>' : ''}`).join('')}</div>
   <div class="row" style="padding:24px;justify-content:space-between;gap:24px;background:#1a1213;border:1px solid #2f1e1d">
-    <div class="col" style="gap:8px"><h3 class="serif" style="margin:0;font-size:24px;line-height:32px">主線劇情製作中</h3><span style="font-size:16px;line-height:24px;color:var(--text-2)">第一章即將開放，敬請期待。</span></div>
-    <button type="button" class="btn" disabled style="width:208px">開始挑戰</button>
+    <div class="col" style="gap:8px"><h3 class="serif" style="margin:0;font-size:24px;line-height:32px">第一節　不存在的第七分鐘</h3><span style="font-size:16px;line-height:24px;color:var(--text-2)">${n00Done ? '限時 30 分鐘，本節挑戰次數不限。' : '先完成序章後開放。'}</span></div>
+    <button type="button" class="btn" id="playN01" style="width:208px"${n00Done ? '' : ' disabled'}>${d.n01 && d.n01.st ? '繼續調查' : d.records.includes('n01') ? '再次挑戰' : '開始挑戰'}</button>
   </div>
 </div>`;
     body.innerHTML = `<div class="chlist" role="list">${list}</div>${panel}`;
@@ -59,6 +59,17 @@ export function stages(st, p, go) {
       if (id === 'n00' || id === '0') { sel = id === 'n00' ? 'n00' : 0; main(); return; }
       toast('完成前一章後解鎖');
     }));
+    const pN = $(body, '#playN01');
+    if (pN) pN.addEventListener('click', async () => {
+      sfx('tap');
+      const dd = get();
+      if (dd.n01 && dd.n01.st) {
+        const r = await modal({ title: '第一節　不存在的第七分鐘', body: '上次的調查還沒完成，要從中斷的地方繼續嗎？', buttons: [{ label: '重新開始', kind: 'btn-line', value: 'new' }, { label: '繼續調查', kind: 'btn', value: 'go' }] });
+        if (r === 'go') go('n01', { resume: true }); else if (r === 'new') { dd.n01.st = null; save(); go('n01'); }
+        return;
+      }
+      go('n01');
+    });
     const play = $(body, '#play');
     if (play) play.addEventListener('click', async () => {
       sfx('tap');
