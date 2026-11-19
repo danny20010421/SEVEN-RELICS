@@ -1,0 +1,122 @@
+{
+ "N01-INT-001-PHONE": {
+  "id": "N01-INT-001-PHONE",
+  "sprite_master_2560": [
+   562,
+   150,
+   1466,
+   490
+  ],
+  "sprite_stage": [
+   281.0,
+   75.0,
+   733.0,
+   245.0
+  ]
+ },
+ "N01-INT-002-FILEBOX": {
+  "id": "N01-INT-002-FILEBOX",
+  "sprite_master_2560": [
+   726,
+   526,
+   1268,
+   204
+  ],
+  "sprite_stage": [
+   363.0,
+   263.0,
+   634.0,
+   102.0
+  ]
+ },
+ "N01-INT-002-DESKDRAWER": {
+  "id": "N01-INT-002-DESKDRAWER",
+  "sprite_master_2560": [
+   896,
+   216,
+   772,
+   314
+  ],
+  "sprite_stage": [
+   448.0,
+   108.0,
+   386.0,
+   157.0
+  ]
+ },
+ "N01-INT-004-INTERCOM": {
+  "id": "N01-INT-004-INTERCOM",
+  "sprite_master_2560": [
+   915,
+   90,
+   285,
+   845
+  ],
+  "sprite_stage": [
+   457.5,
+   45.0,
+   142.5,
+   422.5
+  ]
+ },
+ "N01-INT-001-SHELFBOX": {
+  "id": "N01-INT-001-SHELFBOX",
+  "sprite_master_2560": [
+   1674,
+   462,
+   668,
+   766
+  ],
+  "sprite_stage": [
+   837.0,
+   231.0,
+   334.0,
+   383.0
+  ]
+ },
+ "N01-INT-002-TROLLEY": {
+  "id": "N01-INT-002-TROLLEY",
+  "sprite_master_2560": [
+   605,
+   77,
+   1323,
+   1268
+  ],
+  "sprite_stage": [
+   302.5,
+   38.5,
+   661.5,
+   634.0
+  ]
+ },
+ "N01-INT-003-DESKDRAWER": {
+  "id": "N01-INT-003-DESKDRAWER",
+  "sprite_master_2560": [
+   798,
+   260,
+   964,
+   262
+  ],
+  "sprite_stage": [
+   399.0,
+   130.0,
+   482.0,
+   131.0
+  ]
+ },
+ "N01-INT-004-CABINET": {
+  "id": "N01-INT-004-CABINET",
+  "sprite_master_2560": [
+   254,
+   282,
+   1028,
+   906
+  ],
+  "sprite_stage": [
+   127.0,
+   141.0,
+   514.0,
+   453.0
+  ]
+ }
+}

@@ -72,6 +72,11 @@ const SFX = {
   drip() { tone(1400, 0.06, 'sine', 0.05); tone(680, 0.18, 'sine', 0.03, 0.04, 320); noise(0.12, 'highpass', 2400, 0.05, 0.02); },
   coin() { tone(1568, 0.12, 'triangle', 0.12); tone(2093, 0.3, 'triangle', 0.12, 0.08); },
   hint() { tone(523, 0.2, 'sine', 0.1); tone(784, 0.35, 'sine', 0.1, 0.12); },
+  ring2() { for (const d of [0, 0.9]) { for (let i = 0; i < 12; i++) { tone(i % 2 ? 1100 : 900, 0.04, 'square', 0.06, d + i * 0.05); } } },
+  bell2() { tone(1760, 0.9, 'sine', 0.12); tone(3520, 0.5, 'sine', 0.04); tone(1760, 0.9, 'sine', 0.12, 0.32); tone(3520, 0.5, 'sine', 0.04, 0.32); },
+  hum() { tone(98, 1.4, 'sawtooth', 0.06); tone(196, 1.4, 'triangle', 0.04); noise(1.2, 'lowpass', 300, 0.12); },
+  snap() { noise(0.05, 'highpass', 2500, 0.35); tone(420, 0.06, 'square', 0.08); },
+  card() { noise(0.18, 'bandpass', 2200, 0.2, 0, 2); tone(300, 0.08, 'triangle', 0.08, 0.15); },
   marquee() { tone(55, 0.6, 'sawtooth', 0.05); noise(0.5, 'highpass', 6000, 0.05); },
 };
 export function sfx(name) {

@@ -1,0 +1,39 @@
+{
+ "note": "2560 master coords; stage = /2; game 1920 css = master*0.75",
+ "noneedle_patch_master": [
+  1020,
+  456,
+  184,
+  68
+ ],
+ "noneedle_patch_stage": [
+  510.0,
+  228.0,
+  92.0,
+  34.0
+ ],
+ "needle_sprite_square_master": [
+  1008.75,
+  303.75,
+  400,
+  400
+ ],
+ "needle_sprite_square_stage": [
+  504.375,
+  151.875,
+  200,
+  200
+ ],
+ "pivot_master": [
+  1208.75,
+  503.75
+ ],
+ "pivot_stage": [
+  604.375,
+  251.875
+ ],
+ "black_rest_deg_from_up": -80.7,
+ "red_maxhold_deg": 34,
+ "map": "angle = -80.7 + 16.39*L (L amps; 7A=+34)",
+ "rotate_css": "rotate(angle-(-80.7)) around sprite centre"
+}
