@@ -5,7 +5,10 @@ import { get, save } from './store.js';
 import { sfx, bgm, applyVolume } from './audio.js';
 import { html, $, IMG, ICON, wait, esc, modal, toast } from './ui.js';
 
-const TOTAL = 1800; // 30 分鐘
+const TOTAL = 1800; // 劇情時鐘基準（第一節不限時，只用來推算標準時）
+const NO_LIMIT = true; // 第一章第一節：不限時挑戰
+const FREE_HINTS = 2; // 本節免費提示次數
+const WAIT = { P01: 4, P02: 4, P03: 3, P04: 3, P05: 4 }; // 答錯後的等待秒數（縮短）
 const STD0 = 21 * 60 + 7; // 主角醒來：標準時 21:07
 const OFFSET = 7; // 保安終端快 7 分鐘
 const PAUSE_IN_DIALOGUE = true; // 對白播放時暫停倒數（GDD 4.3 建議實機 A/B 測試後定案）
@@ -80,7 +83,7 @@ export function render(st, params, go) {
 <div class="lvl-top" id="hud">
   <button type="button" class="iconbtn" id="leave" aria-label="離開關卡">${ICON.back}</button>
   <div class="lvl-goal"><span class="chip-red" style="height:32px">第一章・第一節</span><span id="goal">目標　—</span></div>
-  <div class="n1-timer" id="timer" aria-label="剩餘時間">30:00</div>
+  <div class="n1-timer${NO_LIMIT ? ' hidden' : ''}" id="timer" aria-label="剩餘時間">30:00</div>
 </div>
 <div class="lvl-right" style="height:64px">
   <button type="button" class="iconbtn hud-big" id="hintBtn">${ICO.hint}<span>提示</span></button>
@@ -112,7 +115,7 @@ export function render(st, params, go) {
     if (PAUSE_IN_DIALOGUE && (el.querySelector('.sub') || !cine.classList.contains('hidden'))) return;
     S0.timer--; paintTimer();
     if (S0.timer % 5 === 0) persist();
-    if (S0.timer <= 0) timeout();
+    if (!NO_LIMIT && S0.timer <= 0) timeout();
   }, 1000);
 
   // ---------- 道具欄 ----------
@@ -269,9 +272,9 @@ export function render(st, params, go) {
     '去點提示鈴、掃描機、膠卷盒，聽聽它們的聲音。這間房裡沒有電話。',
     '〔叮、叮〕→〔低沉的嗡鳴〕→〔喀一聲〕；電話鈴那段不屬於這捲帶子。'] },
   { k: 'P05', done: () => F.P05_SOLVED, goal: '完成最終推理', hl: ['console'], hl3: ['console'], hints: [
-    '每個結論都要插一張證據卡才算數。',
+    '先選結論，再從四份文件裡選一份能證明它的。',
     '我在館裡的證據在閱覽室；錄音的證據是磁帶；清場表的問題要看簽名和測試啟動的先後。',
-    '①已在閱覽室＋申請單（或訪客卡背面）②不足以證明＋磁帶 ③尚未釐清＋訪客出入紀錄。'] },
+    '①已在閱覽室＋訪客卡（背面）②不足以證明＋錄音磁帶 ③尚未釐清＋訪客出入紀錄。'] },
   { k: 'CHK', done: () => F.CHECKS_DONE, goal: '完成人工清查', hl: ['chk'], hl3: ['chk'], hints: [
     '右側牆上的人工清場面板有三個清查點。',
     '清查表只能寫你親眼確認過的事。',
@@ -286,6 +289,8 @@ export function render(st, params, go) {
   // 提示鈕預設 .dim；同一步驟 90 秒沒進展 → .pulse（不再自動閃熱點）
   let idleT = 0, idleK = null;
   const hintBtn = $(el, '#hintBtn'); hintBtn.classList.add('dim');
+  const paintHintBtn = () => { const n = Math.max(0, FREE_HINTS - (S0.hintUsed || 0)); hintBtn.querySelector('span').textContent = `提示 ${n}`; hintBtn.setAttribute('aria-label', `提示，剩 ${n} 次`); };
+  paintHintBtn();
   const armIdle = () => {
     const k = F.EV_N01_START ? cur().k : null;
     if (k === idleK && idleT) return;
@@ -297,16 +302,15 @@ export function render(st, params, go) {
     sfx('tap');
     if (!F.EV_N01_START) { toast('這裡不需要提示，往下看劇情吧。'); return; }
     const st = cur(); const lv = Math.min((S0.hints[st.k] || 0) + 1, 3);
-    const cost = lv === 2 ? 30 : lv === 3 ? 60 : 0;
-    if (cost && (S0.hints[st.k] || 0) < lv) {
-      const ok = await modal({ title: `提示 ${lv}／3`, body: lv === 2 ? '花 30 秒換提示？' : '花 60 秒看答案？', buttons: [{ label: '先不要', kind: 'btn-line', value: false }, { label: '好', kind: 'btn', value: true }] });
-      if (!ok || !alive) return;
-      S0.timer -= cost; paintTimer(); S0.hintCost = (S0.hintCost || 0) + 1;
-    } else if (!cost && !(S0.hints[st.k])) S0.hintCost = (S0.hintCost || 0) + 1;
+    const used = S0.hintUsed || 0;
+    if (lv > (S0.hints[st.k] || 0) && used >= FREE_HINTS) {
+      await modal({ title: '提示', body: `本節的 ${FREE_HINTS} 次免費提示已經用完。`, buttons: [{ label: '知道了', kind: 'btn', value: true }] }); return;
+    }
+    if (lv > (S0.hints[st.k] || 0)) { S0.hintUsed = used + 1; S0.hintCost = (S0.hintCost || 0) + 1; }
     S0.hints[st.k] = lv; persist();
     hintBtn.classList.remove('pulse'); hintBtn.classList.add('dim');
     sfx('hint'); if (lv >= 2) flash(hlIds(lv));
-    sys([`提示 ${lv}／3：${st.hints[lv - 1]}`], 4200);
+    sys([`提示 ${lv}／3：${st.hints[lv - 1]}`, `剩餘免費提示 ${Math.max(0, FREE_HINTS - (S0.hintUsed || 0))} 次`], 4600); paintHintBtn();
   });
 
   // ---------- 設定、離開 ----------
@@ -323,7 +327,7 @@ export function render(st, params, go) {
   });
   $(el, '#leave').addEventListener('click', async () => {
     sfx('tap');
-    const ok = await modal({ title: '離開關卡', body: '目前的進度與剩餘時間會保存，下次可以從這裡繼續。', buttons: [{ label: '繼續調查', kind: 'btn-line', value: false }, { label: '離開', kind: 'btn', value: true }] });
+    const ok = await modal({ title: '離開關卡', body: '目前的進度會保存，下次可以從這裡繼續。', buttons: [{ label: '繼續調查', kind: 'btn-line', value: false }, { label: '離開', kind: 'btn', value: true }] });
     if (ok && alive) { persist(); go('stages', { tab: 0 }); }
   });
 
@@ -477,7 +481,7 @@ export function render(st, params, go) {
       const k = id[2]; sw[k] = !sw[k]; F.P01_TRIP = false; F.P01_SW = { ...sw }; persist(); sfx('clang');
       if (sum() > 6) {
         paint(); await wait(350); S();
-        F.P01_TRIP = true; sw.A = sw.B = sw.C = false; F.P01_SW = { ...sw }; lockFor('P01_COOL', 20);
+        F.P01_TRIP = true; sw.A = sw.B = sw.C = false; F.P01_SW = { ...sw }; lockFor('P01_COOL', WAIT.P01);
         sfx('error'); paint(); const t = cu.querySelector('#trip'); if (t) t.classList.add('on');
         return;
       }
@@ -597,7 +601,7 @@ export function render(st, params, go) {
       if (id !== 'ent') return;
       if (!(S0.read.includes('test') || F.n01_clock_seen)) { sfx('error'); msg = '資料不足：需要同一事件的兩筆紀錄'; paint(); return; }
       if (v !== -7) {
-        sfx('error'); S0.timer -= 30; paintTimer(); lockFor('P02_LOCK', 30);
+        sfx('error'); lockFor('P02_LOCK', WAIT.P02);
         if (!F.P02_FAILED) { flag('P02_FAILED'); fx = 'N01-SCR-05.webp'; paint(); await wait(150); S(); fx = ''; }
         paint(); return;
       }
@@ -682,7 +686,7 @@ export function render(st, params, go) {
         const v = html(`<div class="g1-docback n1-drawer" role="dialog" aria-label="打開的抽屜"><img src="${IMG('N01-DRW-' + content + '.webp')}" alt="抽屜內部">${content === 'C09' ? '<div class="n1-tag card">2104-M-03</div>' : ''}<div class="g1-dochint">點一下關上抽屜</div></div>`);
         el.appendChild(v);
         if (DRAWER_LINE[content]) { await me(DRAWER_LINE[content], { pic: false }); S(); if (content === 'C05') flag('n01_photo_seen'); if (content === 'C08') flag('n01_key_seen'); }
-        if (isM(code)) { S0.timer -= 15; paintTimer(); lockFor('P03_MLOCK', 15); sfx('error'); await me('這份維護卷宗不是那一天的。', { pic: false }); S(); }
+        if (isM(code)) { lockFor('P03_MLOCK', WAIT.P03); sfx('error'); await me('這份維護卷宗不是那一天的。', { pic: false }); S(); }
         await new Promise(r => v.addEventListener('click', () => { sfx('tap'); v.remove(); r(); })); S();
         paint(); return;
       }
@@ -738,7 +742,7 @@ export function render(st, params, go) {
       paint();
       if (k === 'phone' && !F.n01_phone_seg_heard) { flag('n01_phone_seg_heard'); await me('這段不是在這間房間錄的。電話……是閱覽室那一台？', { pic: false }); S(); }
       if (pick.length < 3) return;
-      if (pick.join() !== ANSWER.join()) { sfx('error'); pick = []; S0.timer -= 15; paintTimer(); lockFor('P04_REW', 15); paint(); return; }
+      if (pick.join() !== ANSWER.join()) { sfx('error'); pick = []; lockFor('P04_REW', WAIT.P04); paint(); return; }
       flag('P04_SOLVED'); sfx('unlock'); paint('〔叮、叮〕→〔低沉的嗡鳴〕→〔喀一聲〕'); await wait(700); S(); closeCu();
       await playFull(false); S();
       paintGoal(); return true;
@@ -814,48 +818,49 @@ export function render(st, params, go) {
     persist(); paintSlots(l[0]); sfx('pick');
     sys([`已取回閱覽室桌上的遺留物品：${l.map(k => ITEMS[k].name).join('、')}`], 2400);
   }
-  // P05：出口控制台近景（BG_DETAIL-011）。選答案 → 選證據卡（入卡槽）→ 按紅鈕送出；錯一次鎖 30 秒
-  const CARDS = ['form', 'noteF', 'cardback', 'visit', 'termlog', 'test', 'label', 'rule', 'clear', 'order', 'tape'];
+  // P05：出口控制台近景（BG_DETAIL-011）。螢幕兩步：① 選結論 ② 從 4 份文件選一份證明（1 對 3 錯）→ 按紅鈕送出
+  // 螢幕 150,154,316×226；錯了短暫鎖定 WAIT.P05 秒，並打開選錯的那份文件讓玩家回頭看
   const cardName = id => (id === 'tape' ? '錄音磁帶' : docBody(id, { pname }).title);
   async function p05() {
     const Q = [
-      { q: '九點零六分清場簽名時，我在哪裡？', o: ['已在閱覽室', '尚未入館', '在走廊'], a: 0, ev: ['form', 'cardback'] },
-      { q: '被裁切的錄音能證明什麼？', o: ['教授威脅過艾琳', '不足以證明教授威脅', '錄音是偽造的'], a: 1, ev: ['tape'] },
-      { q: '清場表上的「無其他人員」？', o: ['是偽造的', '尚未釐清：簽在巡查之前', '確認無誤'], a: 1, ev: ['visit', 'clear'] },
+      { q: '九點零六分清場簽名時，我在哪裡？', o: ['已在閱覽室', '尚未入館', '在走廊'], a: 0, ev: ['termlog', 'cardback', 'order', 'label'], ok: 'cardback' },
+      { q: '被裁切的錄音能證明什麼？', o: ['教授威脅過艾琳', '不足以證明教授威脅', '錄音是偽造的'], a: 1, ev: ['noteF', 'rule', 'tape', 'test'], ok: 'tape' },
+      { q: '清場表上的「無其他人員」？', o: ['是偽造的', '尚未釐清：簽在巡查之前', '確認無誤'], a: 1, ev: ['form', 'test', 'visit', 'order'], ok: 'visit' },
     ];
     let qi = F.P05_Q || 0, opt = null, card = null, iv = 0;
-    const known = id => (id === 'tape' ? has('tape') : S0.read.includes(id));
+    const X0 = 150, Y0 = 154, CW = 136, CH = 36;
+    const cell = i => [X0 + 18 + (i % 2) * (CW + 8), Y0 + 86 + Math.floor(i / 2) * (CH + 8)];
     const paint = msg => {
-      const q = Q[qi], lock = secsLeft('P05_LOCK'), noData = !q.ev.some(known);
-      const cards = CARDS.filter(known);
-      const cw = Math.min(112, Math.floor((1100 - 8 * (cards.length - 1)) / Math.max(1, cards.length)));
-      openCu(`<img class="bg" src="${IMG('N01-BG_DETAIL-011.webp')}" alt="出口控制台近景"><div class="n1-crt amber" style="left:150px;top:154px;width:316px;height:226px">
-<div class="n1-p05s"><div class="n1-crt-t hd">最終推理　${qi + 1}／3<span>失敗鎖定 30 秒</span></div><div class="n1-crt-t q">${q.q}</div>
-${q.o.map((t, i) => `<div class="n1-crt-t opt${opt === i ? ' sel' : ''}${noData || lock ? ' dimt' : ''}" style="top:${94 + i * 28}px">${opt === i ? '▶ ' : ''}${i + 1}．${t}</div>`).join('')}<div class="n1-crt-t msg" id="p05msg">${lock ? `推理不成立：系統鎖定 ${lock} 秒` : noData ? '資料不足' : msg || (opt === null ? '選一個結論' : card ? '按紅色按鈕送出' : '插入一張證據卡')}</div></div></div>` +
-        (card ? `<div class="n1-slotcard" style="left:955px;top:415px;width:230px;height:75px"><span>${cardName(card)}</span></div>` : '') +
-        `<div class="n1-cards">${cards.map((c, i) => `<div class="n1-card${c === card ? ' used' : ''}" style="left:${160 + i * (cw + 8)}px;top:600px;width:${cw}px;height:64px"><span>${cardName(c)}</span></div>`).join('')}</div>`,
-      lock || noData ? [] : [
-        ...q.o.map((t, i) => ({ id: 'a' + i, x: 160, y: 246 + i * 28, w: 296, h: 28, label: t })),
-        ...cards.map((c, i) => ({ id: 'c-' + c, x: 160 + i * (cw + 8), y: 600, w: cw, h: 64, label: '證據卡 ' + cardName(c) })),
-        { id: 'go', x: 1000, y: 160, w: 135, h: 130, label: '送出（紅色按鈕）' }]);
-      if (lock) { clearInterval(iv); iv = ticker('P05_LOCK', n => { const m = cu.querySelector('#p05msg'); if (m) m.textContent = `推理不成立：系統鎖定 ${n} 秒`; }, () => { if (cu.querySelector('#p05msg')) paint(); }); }
+      const q = Q[qi], lock = secsLeft('P05_LOCK');
+      const step2 = opt !== null;
+      const body = !step2
+        ? `<div class="n1-crt-t q">${q.q}</div>` + q.o.map((t, i) => `<div class="n1-crt-t opt${lock ? ' dimt' : ''}" style="top:${94 + i * 28}px">${i + 1}．${t}</div>`).join('') +
+          `<div class="n1-crt-t msg" id="p05msg">${lock ? `推理不成立，請稍候 ${lock} 秒` : msg || '選一個結論'}</div>`
+        : `<div class="n1-crt-t q one">結論：${q.o[opt]}</div><div class="n1-crt-t ask">哪一份能證明？</div>` +
+          q.ev.map((c, i) => { const [x, y] = cell(i); return `<div class="n1-evc${c === card ? ' sel' : ''}${lock ? ' dimt' : ''}" style="left:${x - X0}px;top:${y - Y0}px;width:${CW}px;height:${CH}px">${cardName(c)}</div>`; }).join('') +
+          `<div class="n1-crt-t msg" id="p05msg">${lock ? `推理不成立，請稍候 ${lock} 秒` : msg || (card ? '按紅色按鈕送出' : '選一份證明')}</div><div class="n1-crt-t back2">‹ 換結論</div>`;
+      openCu(`<img class="bg" src="${IMG('N01-BG_DETAIL-011.webp')}" alt="出口控制台近景"><div class="n1-crt amber" style="left:${X0}px;top:${Y0}px;width:316px;height:226px">
+<div class="n1-p05s"><div class="n1-crt-t hd">最終推理　${qi + 1}／3<span>${step2 ? '步驟 2　提出證據' : '步驟 1　選結論'}</span></div>${body}</div></div>` +
+        (card ? `<div class="n1-slotcard in" style="left:955px;top:415px;width:230px;height:75px"><span>${cardName(card)}</span></div>` : ''),
+      lock ? [] : !step2
+        ? q.o.map((t, i) => ({ id: 'a' + i, x: X0 + 10, y: Y0 + 92 + i * 28, w: 296, h: 28, label: t }))
+        : [...q.ev.map((c, i) => { const [x, y] = cell(i); return { id: 'c-' + c, x, y, w: CW, h: CH, label: '證據 ' + cardName(c) }; }),
+          { id: 'chg', x: X0 + 220, y: Y0 + 184, w: 86, h: 28, label: '換結論' },
+          { id: 'go', x: 1000, y: 160, w: 135, h: 130, label: '送出（紅色按鈕）' }]);
+      if (lock) { clearInterval(iv); iv = ticker('P05_LOCK', n => { const m = cu.querySelector('#p05msg'); if (m) m.textContent = `推理不成立，請稍候 ${n} 秒`; }, () => { if (cu.querySelector('#p05msg')) paint(); }); }
     };
     paint();
     const r = await loop(async id => {
       if (id === 'back') { closeCu(); return true; }
       if (secsLeft('P05_LOCK')) return;
-      if (id[0] === 'a') { opt = +id[1]; sfx('key'); paint(); return; }
-      if (id.startsWith('c-')) {
-        card = id.slice(2); sfx('card'); paint();
-        const sc = cu.querySelector('.n1-slotcard'); if (sc) { sc.classList.add('in'); }
-        return;
-      }
+      if (id[0] === 'a') { opt = +id[1]; card = null; sfx('key'); paint(); return; }
+      if (id === 'chg') { opt = null; card = null; sfx('tap'); paint(); return; }
+      if (id.startsWith('c-')) { card = id.slice(2); sfx('card'); paint(); return; }
       if (id !== 'go') return;
-      if (opt === null || !card) { sfx('error'); paint(opt === null ? '先選一個結論' : '先插入一張證據卡'); return; }
+      if (opt === null || !card) { sfx('error'); paint(opt === null ? '先選一個結論' : '先選一份證明'); return; }
       const q = Q[qi];
-      if (opt !== q.a || !q.ev.includes(card)) {
-        const wrong = card; sfx('error'); S0.timer -= 30; paintTimer(); lockFor('P05_LOCK', 30);
-        const sc = cu.querySelector('.n1-slotcard'); if (sc) { sc.classList.add('out'); await wait(200); S(); }
+      if (opt !== q.a || card !== q.ok) {
+        const wrong = card; sfx('error'); lockFor('P05_LOCK', WAIT.P05);
         card = null; opt = null; paint();
         if (wrong === 'tape') { await playFull(true); S(); } else { await readDoc(wrong); S(); }
         paint(); return;
@@ -900,7 +905,7 @@ ${q.o.map((t, i) => `<div class="n1-crt-t opt${opt === i ? ' sel' : ''}${noData 
       const i = +id[2]; if (ok[i]) return;
       if (i === 2 && n !== 1) {
         if (n === 2 && !F.n01_tried_two) { flag('n01_tried_two'); await me('我沒有親眼確認第二個人。清查表只能寫我看見的。', { pic: false }); S(); return; }
-        sfx('error'); S0.timer -= 20; paintTimer(); paint('清查內容與現場不符'); return;
+        sfx('error'); paint('清查內容與現場不符'); return;
       }
       ok[i] = true; F.CHK_OK = [...ok]; persist(); sfx('clang'); paint();
       if (!ok.every(Boolean)) return;
@@ -960,7 +965,7 @@ ${q.o.map((t, i) => `<div class="n1-crt-t opt${opt === i ? ' sel' : ''}${noData 
     await say('舊館夜間安全系統即將啟動，請所有未授權人員離開管制區域。', 'cast'); S();
     sfx('error'); await sys(['通道門鎖著'], 1400); S();
     flag('EV_N01_START'); running = true; paintGoal(); armIdle();
-    await sys(['任務：離開舊文獻館', '剩餘時間 30:00'], 2200); S();
+    await sys(['任務：離開舊文獻館', `本節不限時　免費提示 ${FREE_HINTS} 次`], 2400); S();
   }
   async function ending() {
     running = false; ended = true; flag('N01_CLEAR');

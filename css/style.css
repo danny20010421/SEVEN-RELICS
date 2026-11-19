@@ -1004,3 +1004,9 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 .n1-p05s .q { top: 34px; width: auto; font-size: 16px; line-height: 22px; }
 .n1-p05s .opt { height: 28px; display: flex; align-items: center; font-size: 15px; line-height: 20px; white-space: nowrap; }
 .n1-p05s .msg { top: 186px; height: 24px; display: flex; align-items: center; font-size: 13px; line-height: 18px; white-space: nowrap; }
+.n1-p05s .q.one { font-size: 15px; white-space: nowrap; }
+.n1-p05s .ask { top: 58px; height: 20px; font-size: 13px; line-height: 18px; opacity: 0.85; }
+.n1-evc { position: absolute; z-index: 1; box-sizing: border-box; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 6px; font-family: 'Consolas', 'Menlo', var(--serif); font-size: 13px; line-height: 16px; color: #ffc970; text-shadow: 0 0 6px rgba(255, 180, 80, 0.85); box-shadow: inset 0 0 0 1px rgba(255, 201, 112, 0.4); border-radius: 4px; }
+.n1-evc.sel { color: #fff1c9; box-shadow: inset 0 0 0 2px #ffc970; background: rgba(255, 190, 90, 0.14); }
+.n1-p05s .back2 { top: 186px; left: auto; right: 18px; height: 24px; display: flex; align-items: center; font-size: 13px; opacity: 0.85; }
+.n1-p05s .msg { right: 110px; }
