@@ -23,6 +23,19 @@ const ICO = {
   log: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d8b594" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4zM8 9h8M8 12h5"></path></svg>',
 };
 const RATIO = { 'N01-DOC-061': 0.756, 'N01-DOC-062-front': 1.013, 'N01-DOC-062-back': 1.002, 'N01-DOC-063': 0.777, 'N01-DOC-064': 0.768, 'N01-DOC-065': 0.807, 'N01-DOC-066': 0.741, 'N01-DOC-067': 1.831, 'N01-DOC-068': 1.385, 'N01-DOC-069': 0.755, 'N01-DOC-070': 0.979, 'N01-DOC-071': 0.817, 'N01-PROP-039': 0.5 };
+// DOC-065 印好的表格：欄線 4.5／27.6／49.8／72.2／95.3%，列線 15.5／27.3／35.9／44.1％…；字放進格子裡
+const G065 = { x: [4.5, 27.6, 49.8, 72.2, 95.3], y: [15.5, 27.3, 35.9, 44.1, 52.1, 60.3] };
+function gridDoc(title, rows) {
+  const g = G065;
+  return `<div class="n1-gtitle" style="top:4%;height:${g.y[0] - 4}%">${title}</div>` + rows.map((r, ri) => {
+    let c = 0;
+    return r.map(cell => {
+      const [t, span] = Array.isArray(cell) ? cell : [cell, 1];
+      const x0 = g.x[c], x1 = g.x[c + span]; c += span;
+      return `<div class="n1-gcell${ri === 0 ? ' head' : ''}${span > 1 ? ' torn' : ''}" style="left:${x0}%;width:${x1 - x0}%;top:${g.y[ri]}%;height:${g.y[ri + 1] - g.y[ri]}%">${t}</div>`;
+    }).join('');
+  }).join('');
+}
 const hm = m => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 
 // ---------- 文件（真正的 UI 文字；正式版紙張底圖用文件 ID） ----------
@@ -34,7 +47,7 @@ function docBody(id, ctx) {
     case 'noteB': return { title: '紙條（背面）', asset: 'N01-DOC-062-back', html: '<p class="press">GB-17-042</p>' };
     case 'visit': return { title: '訪客出入紀錄', asset: 'N01-DOC-063', html: '<h4>訪客出入紀錄</h4><div class="base">時間：標準時（獨立讀卡器）</div><table><tr><th>20:43</th><td>測試卡 T-07 讀卡（維修）</td></tr><tr><th>20:48</th><td>E. Ward 入館</td></tr><tr><th>20:55</th><td>訪客登記</td></tr><tr><th>21:02</th><td>安全測試啟動</td></tr><tr><th>21:06</th><td>清場簽名</td></tr></table>' };
     case 'termlog': return { title: '夜間設備終端紀錄', asset: 'N01-DOC-064', html: `<h4>保安終端　夜間設備紀錄</h4><div class="base">時間：終端時間（尚未校時）</div><table><tr><th>21:14</th><td>備用電源切換／監控訊號中斷</td></tr></table>${ctx.p02 ? `<p class="calc">校正後：終端 21:14 ＝ 標準時 ${hm(21 * 60 + 14 - OFFSET)}</p>` : ''}` };
-    case 'test': return { title: '讀卡器測試表', asset: 'N01-DOC-065', html: '<h4>讀卡器維修測試</h4><table><tr><th>測試卡</th><td>T-07</td></tr><tr><th>保安終端記錄</th><td>20:50</td></tr><tr><th>獨立讀卡器記錄</th><td class="torn">（此處以下被撕去）</td></tr></table>' };
+    case 'test': return { title: '讀卡器測試表', asset: 'N01-DOC-065', grid: true, html: gridDoc('讀卡器維修測試', [['測試卡', '記錄來源', '時間', '備註'], ['T-07', '保安終端', '20:50', ''], ['T-07', '獨立讀卡器', ['（此處以下被撕去）', 2]]]) };
     case 'notice': return { title: '終端維護公告', asset: 'N01-DOC-066', html: '<h4>終端維護公告</h4><p>保安終端校時中，已停止自動同步。</p>' };
     case 'label': return { title: '維修標籤', asset: 'N01-DOC-067', html: '<h4>維修標籤</h4><p class="hand big">12/4　M　03</p><p class="hand">（春季例行）</p>' };
     case 'rule': return { title: '文件命名規則', asset: 'N01-DOC-068', html: '<h4>文件命名規則</h4><p class="big">DDMM－類別－序號</p>' };
@@ -216,7 +229,7 @@ export function render(st, params, go) {
       const doc = docBody(id, { pname, p02: !!F.P02_SOLVED });
       const r = RATIO[doc.asset] || 0.78;
       const h = r < 1.2 ? 576 : Math.round(800 / r), w = Math.round(h * r);
-      const m = html(`<div class="g1-docback n1-docback" role="dialog" aria-label="${doc.title}"><div class="n1-paper${r >= 1.2 ? ' wide' : ''}" style="left:${Math.round(572 - w / 2)}px;top:${Math.round(376 - h / 2)}px;width:${w}px;height:${h}px"><img src="${IMG(doc.asset + '.webp')}" alt="" onerror="this.remove()"><div class="n1-ink">${doc.html}</div></div><div class="g1-dochint">點旁邊收起</div></div>`);
+      const m = html(`<div class="g1-docback n1-docback" role="dialog" aria-label="${doc.title}"><div class="n1-paper${r >= 1.2 ? ' wide' : ''}" style="left:${Math.round(572 - w / 2)}px;top:${Math.round(376 - h / 2)}px;width:${w}px;height:${h}px"><img src="${IMG(doc.asset + '.webp')}" alt="" onerror="this.remove()"><div class="n1-ink${doc.grid ? ' grid' : ''}">${doc.html}</div></div><div class="g1-dochint">點旁邊收起</div></div>`);
       m.addEventListener('click', e => { if (e.target.closest('.n1-paper')) return; sfx('tap'); m.remove(); res(); });
       el.appendChild(m);
     });
@@ -638,7 +651,8 @@ export function render(st, params, go) {
   // P03：卷宗櫃近景（BG_DETAIL-009）5×4 抽屜；目標 c4r3＝1204-M-03。M 類開錯 −15 秒、M 類抽屜鎖 15 秒
   const CELL_X = [[40, 270], [277, 510], [517, 751], [758, 1000], [1007, 1242]];
   const CELL_Y = [[30, 220], [227, 410], [417, 599], [606, 720]];
-  const LABEL_Y = [97, 285, 473, 660];
+  const LABEL_Y = [98, 288, 475.5, 660.5];
+  const LABEL_X = [158.8, 403.5, 642.5, 883.4, 1126.8]; // 標籤卡中心（由 BG_DETAIL-009 量測）
   const CODES = [['1104-M-03', '0312-A-01', '2204-S-02', '1204-M-02', '0701-R-04'], ['1204-R-03', '0911-A-02', '3003-M-01', '1504-S-03', '1204-A-01'], ['0612-M-05', '2104-M-03', '0412-M-03', '1204-M-03', '1902-R-02'], ['2512-S-01', '1204-M-30', '0805-A-03', '1003-M-04', '2711-R-01']];
   const DRAWER = { c1r1: 'C03', c2r1: 'C01', c3r1: 'C07', c4r1: 'C04', c5r1: 'C03', c1r2: 'C02', c2r2: 'C09', c3r2: 'C06', c4r2: 'C03', c5r2: 'C10', c1r3: 'C05', c2r3: 'C01', c3r3: 'C08', c4r3: 'T01', c5r3: 'C03', c1r4: 'C04', c2r4: 'C02', c3r4: 'C10', c4r4: 'C06', c5r4: 'C01' };
   const DRAWER_LINE = {
@@ -651,7 +665,7 @@ export function render(st, params, go) {
     const paint = () => {
       const ml = secsLeft('P03_MLOCK');
       openCu(`<img class="bg" src="${IMG(F.P03_SOLVED ? 'N01-BG_DETAIL-009-open.webp' : 'N01-BG_DETAIL-009.webp')}" alt="卷宗櫃近景"><div class="n1-plate009">卷宗櫃 C-2　M 類管制</div>` +
-        CODES.map((row, r) => row.map((c, ci) => (F.P03_SOLVED && r === 2 && ci === 3) ? '' : `<div class="n1-tag${ml && isM(c) ? ' dimt' : ''}" style="left:${(CELL_X[ci][0] + CELL_X[ci][1]) / 2}px;top:${LABEL_Y[r]}px">${c}</div>`).join('')).join('') +
+        CODES.map((row, r) => row.map((c, ci) => (F.P03_SOLVED && r === 2 && ci === 3) ? '' : `<div class="n1-tag box${ml && isM(c) ? ' dimt' : ''}" style="left:${LABEL_X[ci]}px;top:${LABEL_Y[r]}px">${c}</div>`).join('')).join('') +
         (ml ? `<div class="n1-state" id="p03st" style="left:640px;top:690px">M 類抽屜鎖定 ${ml} 秒</div>` : ''),
       F.P03_SOLVED ? [] : CODES.flatMap((row, r) => row.map((c, ci) => ({ c, id: `d-c${ci + 1}r${r + 1}`, x: CELL_X[ci][0], y: CELL_Y[r][0], w: CELL_X[ci][1] - CELL_X[ci][0], h: CELL_Y[r][1] - CELL_Y[r][0], label: `抽屜 ${c}` }))).filter(h => !(ml && isM(h.c))));
       if (ml) { clearInterval(iv); iv = ticker('P03_MLOCK', n => { const s = cu.querySelector('#p03st'); if (s) s.textContent = `M 類抽屜鎖定 ${n} 秒`; }, () => { if (cu.querySelector('#p03st')) paint(); }); }
@@ -706,7 +720,7 @@ export function render(st, params, go) {
     let pick = [], iv = 0;
     const paint = msg => {
       const rw = secsLeft('P04_REW');
-      deck(`<div class="n1-stamp tape sm" style="left:640px;top:452px">第二聲道　片段排序</div>` +
+      deck(`<div class="n1-stamp tape sm" style="left:400px;top:452px">第二聲道　片段排序</div>` +
         order.map((k, i) => `<div class="n1-seg2${pick.includes(k) ? ' used' : ''}${rw ? ' dimt' : ''}" style="left:${280 + i * 180}px;top:485px;width:176px"><b>${LET[i]}</b><small>${SEG[k]}</small></div>`).join('') +
         [0, 1, 2].map(i => `<div class="n1-key" style="left:${384 + i * 128}px;top:588px">${pick[i] ? LET[order.indexOf(pick[i])] : ''}</div>`).join('') +
         `<div class="n1-state n1-st010" id="p04st">${rw ? `倒帶中… ${rw}` : msg || ''}</div>`,
@@ -816,12 +830,12 @@ export function render(st, params, go) {
       const cards = CARDS.filter(known);
       const cw = Math.min(112, Math.floor((1100 - 8 * (cards.length - 1)) / Math.max(1, cards.length)));
       openCu(`<img class="bg" src="${IMG('N01-BG_DETAIL-011.webp')}" alt="出口控制台近景"><div class="n1-crt amber" style="left:150px;top:154px;width:316px;height:226px">
-<div class="n1-crt-t" style="left:6%;top:4%">最終推理　${qi + 1}／3</div><div class="n1-crt-t tiny" style="left:6%;top:13%">每次驗證失敗，系統鎖定 30 秒</div><div class="n1-crt-t q" style="left:6%;top:22%">${q.q}</div>
-${q.o.map((t, i) => `<div class="n1-crt-t opt${opt === i ? ' sel' : ''}${noData || lock ? ' dimt' : ''}" style="left:6%;top:${44 + i * 15}%">${opt === i ? '▶' : ''}${i + 1}．${t}</div>`).join('')}<div class="n1-crt-t msg" id="p05msg" style="left:6%;top:88%">${lock ? `推理不成立：系統鎖定 ${lock} 秒` : noData ? '資料不足' : msg || (opt === null ? '選一個結論' : card ? '按紅色按鈕送出' : '插入一張證據卡')}</div></div>` +
+<div class="n1-p05s"><div class="n1-crt-t hd">最終推理　${qi + 1}／3<span>失敗鎖定 30 秒</span></div><div class="n1-crt-t q">${q.q}</div>
+${q.o.map((t, i) => `<div class="n1-crt-t opt${opt === i ? ' sel' : ''}${noData || lock ? ' dimt' : ''}" style="top:${94 + i * 28}px">${opt === i ? '▶ ' : ''}${i + 1}．${t}</div>`).join('')}<div class="n1-crt-t msg" id="p05msg">${lock ? `推理不成立：系統鎖定 ${lock} 秒` : noData ? '資料不足' : msg || (opt === null ? '選一個結論' : card ? '按紅色按鈕送出' : '插入一張證據卡')}</div></div></div>` +
         (card ? `<div class="n1-slotcard" style="left:955px;top:415px;width:230px;height:75px"><span>${cardName(card)}</span></div>` : '') +
         `<div class="n1-cards">${cards.map((c, i) => `<div class="n1-card${c === card ? ' used' : ''}" style="left:${160 + i * (cw + 8)}px;top:600px;width:${cw}px;height:64px"><span>${cardName(c)}</span></div>`).join('')}</div>`,
       lock || noData ? [] : [
-        ...q.o.map((t, i) => ({ id: 'a' + i, x: 158, y: 247 + i * 34, w: 300, h: 32, label: t })),
+        ...q.o.map((t, i) => ({ id: 'a' + i, x: 160, y: 246 + i * 28, w: 296, h: 28, label: t })),
         ...cards.map((c, i) => ({ id: 'c-' + c, x: 160 + i * (cw + 8), y: 600, w: cw, h: 64, label: '證據卡 ' + cardName(c) })),
         { id: 'go', x: 1000, y: 160, w: 135, h: 130, label: '送出（紅色按鈕）' }]);
       if (lock) { clearInterval(iv); iv = ticker('P05_LOCK', n => { const m = cu.querySelector('#p05msg'); if (m) m.textContent = `推理不成立：系統鎖定 ${n} 秒`; }, () => { if (cu.querySelector('#p05msg')) paint(); }); }

@@ -990,3 +990,17 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 .n1-winoff { position: absolute; z-index: 2; background: rgba(8, 10, 14, .85); opacity: 0; pointer-events: none; transition: opacity 80ms linear; }
 .n1-winoff.on { opacity: 1; }
 .n1-hc { font-size: 14px; color: var(--text-2); }
+/* N01 修正：抽屜標籤卡置中、測試表套印在表格裡、控制台螢幕排版 */
+.n1-tag.box { width: 93px; height: 46px; display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 14px; letter-spacing: 0.02em; }
+.n01 .n1-paper .n1-ink.grid { inset: 0; mix-blend-mode: multiply; }
+.n1-gtitle { position: absolute; left: 6%; right: 6%; display: flex; align-items: center; font-family: var(--serif); font-size: 22px; font-weight: 700; color: rgba(30, 22, 16, 0.92); }
+.n1-gcell { position: absolute; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 4px; text-align: center; font-size: 15px; line-height: 18px; color: rgba(30, 22, 16, 0.92); }
+.n1-gcell.head { font-size: 14px; color: rgba(60, 44, 30, 0.8); }
+.n1-gcell.torn { font-style: italic; color: rgba(60, 44, 30, 0.7); }
+.n1-p05s { position: absolute; inset: 0; padding: 12px 18px; }
+.n1-p05s .n1-crt-t { left: 18px; right: 18px; white-space: normal; }
+.n1-p05s .hd { top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; line-height: 18px; }
+.n1-p05s .hd span { font-size: 11px; opacity: 0.75; }
+.n1-p05s .q { top: 34px; width: auto; font-size: 16px; line-height: 22px; }
+.n1-p05s .opt { height: 28px; display: flex; align-items: center; font-size: 15px; line-height: 20px; white-space: nowrap; }
+.n1-p05s .msg { top: 186px; height: 24px; display: flex; align-items: center; font-size: 13px; line-height: 18px; white-space: nowrap; }
