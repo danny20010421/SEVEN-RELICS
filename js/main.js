@@ -4,6 +4,7 @@ import { stage } from './ui.js';
 import * as front from './front.js';
 import * as prologue from './prologue.js';
 import * as g01 from './g01.js';
+import * as n01 from './n01.js';
 import * as lobby from './lobby.js';
 import * as pages from './pages.js';
 
@@ -11,6 +12,7 @@ const SCREENS = {
   terms: front.terms, loading: front.loading, login: front.login, name: front.name,
   prologue: prologue.render,
   g01: g01.render,
+  n01: n01.render,
   lobby: lobby.render,
   stages: pages.stages, shop: pages.shop, bag: pages.bag, signin: pages.signin, vip: pages.vip,
   settings: pages.settings, events: pages.events, files: pages.files, notice: pages.notice,

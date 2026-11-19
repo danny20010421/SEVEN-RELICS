@@ -1,0 +1,749 @@
+{
+ "note": "Extra interactables beyond puzzle close-ups. No new story clues; flavor or misdirection only. Close-up art not yet generated (API credits exhausted). Terminal is covered separately by screen_states.json. | v2.2: all close-ups generated; see claude-update/CLAUDE_UPDATE.md §10.2. Misdirection items need story-owner approval before use.",
+ "items": [
+  {
+   "id": "N01-INT-001-PHONE",
+   "scene": "BG-001",
+   "name": "桌上電話",
+   "bbox_xyxy_master": [
+    562,
+    1218,
+    1143,
+    1556
+   ],
+   "bbox_stage_1280": [
+    187,
+    406,
+    381,
+    519
+   ],
+   "type": "move",
+   "closeup_subject": "a beige push-button desk telephone with coiled cord, handset resting on the cradle, unlabelled keys, a cracked corner of the casing, yellowed plastic",
+   "player_sees": "拿起話筒：線路無聲（停電）；話筒下的托架周圍有一圈沒積灰的乾淨印子，代表最近常被使用。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "move": {
+    "movable_part": "the telephone handset with a short length of coiled cord",
+    "revealed": "the empty cradle with its two hook switches pressed up, a clean dust-free outline of the handset on the casing, a few dust specks around it"
+   },
+   "wide_crop_ref": "work/inter/crop-N01-INT-001-PHONE.png",
+   "files": {
+    "closeup": "N01-INT-001-PHONE_closeup.webp",
+    "revealed": "N01-INT-001-PHONE_revealed.webp",
+    "sprite": "N01-INT-001-PHONE_sprite.webp",
+    "sprite_stage": [
+     281.0,
+     75.0,
+     733.0,
+     245.0
+    ]
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-001-LAMP",
+   "scene": "BG-001",
+   "name": "銀行燈",
+   "bbox_xyxy_master": [
+    1050,
+    900,
+    1593,
+    1462
+   ],
+   "bbox_stage_1280": [
+    350,
+    300,
+    531,
+    487
+   ],
+   "type": "operate",
+   "closeup_subject": "a brass banker's desk lamp with a dark wine-red glass shade, brass pull chain, round brass base with a small blank brass plate, a dent on the base rim",
+   "player_sees": "拉鏈開關可拉動；停電時不亮，P01 解開後亮。底座有撞凹痕和空白銘牌（純氛圍）。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-001-LAMP.png",
+   "files": {
+    "closeup": "N01-INT-001-LAMP_closeup.webp"
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-001-WINDOW",
+   "scene": "BG-001",
+   "name": "閱覽室窗戶",
+   "bbox_xyxy_master": [
+    1518,
+    300,
+    2718,
+    956
+   ],
+   "bbox_stage_1280": [
+    506,
+    100,
+    906,
+    319
+   ],
+   "type": "observe",
+   "closeup_subject": "a large steel-framed window of rain-streaked glass at night, blurred distant city lights and a red glow, condensation, one smeared hand-wiped patch on the inside of the glass",
+   "player_sees": "雨夜城景；玻璃內側有一塊被手抹開的霧痕（誤導：可能只是白天有人擦過）。",
+   "tag": "misdirection",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-001-WINDOW.png",
+   "files": {
+    "closeup": "N01-INT-001-WINDOW_closeup.webp"
+   },
+   "wired_in_game": false
+  },
+  {
+   "id": "N01-INT-001-SHELFBOX",
+   "scene": "BG-001",
+   "name": "書架檔案箱",
+   "bbox_xyxy_master": [
+    1068,
+    393,
+    1312,
+    581
+   ],
+   "bbox_stage_1280": [
+    356,
+    131,
+    437,
+    194
+   ],
+   "type": "move",
+   "closeup_subject": "a lidded cardboard archive box on a grey steel shelf, worn corners, a blank paper label holder",
+   "player_sees": "把箱子滑出：架上露出一塊沒積灰的長方形和幾根散落的釘書針，箱子後面只有牆。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "move": {
+    "movable_part": "the lidded cardboard archive box alone",
+    "revealed": "the bare grey steel shelf after the box has been slid out: a clean rectangle in the thick dust where the box stood and a few loose staples, the back wall behind"
+   },
+   "wide_crop_ref": "work/inter/crop-N01-INT-001-SHELFBOX.png",
+   "files": {
+    "closeup": "N01-INT-001-SHELFBOX_closeup.webp",
+    "revealed": "N01-INT-001-SHELFBOX_revealed.webp",
+    "sprite": "N01-INT-001-SHELFBOX_sprite.webp",
+    "sprite_stage": [
+     837.0,
+     231.0,
+     334.0,
+     383.0
+    ]
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-001-DOOR",
+   "scene": "BG-001",
+   "name": "閱覽室雙開門",
+   "bbox_xyxy_master": [
+    2925,
+    375,
+    3675,
+    1331
+   ],
+   "bbox_stage_1280": [
+    975,
+    125,
+    1225,
+    444
+   ],
+   "type": "observe",
+   "closeup_subject": "a pair of dark wooden double doors with wired frosted glass panels, scuffed brass push plates, and a wall-mounted card reader with a red LED beside them",
+   "player_sees": "磨砂玻璃後一片黑；門把附近有新刮痕（誤導：舊館日常磨損）。讀卡器紅燈。",
+   "tag": "misdirection",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-001-DOOR.png",
+   "files": {
+    "closeup": "N01-INT-001-DOOR_closeup.webp"
+   },
+   "wired_in_game": false
+  },
+  {
+   "id": "N01-INT-002-CLOCK",
+   "scene": "BG-002",
+   "name": "走廊牆鐘",
+   "bbox_xyxy_master": [
+    693,
+    281,
+    1170,
+    907
+   ],
+   "bbox_stage_1280": [
+    231,
+    94,
+    390,
+    302
+   ],
+   "type": "observe",
+   "closeup_subject": "a round institutional wall clock with a cream face, only tick marks and no numerals, dark red-brown rim, hands at 9:07, a fine hairline crack across the glass",
+   "player_sees": "時鐘走著，9:07（標準時）。玻璃有一道細裂紋，鐘框上有積灰（只是氛圍）。",
+   "tag": "flavor",
+   "art_status": "USE N01-BG_DETAIL-008 (existing close-up; text conflict: clock is stopped)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-002-CLOCK.png",
+   "files": {
+    "closeup": "N01-BG_DETAIL-008.webp"
+   },
+   "wired_in_game": false
+  },
+  {
+   "id": "N01-INT-002-LAMP",
+   "scene": "BG-002",
+   "name": "終端旁檯燈",
+   "bbox_xyxy_master": [
+    412,
+    937,
+    768,
+    1470
+   ],
+   "bbox_stage_1280": [
+    137,
+    312,
+    256,
+    490
+   ],
+   "type": "operate",
+   "closeup_subject": "a dark metal articulated desk lamp with a dome shade, warm bulb glowing, round heavy base",
+   "player_sees": "可以轉動燈頭照向終端或時鐘（純操作手感）。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-002-LAMP.png",
+   "files": {
+    "closeup": "N01-INT-002-LAMP_closeup.webp"
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-002-FILEBOX",
+   "scene": "BG-002",
+   "name": "桌上收納盒",
+   "bbox_xyxy_master": [
+    506,
+    1256,
+    825,
+    1455
+   ],
+   "bbox_stage_1280": [
+    169,
+    419,
+    275,
+    485
+   ],
+   "type": "move",
+   "closeup_subject": "a small lidded metal-and-card storage box on the desk next to a stack of hardback ledgers",
+   "player_sees": "掀開蓋子：裡面是空白的磁碟片和一卷印表機色帶——跟終端有關的耗材，不是線索。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "move": {
+    "movable_part": "the lid of the small storage box",
+    "revealed": "the open storage box seen from the front and slightly above: a row of blank black floppy disks in paper sleeves and a spare printer ribbon cartridge, all unlabelled"
+   },
+   "wide_crop_ref": "work/inter/crop-N01-INT-002-FILEBOX.png",
+   "files": {
+    "closeup": "N01-INT-002-FILEBOX_closeup.webp",
+    "revealed": "N01-INT-002-FILEBOX_revealed.webp",
+    "sprite": "N01-INT-002-FILEBOX_sprite.webp",
+    "sprite_stage": [
+     363.0,
+     263.0,
+     634.0,
+     102.0
+    ]
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-002-TROLLEY",
+   "scene": "BG-002",
+   "name": "檔案推車",
+   "bbox_xyxy_master": [
+    1755,
+    1170,
+    2205,
+    1657
+   ],
+   "bbox_stage_1280": [
+    585,
+    390,
+    735,
+    552
+   ],
+   "type": "move",
+   "closeup_subject": "a chrome wire library book trolley on castors with two cardboard boxes on its shelves, standing on a wet terrazzo floor",
+   "player_sees": "推開推車：地上有新的輪痕穿過水漬（誤導：可能只是保安巡邏時推過）。",
+   "tag": "misdirection",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "move": {
+    "movable_part": "the chrome wire trolley with its two boxes, seen from the front",
+    "revealed": "the wet terrazzo floor where the trolley stood: four small dry circles where the castors were and a curving track of wheel marks through the water film"
+   },
+   "wide_crop_ref": "work/inter/crop-N01-INT-002-TROLLEY.png",
+   "files": {
+    "closeup": "N01-INT-002-TROLLEY_closeup.webp",
+    "revealed": "N01-INT-002-TROLLEY_revealed.webp",
+    "sprite": "N01-INT-002-TROLLEY_sprite.webp",
+    "sprite_stage": [
+     302.5,
+     38.5,
+     661.5,
+     634.0
+    ]
+   },
+   "wired_in_game": false
+  },
+  {
+   "id": "N01-INT-002-DESKDRAWER",
+   "scene": "BG-002",
+   "name": "終端桌抽屜",
+   "bbox_xyxy_master": [
+    1170,
+    1432,
+    1395,
+    1957
+   ],
+   "bbox_stage_1280": [
+    390,
+    477,
+    465,
+    652
+   ],
+   "type": "move",
+   "closeup_subject": "the stack of three small steel drawers of the terminal desk, worn grey paint, small handles",
+   "player_sees": "拉開最上層抽屜：舊鉛筆、橡皮擦、斷掉的尺、幾張空白便條。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "move": {
+    "movable_part": "the top steel drawer front alone",
+    "revealed": "the top drawer pulled open, seen from the front and slightly above: old pencils, an eraser, a snapped wooden ruler and a few blank memo slips"
+   },
+   "wide_crop_ref": "work/inter/crop-N01-INT-002-DESKDRAWER.png",
+   "files": {
+    "closeup": "N01-INT-002-DESKDRAWER_closeup.webp",
+    "revealed": "N01-INT-002-DESKDRAWER_revealed.webp",
+    "sprite": "N01-INT-002-DESKDRAWER_sprite.webp",
+    "sprite_stage": [
+     448.0,
+     108.0,
+     386.0,
+     157.0
+    ]
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-003-READER",
+   "scene": "BG-003",
+   "name": "微縮膠片閱讀機",
+   "bbox_xyxy_master": [
+    1143,
+    431,
+    1875,
+    1143
+   ],
+   "bbox_stage_1280": [
+    381,
+    144,
+    625,
+    381
+   ],
+   "type": "operate",
+   "closeup_subject": "a beige-grey vintage microfilm reader with a large dark hooded screen, two film reel spindles, a lit lamp window and knobs",
+   "player_sees": "可轉動旋鈕；螢幕只有空白光（沒有裝膠片）。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-003-READER.png",
+   "files": {
+    "closeup": "N01-INT-003-READER_closeup.webp"
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-003-DESKDRAWER",
+   "scene": "BG-003",
+   "name": "閱讀機桌抽屜",
+   "bbox_xyxy_master": [
+    1987,
+    1162,
+    2418,
+    1668
+   ],
+   "bbox_stage_1280": [
+    662,
+    387,
+    806,
+    556
+   ],
+   "type": "move",
+   "closeup_subject": "the steel drawer unit under the microfilm reader desk, three drawers with recessed handles",
+   "player_sees": "拉開抽屜：備用燈泡和一盒保險絲、一捲絕緣膠帶。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "move": {
+    "movable_part": "the top steel drawer front alone",
+    "revealed": "the top drawer pulled open, seen from the front and slightly above: spare frosted light bulbs in cardboard sleeves, a small box of glass fuses and a roll of black insulating tape"
+   },
+   "wide_crop_ref": "work/inter/crop-N01-INT-003-DESKDRAWER.png",
+   "files": {
+    "closeup": "N01-INT-003-DESKDRAWER_closeup.webp",
+    "revealed": "N01-INT-003-DESKDRAWER_revealed.webp",
+    "sprite": "N01-INT-003-DESKDRAWER_sprite.webp",
+    "sprite_stage": [
+     399.0,
+     130.0,
+     482.0,
+     131.0
+    ]
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-003-WORKLAMP",
+   "scene": "BG-003",
+   "name": "夾式工作燈",
+   "bbox_xyxy_master": [
+    3093,
+    506,
+    3840,
+    1256
+   ],
+   "bbox_stage_1280": [
+    1031,
+    169,
+    1280,
+    419
+   ],
+   "type": "operate",
+   "closeup_subject": "a clip-on articulated metal work lamp with a conical shade glowing warm, spring arms",
+   "player_sees": "可以轉燈頭照櫃子或工作桌。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-003-WORKLAMP.png",
+   "files": {
+    "closeup": "N01-INT-003-WORKLAMP_closeup.webp"
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-003-DOORWAY",
+   "scene": "BG-003",
+   "name": "通往走廊的門口",
+   "bbox_xyxy_master": [
+    2587,
+    225,
+    3262,
+    1237
+   ],
+   "bbox_stage_1280": [
+    862,
+    75,
+    1087,
+    412
+   ],
+   "type": "observe",
+   "closeup_subject": "an open doorway with a dark red-painted steel door ajar, the dim corridor beyond lit by red emergency light, a red caged lamp above",
+   "player_sees": "走廊遠處一片紅光，地上有水反光。只是回 B 的路。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-003-DOORWAY.png",
+   "files": {
+    "closeup": "N01-INT-003-DOORWAY_closeup.webp"
+   },
+   "wired_in_game": false
+  },
+  {
+   "id": "N01-INT-004-INTERCOM",
+   "scene": "BG-004",
+   "name": "對講機",
+   "bbox_xyxy_master": [
+    3000,
+    675,
+    3270,
+    1256
+   ],
+   "bbox_stage_1280": [
+    1000,
+    225,
+    1090,
+    419
+   ],
+   "type": "move",
+   "closeup_subject": "a grey wall-mounted intercom unit with a corded handset, speaker grille and a round call button",
+   "player_sees": "拿起話筒：只有電流聲（保安聲音另由劇情觸發）。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "move": {
+    "movable_part": "the intercom handset with a short length of coiled cord",
+    "revealed": "the intercom unit with its handset removed: the empty hook, speaker grille and call button, and a pale clean patch on the wall paint where the handset usually rests"
+   },
+   "wide_crop_ref": "work/inter/crop-N01-INT-004-INTERCOM.png",
+   "files": {
+    "closeup": "N01-INT-004-INTERCOM_closeup.webp",
+    "revealed": "N01-INT-004-INTERCOM_revealed.webp",
+    "sprite": "N01-INT-004-INTERCOM_sprite.webp",
+    "sprite_stage": [
+     457.5,
+     45.0,
+     142.5,
+     422.5
+    ]
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-004-LAMP",
+   "scene": "BG-004",
+   "name": "控制台檯燈",
+   "bbox_xyxy_master": [
+    450,
+    637,
+    825,
+    1068
+   ],
+   "bbox_stage_1280": [
+    150,
+    212,
+    275,
+    356
+   ],
+   "type": "operate",
+   "closeup_subject": "an articulated brass-and-steel desk lamp with a dome shade glowing warm, standing on top of a control console",
+   "player_sees": "可轉動燈頭照向控制台按鈕。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-004-LAMP.png",
+   "files": {
+    "closeup": "N01-INT-004-LAMP_closeup.webp"
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-004-WINDOW",
+   "scene": "BG-004",
+   "name": "控制間窗戶",
+   "bbox_xyxy_master": [
+    356,
+    56,
+    1068,
+    993
+   ],
+   "bbox_stage_1280": [
+    119,
+    19,
+    356,
+    331
+   ],
+   "type": "observe",
+   "closeup_subject": "a tall steel-framed window with rain-streaked wired glass, red light from outside bleeding through, condensation",
+   "player_sees": "外面是紅光和雨；看不清街道。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-004-WINDOW.png",
+   "files": {
+    "closeup": "N01-INT-004-WINDOW_closeup.webp"
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-004-CABINET",
+   "scene": "BG-004",
+   "name": "控制台下櫃門",
+   "bbox_xyxy_master": [
+    543,
+    1443,
+    1312,
+    1893
+   ],
+   "bbox_stage_1280": [
+    181,
+    481,
+    437,
+    631
+   ],
+   "type": "move",
+   "closeup_subject": "the two steel cabinet doors under the control console, louvred vents, small handles, worn paint",
+   "player_sees": "打開左櫃門：裡面是整束接線和一排老式保險絲座（純設備細節）。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "move": {
+    "movable_part": "the left steel cabinet door alone",
+    "revealed": "the cabinet interior with the left door opened: bundled old cloth-covered wiring, a row of ceramic fuse holders, dust and cobwebs"
+   },
+   "wide_crop_ref": "work/inter/crop-N01-INT-004-CABINET.png",
+   "files": {
+    "closeup": "N01-INT-004-CABINET_closeup.webp",
+    "revealed": "N01-INT-004-CABINET_revealed.webp",
+    "sprite": "N01-INT-004-CABINET_sprite.webp",
+    "sprite_stage": [
+     127.0,
+     141.0,
+     514.0,
+     453.0
+    ]
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-004-BEACON",
+   "scene": "BG-004",
+   "name": "紅色警示燈",
+   "bbox_xyxy_master": [
+    2070,
+    187,
+    2280,
+    393
+   ],
+   "bbox_stage_1280": [
+    690,
+    62,
+    760,
+    131
+   ],
+   "type": "observe",
+   "closeup_subject": "a red rotating warning beacon with a ribbed red glass dome on a metal base mounted on a wall, dust inside the dome",
+   "player_sees": "玻璃罩裡有死蟲和灰；燈在轉（氛圍）。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-004-BEACON.png",
+   "files": {
+    "closeup": "N01-INT-004-BEACON_closeup.webp"
+   },
+   "wired_in_game": true
+  },
+  {
+   "id": "N01-INT-005-CAR",
+   "scene": "BG-005",
+   "name": "路邊轎車",
+   "bbox_xyxy_master": [
+    2730,
+    1207,
+    3645,
+    1687
+   ],
+   "bbox_stage_1280": [
+    910,
+    402,
+    1215,
+    562
+   ],
+   "type": "observe",
+   "closeup_subject": "a dark older 1980s sedan parked at the kerb in heavy rain, seen from the front, headlights off, rain beading on the bonnet and windscreen, fogged windows, a wet leaf caught under a wiper, dark empty interior",
+   "player_sees": "車內空無一人、窗戶起霧（誤導：像是剛有人坐過，但沒有證據）。",
+   "tag": "misdirection",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-005-CAR.png",
+   "files": {
+    "closeup": "N01-INT-005-CAR_closeup.webp"
+   },
+   "wired_in_game": false
+  },
+  {
+   "id": "N01-INT-005-NAMEPLATE",
+   "scene": "BG-005",
+   "name": "門楣銘牌",
+   "bbox_xyxy_master": [
+    1331,
+    750,
+    2043,
+    982
+   ],
+   "bbox_stage_1280": [
+    444,
+    250,
+    681,
+    327
+   ],
+   "type": "observe",
+   "closeup_subject": "a large blank bronze-and-stone nameplate panel above an entrance, four bolts (one missing), rain streaks and green-free dark patina",
+   "player_sees": "銘牌是空白的（館名由程式疊字）；少了一顆螺絲。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-005-NAMEPLATE.png",
+   "files": {
+    "closeup": "N01-INT-005-NAMEPLATE_closeup.webp"
+   },
+   "wired_in_game": false
+  },
+  {
+   "id": "N01-INT-005-GATE",
+   "scene": "BG-005",
+   "name": "鐵柵門",
+   "bbox_xyxy_master": [
+    1230,
+    1275,
+    2231,
+    1650
+   ],
+   "bbox_stage_1280": [
+    410,
+    425,
+    744,
+    550
+   ],
+   "type": "operate",
+   "closeup_subject": "a pair of black wrought-iron gates standing half open at the bottom of stone steps between low concrete walls, rust at the hinges, rain dripping",
+   "player_sees": "可推動柵門（鉸鏈吱嘎）；門柱鉸鏈生鏽。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-005-GATE.png",
+   "files": {
+    "closeup": "N01-INT-005-GATE_closeup.webp"
+   },
+   "wired_in_game": false
+  },
+  {
+   "id": "N01-INT-005-STREETLAMP",
+   "scene": "BG-005",
+   "name": "路燈",
+   "bbox_xyxy_master": [
+    3037,
+    93,
+    3543,
+    1256
+   ],
+   "bbox_stage_1280": [
+    1012,
+    31,
+    1181,
+    419
+   ],
+   "type": "observe",
+   "closeup_subject": "a tall old street lamp on a concrete pole with a curved arm and a warm sodium lamp head glowing in heavy rain, light cone full of raindrops",
+   "player_sees": "路燈在雨中閃了一下（可做閃爍動畫，純氛圍）。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-005-STREETLAMP.png",
+   "files": {
+    "closeup": "N01-INT-005-STREETLAMP_closeup.webp"
+   },
+   "wired_in_game": false
+  },
+  {
+   "id": "N01-INT-005-DOORS",
+   "scene": "BG-005",
+   "name": "館正門",
+   "bbox_xyxy_master": [
+    1417,
+    1068,
+    1920,
+    1455
+   ],
+   "bbox_stage_1280": [
+    472,
+    356,
+    640,
+    485
+   ],
+   "type": "observe",
+   "closeup_subject": "heavy double entrance doors of dark wood with thick glass panels in a recessed porch, a warm ceiling light, brass push bars",
+   "player_sees": "門內大廳亮著一盞燈，空無一人。",
+   "tag": "flavor",
+   "art_status": "DONE v2.2 (2026-11-20)",
+   "wide_crop_ref": "work/inter/crop-N01-INT-005-DOORS.png",
+   "files": {
+    "closeup": "N01-INT-005-DOORS_closeup.webp"
+   },
+   "wired_in_game": false
+  }
+ ]
+}
