@@ -176,13 +176,47 @@ export function render(st, params, go) {
   }
   let lastOrigin = [640, 360], cuT = 0;
   async function loop(handler) {
+    await guide();
     for (;;) {
       const a = await act(x => x.type === 'hs'); S();
       const used = a.item;
       const r = await handler(a.id, used); S();
       if (used && selected === used) { selected = null; paintSlots(); }
       if (r) return r;
+      await guide();
     }
+  }
+  // ---------- 教授的電話引導（劇本草稿 v4）：每個步驟第一次到對的房間時說方向；第一次答錯時再給具體一點的提示 ----------
+  const GUIDE_AT = { P01: 'A', CARD: 'A', P02: 'B', P03: 'C', P04: 'C', P05: 'D', CHK: 'D' };
+  const GUIDE = {
+    P01: [['ind', '先讓燈亮起來。你那間閱覽室的牆上，應該有一個備用配電箱。'], ['me', '左邊牆上……有。上面的紅燈一直在閃。'], ['ind', '舊館的線路很老，一次開太多就會跳脫。先看清楚每一路吃多少電，再決定開哪幾個。']],
+    CARD: [['ind', '門邊的讀卡器亮了嗎？'], ['me', '亮了。'], ['ind', '你桌上應該有一張臨時訪客卡。用它。']],
+    P02: [['me', '走廊。牆上有一個鐘，旁邊是一台保安終端。'], ['ind', '往裡面的門要靠那台終端開。可是終端的時間，我不信任。'], ['ind', '找一件同時被兩台機器記下來的事。兩邊差多少，終端就錯了多少。']],
+    P03: [['me', '這裡是微縮膠卷室。整面牆都是卷宗櫃。'], ['ind', '你要找的是設備的維護卷宗。牆上應該貼著命名規則，桌上也許有維修標籤。'], ['ind', '維修人員寫日期的習慣，不一定和規則一樣。兩樣都看過再開抽屜。']],
+    P04: [['ind', '旁邊那台錄音機，帶子被剪亂了。'], ['ind', '找一找操作順序的便條。每做一個步驟，房間裡的機器都會發出聲音。照聲音把帶子排回去。']],
+    P05: [['ind', '控制台會要你證明三件事。每一件都先選結論，再拿一份文件當證據。'], ['ind', '別選你覺得對的，選文件上寫著的。']],
+    CHK: [['ind', '最後是人工清場面板。只填你親眼確認過的事。'], ['me', '館裡的人……我只確認過一個。'], ['ind', '那就照實寫。']],
+  };
+  const HELP = {
+    P01: [['ind', '別硬扳。配電箱門內側有一張負載表，被弄髒的那一格，看上面的電錶——它記得跳脫那一刻的總量。'], ['ind', '門禁一定要開。剩下的，算一算哪一路可以先關掉。']],
+    P02: [['ind', '讀卡器旁邊的測試表，和值班登記板。同一張測試卡 T-07，兩邊各記了一次時間。'], ['ind', '用終端記的時間，減掉真正的時間。差幾分鐘，就往回調幾分鐘。']],
+    P03: [['ind', '維修標籤上寫「12/4・春季例行」。十二月不是春天。'], ['ind', '所以 12 是日、4 是月。照牆上的規則，日在前、月在後，再接類別和序號。']],
+    P04: [['ind', '便條上寫的是動作。去點房間裡的提示鈴、掃描機、膠卷盒，聽它們的聲音。'], ['ind', '電話鈴那一段，不是這間房間會有的聲音。']],
+    P05: [['ind', '第一題，看訪客卡背面的發卡時間。第二題，錄音只聽得到聲音，聽不到是誰。'], ['ind', '第三題，比一比清場簽名和夜間測試開始的時間，哪一個先。']],
+    CHK: [['ind', '在館人數。你親眼看到的，只有你自己。']],
+  };
+  async function playLines(L) { for (const [w, t] of L) { if (w === 'me') await me(t); else await say(t, w); S(); } }
+  async function guide() {
+    if (!F.EV_N01_START || ended || !cu.classList.contains('hidden') && !cu.classList.contains('out')) return;
+    const k = cur().k;
+    if (!GUIDE[k] || F['G_' + k] || GUIDE_AT[k] !== S0.scene) return;
+    flag('G_' + k); await wait(300); S();
+    await playLines(GUIDE[k]);
+  }
+  async function help() {
+    const k = cur().k;
+    if (!HELP[k] || F['H_' + k]) return;
+    flag('H_' + k); await playLines(HELP[k]);
   }
   // 近景：從點擊的物件位置推進；返回時反向播放（CODE_NOTES 審核補充）
   function openCu(inner, list = []) {
@@ -360,6 +394,9 @@ export function render(st, params, go) {
     if (S0.alert >= MAX_ALERT) { await caught(); return; }
     sfx('step'); el.classList.add('n1-sweep'); setTimeout(() => el.classList.remove('n1-sweep'), 1600);
     await say(ALERT_LINE[S0.alert - 1], 'guardv'); S();
+    if (S0.alert === 1) { await say('你聽到了嗎？他在樓下。動作快一點，但別慌。', 'ind'); S(); }
+    if (S0.alert === 2) { await me('腳步聲越來越近了……'); S(); await say('再錯一次，他就會上來。慢慢想，想清楚再動手。', 'ind'); S(); }
+    await help();
   }
   async function caught() {
     running = false;
@@ -752,6 +789,8 @@ export function render(st, params, go) {
         if (DRAWER_LINE[content]) { await me(DRAWER_LINE[content], { pic: false }); S(); if (content === 'C05') flag('n01_photo_seen'); if (content === 'C08') flag('n01_key_seen'); }
         if (isM(code)) { lockFor('P03_MLOCK', WAIT.P03); sfx('error'); await me('這份維護卷宗不是那一天的。', { pic: false }); S(); await alarm(); }
         await new Promise(r => v.addEventListener('click', () => { sfx('tap'); v.remove(); r(); })); S();
+        F.P03_MISS = (F.P03_MISS || 0) + 1; persist();
+        if (!isM(code) && F.P03_MISS >= 2) await help(); // 開錯兩個非目標抽屜，教授也會出聲
         paint(); return;
       }
       flag('P03_SOLVED'); sfx('unlock'); paint(); await wait(700); S();
