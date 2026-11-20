@@ -9,8 +9,8 @@ const TOTAL = 1800; // 劇情時鐘基準（第一節不限時，只用來推算
 const NO_LIMIT = true; // 第一章第一節：不限時挑戰
 const FREE_HINTS = 2; // 本節免費提示次數
 const MAX_ALERT = 3; // 答錯 3 次被保安發現 → 失敗、退出、從頭開始
-// 長老伏筆（第一章第一節只露姓氏；正式姓名之後由劇本填）　※「顧」為暫定
-const ELDER_SURNAME = '顧';
+// 長老伏筆：名字一律模糊成馬賽克，不給任何可讀的字（主角失憶、閱讀能力下降；身分之後再設定）
+const ELDER_MOSAIC = '<span class="mosaic" aria-label="模糊不清的名字"><i></i><i></i><i></i></span>';
 // 新文件的紙張：美術補圖前先借用現有空白紙（DOC-072 借閱卡、DOC-073 信紙到位後換掉）
 const DOC_ART = { borrow: 'N01-DOC-068', letter: 'N01-DOC-066' };
 const WAIT = { P01: 4, P02: 4, P03: 3, P04: 3, P05: 4 }; // 答錯後的等待秒數（縮短）
@@ -52,8 +52,8 @@ function docBody(id, ctx) {
   switch (id) {
     case 'form': return { title: '資料申請單', asset: 'N01-DOC-061', html: `<h4>灰橋舊文獻館　資料申請單</h4><table><tr><th>借閱編號</th><td><b>GB-17-042</b></td></tr><tr><th>申請人</th><td>${name}</td></tr><tr><th>登記時間（標準時）</th><td>20:55</td></tr><tr><th>簽名</th><td class="sig">${name}</td></tr></table>` };
     case 'noteF': return { title: '紙條（正面）', asset: 'N01-DOC-062-front', html: '<p class="hand">不要讓別人替你描述，你當時看見了什麼。</p><p class="hand">尤其不要急著相信，你自己寫下的版本。</p>' };
-    case 'borrow': return { title: '借閱紀錄卡', asset: DOC_ART.borrow, html: `<h4>借閱紀錄卡　卷宗 1204-M-03</h4><table><tr><th>日期</th><th>借閱人</th><th>歸還</th></tr><tr><td>2021.04.12</td><td>館務組</td><td>已還</td></tr><tr><td>2024.12.04</td><td>維修課</td><td>已還</td></tr><tr><td>——</td><td><span class="ink-out">${ELDER_SURNAME}</span><span class="blot"></span></td><td class="hand">是他。</td></tr></table>` };
-    case 'letter': return { title: '夾在書裡的信', asset: DOC_ART.letter, html: `<p class="hand">館長：</p><p class="hand">第三櫃的捐贈文獻，照舊不對外開放。借閱紀錄由你親自保管，不必經過館務組。</p><p class="hand">若有人問起，就說那批資料早已銷毀。</p><p class="hand sig">${ELDER_SURNAME}<span class="scrawl">（後面的字跡潦草，難以辨認）</span></p>` };
+    case 'borrow': return { title: '借閱紀錄卡', asset: DOC_ART.borrow, html: `<h4>借閱紀錄卡　卷宗 1204-M-03</h4><table><tr><th>日期</th><th>借閱人</th><th>歸還</th></tr><tr><td>2021.04.12</td><td>館務組</td><td>已還</td></tr><tr><td>2024.12.04</td><td>維修課</td><td>已還</td></tr><tr><td>——</td><td>${ELDER_MOSAIC}</td><td class="hand">是他。</td></tr></table>` };
+    case 'letter': return { title: '夾在書裡的信', asset: DOC_ART.letter, html: `<p class="hand">館長：</p><p class="hand">第三櫃的捐贈文獻，照舊不對外開放。借閱紀錄由你親自保管，不必經過館務組。</p><p class="hand">若有人問起，就說那批資料早已銷毀。</p><p class="hand sig">${ELDER_MOSAIC}</p>` };
     case 'noteB': return { title: '紙條（背面）', asset: 'N01-DOC-062-back', html: '<p class="press">GB-17-042</p>' };
     case 'visit': return { title: '訪客出入紀錄', asset: 'N01-DOC-063', html: '<h4>訪客出入紀錄</h4><div class="base">時間：標準時（獨立讀卡器）</div><table><tr><th>20:43</th><td>測試卡 T-07 讀卡（維修）</td></tr><tr><th>20:48</th><td>E. Ward 入館</td></tr><tr><th>20:55</th><td>訪客登記</td></tr><tr><th>21:02</th><td>安全測試啟動</td></tr><tr><th>21:06</th><td>清場簽名</td></tr></table>' };
     case 'termlog': return { title: '夜間設備終端紀錄', asset: 'N01-DOC-064', html: `<h4>保安終端　夜間設備紀錄</h4><div class="base">時間：終端時間（尚未校時）</div><table><tr><th>21:14</th><td>備用電源切換／監控訊號中斷</td></tr></table>${ctx.p02 ? `<p class="calc">校正後：終端 21:14 ＝ 標準時 ${hm(21 * 60 + 14 - OFFSET)}</p>` : ''}` };
@@ -456,7 +456,7 @@ export function render(st, params, go) {
       if (id === 'book') { // 隱藏伏筆：不進提示、不進目標
         if (!F.LETTER_FOUND) { flag('LETTER_FOUND'); sfx('pick'); await sys(['一本舊館藏目錄，書頁間夾著一封信'], 1600); S(); }
         await readDoc('letter'); S();
-        if (S0.read.includes('borrow') && !F.LETTER_LINK) { flag('LETTER_LINK'); await me(`借閱卡上被塗掉的名字，也是「${ELDER_SURNAME}」。`); S(); }
+        if (S0.read.includes('borrow') && !F.LETTER_LINK) { flag('LETTER_LINK'); await me('這個簽名的筆畫，跟借閱卡上那個名字很像。'); S(); }
         return;
       }
       if (id === 'phone') {
@@ -744,9 +744,9 @@ export function render(st, params, go) {
       await me('她說這裡沒有人。那我是什麼？'); S();
       await sys(['卷宗封底夾著一張借閱紀錄卡'], 1600); S();
       await readDoc('borrow'); S();
-      await me(`借閱人的名字被墨水塗掉了，只剩一個「${ELDER_SURNAME}」。`); S();
+      await me('最後一個借閱人的名字……我看不清楚。字明明就在那裡。'); S();
       await me('旁邊那兩個字……是我的筆跡。'); S();
-      if (S0.read.includes('letter')) { await me(`閱覽室那封信的署名，也是「${ELDER_SURNAME}」。`); S(); }
+      if (S0.read.includes('letter')) { await me('這個簽名的筆畫，跟閱覽室那封信上的很像。'); S(); }
       paintGoal(); return true;
     });
     clearInterval(iv); return r;

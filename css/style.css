@@ -1023,3 +1023,8 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 .n1-ink .blot { display: inline-block; width: 64px; height: 18px; margin-left: 2px; vertical-align: -3px; background: rgba(20, 14, 10, 0.88); border-radius: 40% 60% 50% 45%; filter: blur(0.6px); }
 .n1-ink .sig { text-align: right; margin-top: 16px; }
 .n1-ink .scrawl { font-size: 13px; opacity: 0.6; margin-left: 8px; }
+/* 長老名字：模糊成馬賽克，不留可讀筆畫 */
+.n1-ink .mosaic { display: inline-flex; gap: 2px; vertical-align: -4px; filter: blur(1.2px); }
+.n1-ink .mosaic i { width: 18px; height: 20px; background: repeating-conic-gradient(rgba(30, 22, 16, 0.85) 0 25%, rgba(30, 22, 16, 0.35) 0 50%) 0 0 / 6px 6px; border-radius: 2px; }
+.n1-ink .sig .mosaic { transform: rotate(-4deg); }
+.n1-ink td.hand { white-space: nowrap; }
