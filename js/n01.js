@@ -8,6 +8,11 @@ import { html, $, IMG, ICON, wait, esc, modal, toast } from './ui.js';
 const TOTAL = 1800; // 劇情時鐘基準（第一節不限時，只用來推算標準時）
 const NO_LIMIT = true; // 第一章第一節：不限時挑戰
 const FREE_HINTS = 2; // 本節免費提示次數
+const MAX_ALERT = 3; // 答錯 3 次被保安發現 → 失敗、退出、從頭開始
+// 長老伏筆（第一章第一節只露姓氏；正式姓名之後由劇本填）　※「顧」為暫定
+const ELDER_SURNAME = '顧';
+// 新文件的紙張：美術補圖前先借用現有空白紙（DOC-072 借閱卡、DOC-073 信紙到位後換掉）
+const DOC_ART = { borrow: 'N01-DOC-068', letter: 'N01-DOC-066' };
 const WAIT = { P01: 4, P02: 4, P03: 3, P04: 3, P05: 4 }; // 答錯後的等待秒數（縮短）
 const STD0 = 21 * 60 + 7; // 主角醒來：標準時 21:07
 const OFFSET = 7; // 保安終端快 7 分鐘
@@ -25,7 +30,7 @@ const ICO = {
   file: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d8b594" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM15 3v4h4M9 12h6M9 16h6"></path></svg>',
   log: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d8b594" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4zM8 9h8M8 12h5"></path></svg>',
 };
-const RATIO = { 'N01-DOC-061': 0.756, 'N01-DOC-062-front': 1.013, 'N01-DOC-062-back': 1.002, 'N01-DOC-063': 0.777, 'N01-DOC-064': 0.768, 'N01-DOC-065': 0.807, 'N01-DOC-066': 0.741, 'N01-DOC-067': 1.831, 'N01-DOC-068': 1.385, 'N01-DOC-069': 0.755, 'N01-DOC-070': 0.979, 'N01-DOC-071': 0.817, 'N01-PROP-039': 0.5 };
+const RATIO = { 'N01-DOC-072': 1.6, 'N01-DOC-073': 0.74, 'N01-DOC-061': 0.756, 'N01-DOC-062-front': 1.013, 'N01-DOC-062-back': 1.002, 'N01-DOC-063': 0.777, 'N01-DOC-064': 0.768, 'N01-DOC-065': 0.807, 'N01-DOC-066': 0.741, 'N01-DOC-067': 1.831, 'N01-DOC-068': 1.385, 'N01-DOC-069': 0.755, 'N01-DOC-070': 0.979, 'N01-DOC-071': 0.817, 'N01-PROP-039': 0.5 };
 // DOC-065 印好的表格：欄線 4.5／27.6／49.8／72.2／95.3%，列線 15.5／27.3／35.9／44.1％…；字放進格子裡
 const G065 = { x: [4.5, 27.6, 49.8, 72.2, 95.3], y: [15.5, 27.3, 35.9, 44.1, 52.1, 60.3] };
 function gridDoc(title, rows) {
@@ -47,6 +52,8 @@ function docBody(id, ctx) {
   switch (id) {
     case 'form': return { title: '資料申請單', asset: 'N01-DOC-061', html: `<h4>灰橋舊文獻館　資料申請單</h4><table><tr><th>借閱編號</th><td><b>GB-17-042</b></td></tr><tr><th>申請人</th><td>${name}</td></tr><tr><th>登記時間（標準時）</th><td>20:55</td></tr><tr><th>簽名</th><td class="sig">${name}</td></tr></table>` };
     case 'noteF': return { title: '紙條（正面）', asset: 'N01-DOC-062-front', html: '<p class="hand">不要讓別人替你描述，你當時看見了什麼。</p><p class="hand">尤其不要急著相信，你自己寫下的版本。</p>' };
+    case 'borrow': return { title: '借閱紀錄卡', asset: DOC_ART.borrow, html: `<h4>借閱紀錄卡　卷宗 1204-M-03</h4><table><tr><th>日期</th><th>借閱人</th><th>歸還</th></tr><tr><td>2021.04.12</td><td>館務組</td><td>已還</td></tr><tr><td>2024.12.04</td><td>維修課</td><td>已還</td></tr><tr><td>——</td><td><span class="ink-out">${ELDER_SURNAME}</span><span class="blot"></span></td><td class="hand">是他。</td></tr></table>` };
+    case 'letter': return { title: '夾在書裡的信', asset: DOC_ART.letter, html: `<p class="hand">館長：</p><p class="hand">第三櫃的捐贈文獻，照舊不對外開放。借閱紀錄由你親自保管，不必經過館務組。</p><p class="hand">若有人問起，就說那批資料早已銷毀。</p><p class="hand sig">${ELDER_SURNAME}<span class="scrawl">（後面的字跡潦草，難以辨認）</span></p>` };
     case 'noteB': return { title: '紙條（背面）', asset: 'N01-DOC-062-back', html: '<p class="press">GB-17-042</p>' };
     case 'visit': return { title: '訪客出入紀錄', asset: 'N01-DOC-063', html: '<h4>訪客出入紀錄</h4><div class="base">時間：標準時（獨立讀卡器）</div><table><tr><th>20:43</th><td>測試卡 T-07 讀卡（維修）</td></tr><tr><th>20:48</th><td>E. Ward 入館</td></tr><tr><th>20:55</th><td>訪客登記</td></tr><tr><th>21:02</th><td>安全測試啟動</td></tr><tr><th>21:06</th><td>清場簽名</td></tr></table>' };
     case 'termlog': return { title: '夜間設備終端紀錄', asset: 'N01-DOC-064', html: `<h4>保安終端　夜間設備紀錄</h4><div class="base">時間：終端時間（尚未校時）</div><table><tr><th>21:14</th><td>備用電源切換／監控訊號中斷</td></tr></table>${ctx.p02 ? `<p class="calc">校正後：終端 21:14 ＝ 標準時 ${hm(21 * 60 + 14 - OFFSET)}</p>` : ''}` };
@@ -83,7 +90,7 @@ export function render(st, params, go) {
 <div class="lvl-top" id="hud">
   <button type="button" class="iconbtn" id="leave" aria-label="離開關卡">${ICON.back}</button>
   <div class="lvl-goal"><span class="chip-red" style="height:32px">第一章・第一節</span><span id="goal">目標　—</span></div>
-  <div class="n1-timer${NO_LIMIT ? ' hidden' : ''}" id="timer" aria-label="剩餘時間">30:00</div>
+  <div class="n1-timer${NO_LIMIT ? ' hidden' : ''}" id="timer" aria-label="剩餘時間">30:00</div><div class="n1-alert" id="alert" aria-label="保安警戒"><span>警戒</span><i></i><i></i><i></i></div>
 </div>
 <div class="lvl-right" style="height:64px">
   <button type="button" class="iconbtn hud-big" id="hintBtn">${ICO.hint}<span>提示</span></button>
@@ -188,7 +195,7 @@ export function render(st, params, go) {
   }
 
   // ---------- 對白、廣播、紀錄 ----------
-  const WHO = { fv: '女聲', mv: '男聲', me: pname, ind: '因杜阿森（電話）', indp: '因杜阿森', cast: '館內廣播', eileen: '錄音・艾琳', male: '錄音・男聲', sup: '錄音・前主管', guard: '保安（對講機）' };
+  const WHO = { fv: '女聲', mv: '男聲', me: pname, ind: '因杜阿森（電話）', indp: '因杜阿森', cast: '館內廣播', eileen: '錄音・艾琳', male: '錄音・男聲', sup: '錄音・前主管', guard: '保安（對講機）', guardv: '保安（門外）' };
   function say(cn, who = 'me', opt = {}) {
     S0.log.push([WHO[who] || '', cn]); if (S0.log.length > 200) S0.log.shift();
     return new Promise(res => {
@@ -331,6 +338,30 @@ export function render(st, params, go) {
     if (ok && alive) { persist(); go('stages', { tab: 0 }); }
   });
 
+  // ---------- 保安警戒：答錯一次＋1，滿 MAX_ALERT 被發現 → 失敗、退出、從頭開始 ----------
+  const paintAlert = () => { const n = $(el, '#alert'); if (n) n.querySelectorAll('i').forEach((d, i) => d.classList.toggle('on', i < (S0.alert || 0))); };
+  const ALERT_LINE = ['……嗯？誰在那裡？', '有人在裡面嗎？這個時間不能進來。'];
+  async function alarm() {
+    if (ended) return;
+    S0.alert = (S0.alert || 0) + 1; persist(); paintAlert();
+    if (S0.alert >= MAX_ALERT) { await caught(); return; }
+    sfx('step'); el.classList.add('n1-sweep'); setTimeout(() => el.classList.remove('n1-sweep'), 1600);
+    await say(ALERT_LINE[S0.alert - 1], 'guardv'); S();
+  }
+  async function caught() {
+    running = false;
+    sfx('door'); el.classList.add('n1-sweep');
+    await say('你怎麼會在這裡？站好，我要通知警察。', 'guardv');
+    if (ended) return;
+    ended = true; alive = false; F.N01_CAUGHT = true;
+    meta.st = null; save();
+    const b = html(`<div class="n1-fail"><div class="n1-shut" aria-hidden="true"></div><div class="col" style="align-items:center;gap:16px;z-index:2">
+<div class="label">EV_CAUGHT</div><h2>被保安發現了</h2><p>警察正在趕來的路上。這一晚，你沒能離開。</p>
+<div class="row" style="gap:16px;height:56px"><button type="button" class="btn-line" data-a="out" style="width:208px">返回關卡選擇</button><button type="button" class="btn" data-a="retry" style="width:208px">重新挑戰</button></div></div></div>`);
+    b.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (!a) return; sfx('tap'); if (a.dataset.a === 'retry') go('n01', { retry: true }); else go('stages', { tab: 0 }); });
+    el.appendChild(b); sfx('error');
+  }
+
   // ---------- 超時：安全門鎖定、夜間保安通報，無限次重試 ----------
   function timeout() {
     if (ended) return;
@@ -392,6 +423,7 @@ export function render(st, params, go) {
   // ---------- A 閱覽室（BG-001） ----------
   const A_HS = () => [
     { id: 'i-shelf', x: 356, y: 131, w: 81, h: 63, label: '書架檔案箱' },
+    { id: 'book', x: 258, y: 196, w: 72, h: 88, label: '書架上的舊書' },
     { id: 'panel', x: 40, y: 140, w: 212, h: 182, label: '備用配電箱' },
     { id: 'phone', x: 204, y: 410, w: 150, h: 100, label: '桌上電話' },
     { id: 'lamp', x: 356, y: 306, w: 170, h: 150, label: '銀行燈' },
@@ -421,6 +453,12 @@ export function render(st, params, go) {
       if (id === 'panel') { await p01(); sceneAState(); return; }
       if (id === 'lamp') { if (!F.P01_SOLVED) return void sys(['照明：未供電'], 1400); await inspect('lamp'); return; }
       if (id === 'i-shelf') { await inspect('shelf'); return; }
+      if (id === 'book') { // 隱藏伏筆：不進提示、不進目標
+        if (!F.LETTER_FOUND) { flag('LETTER_FOUND'); sfx('pick'); await sys(['一本舊館藏目錄，書頁間夾著一封信'], 1600); S(); }
+        await readDoc('letter'); S();
+        if (S0.read.includes('borrow') && !F.LETTER_LINK) { flag('LETTER_LINK'); await me(`借閱卡上被塗掉的名字，也是「${ELDER_SURNAME}」。`); S(); }
+        return;
+      }
       if (id === 'phone') {
         if (!F.n01_phone_rang) {
           sfx('ring2'); await sys(['〔電話鈴響兩聲〕'], 1700); S(); flag('n01_phone_rang');
@@ -483,7 +521,7 @@ export function render(st, params, go) {
         paint(); await wait(350); S();
         F.P01_TRIP = true; sw.A = sw.B = sw.C = false; F.P01_SW = { ...sw }; lockFor('P01_COOL', WAIT.P01);
         sfx('error'); paint(); const t = cu.querySelector('#trip'); if (t) t.classList.add('on');
-        return;
+        await alarm(); return;
       }
       if (sw.A && !sw.B && sw.C) {
         flag('P01_SOLVED'); paint(); sfx('unlock'); await wait(900); S(); closeCu(); sceneAState();
@@ -515,6 +553,13 @@ export function render(st, params, go) {
     setScene(F.P02_SOLVED ? 'N01-BG-002-open' : 'N01-BG-002', '檔案走廊', B_HS());
     addBack('← 閱覽室', 'toA');
     paintGoal();
+    if (F.P03_SOLVED && !F.GUARD_CALL) {
+      // 伏筆：保安是眼線（教授不知道）。聽起來只是例行公事（劇本草稿，待確認）
+      flag('GUARD_CALL'); await wait(500); S(); sfx('step');
+      await sys(['門外傳來壓低的說話聲'], 1400); S();
+      await say('今晚一切正常。……是，我會照之前講的報告。', 'guardv'); S();
+      await me('……照之前講的？'); S();
+    }
     return loop(async (id) => {
       if (id === 'back') { closeCu(); return; }
       if (id === 'toA') return 'A';
@@ -603,7 +648,7 @@ export function render(st, params, go) {
       if (v !== -7) {
         sfx('error'); lockFor('P02_LOCK', WAIT.P02);
         if (!F.P02_FAILED) { flag('P02_FAILED'); fx = 'N01-SCR-05.webp'; paint(); await wait(150); S(); fx = ''; }
-        paint(); return;
+        paint(); await alarm(); return;
       }
       flag('P02_SOLVED'); sfx('unlock'); paint(); await wait(900); S(); closeCu(); setBg('N01-BG-002-open');
       await me('你早就知道這裡的時鐘有問題？'); S();
@@ -686,7 +731,7 @@ export function render(st, params, go) {
         const v = html(`<div class="g1-docback n1-drawer" role="dialog" aria-label="打開的抽屜"><img src="${IMG('N01-DRW-' + content + '.webp')}" alt="抽屜內部">${content === 'C09' ? '<div class="n1-tag card">2104-M-03</div>' : ''}<div class="g1-dochint">點一下關上抽屜</div></div>`);
         el.appendChild(v);
         if (DRAWER_LINE[content]) { await me(DRAWER_LINE[content], { pic: false }); S(); if (content === 'C05') flag('n01_photo_seen'); if (content === 'C08') flag('n01_key_seen'); }
-        if (isM(code)) { lockFor('P03_MLOCK', WAIT.P03); sfx('error'); await me('這份維護卷宗不是那一天的。', { pic: false }); S(); }
+        if (isM(code)) { lockFor('P03_MLOCK', WAIT.P03); sfx('error'); await me('這份維護卷宗不是那一天的。', { pic: false }); S(); await alarm(); }
         await new Promise(r => v.addEventListener('click', () => { sfx('tap'); v.remove(); r(); })); S();
         paint(); return;
       }
@@ -697,6 +742,11 @@ export function render(st, params, go) {
       closeCu(); setBg('N01-BG-003-open'); addItem('file');
       await readDoc('clear'); S();
       await me('她說這裡沒有人。那我是什麼？'); S();
+      await sys(['卷宗封底夾著一張借閱紀錄卡'], 1600); S();
+      await readDoc('borrow'); S();
+      await me(`借閱人的名字被墨水塗掉了，只剩一個「${ELDER_SURNAME}」。`); S();
+      await me('旁邊那兩個字……是我的筆跡。'); S();
+      if (S0.read.includes('letter')) { await me(`閱覽室那封信的署名，也是「${ELDER_SURNAME}」。`); S(); }
       paintGoal(); return true;
     });
     clearInterval(iv); return r;
@@ -742,7 +792,7 @@ export function render(st, params, go) {
       paint();
       if (k === 'phone' && !F.n01_phone_seg_heard) { flag('n01_phone_seg_heard'); await me('這段不是在這間房間錄的。電話……是閱覽室那一台？', { pic: false }); S(); }
       if (pick.length < 3) return;
-      if (pick.join() !== ANSWER.join()) { sfx('error'); pick = []; lockFor('P04_REW', WAIT.P04); paint(); return; }
+      if (pick.join() !== ANSWER.join()) { sfx('error'); pick = []; lockFor('P04_REW', WAIT.P04); paint(); await alarm(); return; }
       flag('P04_SOLVED'); sfx('unlock'); paint('〔叮、叮〕→〔低沉的嗡鳴〕→〔喀一聲〕'); await wait(700); S(); closeCu();
       await playFull(false); S();
       paintGoal(); return true;
@@ -861,7 +911,7 @@ export function render(st, params, go) {
       const q = Q[qi];
       if (opt !== q.a || card !== q.ok) {
         const wrong = card; sfx('error'); lockFor('P05_LOCK', WAIT.P05);
-        card = null; opt = null; paint();
+        card = null; opt = null; paint(); await alarm();
         if (wrong === 'tape') { await playFull(true); S(); } else { await readDoc(wrong); S(); }
         paint(); return;
       }
@@ -905,7 +955,7 @@ export function render(st, params, go) {
       const i = +id[2]; if (ok[i]) return;
       if (i === 2 && n !== 1) {
         if (n === 2 && !F.n01_tried_two) { flag('n01_tried_two'); await me('我沒有親眼確認第二個人。清查表只能寫我看見的。', { pic: false }); S(); return; }
-        sfx('error'); paint('清查內容與現場不符'); return;
+        sfx('error'); paint('清查內容與現場不符'); await alarm(); return;
       }
       ok[i] = true; F.CHK_OK = [...ok]; persist(); sfx('clang'); paint();
       if (!ok.every(Boolean)) return;
@@ -925,6 +975,7 @@ export function render(st, params, go) {
       await say('對了——你上來的時候，有沒有看到別人？', 'guard'); S();
       await me('……為什麼這樣問？'); S();
       await say('沒事。監控今晚整晚都沒訊號，我只是問問。', 'guard'); S();
+      await me('（他沒看見我的臉。趁現在走。）'); S();
       paintGoal(); return true;
     });
   }
@@ -962,10 +1013,21 @@ export function render(st, params, go) {
     S0.choices.D01 = c; S0.trust = [1, -1, 0][c]; persist();
     await me(['我不確定，我的記憶有點混亂。', '你先告訴我，為什麼我應該相信你？', '別管昨天了，先告訴我怎麼出去。'][c]); S();
     await say(['那就先別急著回想。從你能確認的事情開始。', '你不應該。尤其在你連自己怎麼到那裡都不清楚的時候。', '很好，先處理眼前的問題。其他事情離開後再談。'][c], 'ind'); S();
+    // 改版：教授要主角在保安巡到前離開（劇本草稿，待劇本確認）
+    await say('聽好。夜間保安很快就會開始巡樓，在他巡到你那裡之前離開。', 'ind'); S();
+    await me('被看到又怎樣？我又不是小偷。'); S();
+    await say('別讓保安看到你。他看到了什麼，就會有人知道。', 'ind'); S();
+    await me('……誰會知道？'); S();
+    await say('先出來。出來以後再說。', 'ind'); S();
     await say('舊館夜間安全系統即將啟動，請所有未授權人員離開管制區域。', 'cast'); S();
     sfx('error'); await sys(['通道門鎖著'], 1400); S();
-    flag('EV_N01_START'); running = true; paintGoal(); armIdle();
-    await sys(['任務：離開舊文獻館', `本節不限時　免費提示 ${FREE_HINTS} 次`], 2400); S();
+    await me('我記得九點整走進這間閱覽室。再來……就是現在。'); S();
+    await me('中間少了七分鐘。'); S();
+    meta.seenOpening = true; meta.d01 = S0.choices.D01; save();
+    startRun();
+    await sys(['任務：在保安巡到之前離開舊文獻館', `答錯 ${MAX_ALERT} 次會被保安發現　免費提示 ${FREE_HINTS} 次`], 2600); S();
+  }
+  function startRun() { flag('EV_N01_START'); running = true; paintGoal(); armIdle(); paintAlert();
   }
   async function ending() {
     running = false; ended = true; flag('N01_CLEAR');
@@ -974,6 +1036,10 @@ export function render(st, params, go) {
     const outStd = hm(stdNow());
     await fadeTo(() => { setScene('N01-BG-005', '台灣雨夜館外', []); $(el, '#slots').classList.add('hidden'); }); S();
     await sys([`離館時間　標準時 ${outStd}`], 2000); S();
+    // 蒙太奇的反轉：這些事都對得上那七分鐘，但都不是主角做的（劇本草稿，待確認）
+    await me('艾琳先簽了清場表。錄音裡是別人在吵架。終端的時間快了七分鐘。'); S();
+    await me('每一件事都對得上那七分鐘。'); S();
+    await me('可是沒有一件，是我做的。'); S();
     await say('找到你想找的東西了嗎？', 'indp'); S();
     await me('我連自己想找什麼都不知道。'); S();
     await say('那你今天至少學會了一件事：不知道自己正在找什麼，比誤以為自己已經找到答案要好。', 'indp'); S();
@@ -1004,13 +1070,20 @@ export function render(st, params, go) {
   async function flow() {
     paintSlots(); paintTimer(); bgm('n00');
     if (params && params.retry) F.RETRY = true;
-    if (!F.EV_N01_START) {
+    if (!F.EV_N01_START && params && params.retry && meta.seenOpening) {
+      // 重新挑戰：略過序幕與開場電話，直接開始
+      setScene(litKey(), '閱覽室', A_HS()); sceneAState();
+      if (meta.d01 != null) { S0.choices.D01 = meta.d01; S0.trust = [1, -1, 0][meta.d01]; }
+      await wait(300); S(); $(el, '#black').classList.remove('on'); await wait(300); S();
+      startRun();
+      await sys(['重新挑戰：在保安巡到之前離開舊文獻館', `答錯 ${MAX_ALERT} 次會被保安發現`], 2400); S();
+    } else if (!F.EV_N01_START) {
       await prologue(); S();
       setScene(litKey(), '閱覽室', A_HS()); sceneAState();
       await wait(600); S(); $(el, '#black').classList.remove('on'); await wait(400); S();
       await opening(); S();
     } else {
-      $(el, '#black').classList.remove('on'); running = true; armIdle();
+      $(el, '#black').classList.remove('on'); running = true; armIdle(); paintAlert();
     }
     let where = S0.scene || 'A';
     const RUN = { A: sceneA, B: sceneB, C: sceneC, D: sceneD };

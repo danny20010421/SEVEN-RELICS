@@ -1010,3 +1010,16 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 .n1-evc.sel { color: #fff1c9; box-shadow: inset 0 0 0 2px #ffc970; background: rgba(255, 190, 90, 0.14); }
 .n1-p05s .back2 { top: 186px; left: auto; right: 18px; height: 24px; display: flex; align-items: center; font-size: 13px; opacity: 0.85; }
 .n1-p05s .msg { right: 110px; }
+/* N01 保安警戒：取代倒數的位置；三格手電筒光，答錯一次亮一格 */
+.n1-alert { height: 48px; padding: 0 16px; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(10, 6, 7, 0.82); border: 1px solid var(--line-dim); font-size: 16px; color: var(--text-2); }
+.n1-alert span { line-height: 48px; margin-right: 4px; }
+.n1-alert i { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255, 210, 140, 0.45); }
+.n1-alert i.on { background: radial-gradient(circle, #fff3c8 0, #ffc970 45%, rgba(255, 170, 60, 0.2) 100%); box-shadow: 0 0 10px rgba(255, 190, 90, 0.9); }
+/* 手電筒光掃過畫面 */
+.n01.n1-sweep::after { content: ''; position: absolute; inset: 0; z-index: 30; pointer-events: none; background: radial-gradient(ellipse 220px 160px at 50% 50%, rgba(255, 236, 190, 0.28), transparent 70%); animation: n1sweep 1.6s ease-in-out; }
+@keyframes n1sweep { from { background-position: -640px 0; } to { background-position: 640px 0; } }
+/* 借閱卡、信：塗掉的名字與潦草署名 */
+.n1-ink .ink-out { position: relative; }
+.n1-ink .blot { display: inline-block; width: 64px; height: 18px; margin-left: 2px; vertical-align: -3px; background: rgba(20, 14, 10, 0.88); border-radius: 40% 60% 50% 45%; filter: blur(0.6px); }
+.n1-ink .sig { text-align: right; margin-top: 16px; }
+.n1-ink .scrawl { font-size: 13px; opacity: 0.6; margin-left: 8px; }
