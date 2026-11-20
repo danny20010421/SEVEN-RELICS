@@ -76,11 +76,18 @@ const SFX = {
   bell2() { tone(1760, 0.9, 'sine', 0.12); tone(3520, 0.5, 'sine', 0.04); tone(1760, 0.9, 'sine', 0.12, 0.32); tone(3520, 0.5, 'sine', 0.04, 0.32); },
   hum() { tone(98, 1.4, 'sawtooth', 0.06); tone(196, 1.4, 'triangle', 0.04); noise(1.2, 'lowpass', 300, 0.12); },
   snap() { noise(0.05, 'highpass', 2500, 0.35); tone(420, 0.06, 'square', 0.08); },
+  step() { for (const d of [0, 0.45, 0.9]) noise(0.12, 'lowpass', 220, 0.4, d, 2); },
   card() { noise(0.18, 'bandpass', 2200, 0.2, 0, 2); tone(300, 0.08, 'triangle', 0.08, 0.15); },
   marquee() { tone(55, 0.6, 'sawtooth', 0.05); noise(0.5, 'highpass', 6000, 0.05); },
 };
+// 有實際錄音檔的音效（找不到檔案時退回合成音）
+const SFX_FILES = { step: 'assets/audio/N01-SFX-STEP.mp3' };
 export function sfx(name) {
-  if (!ensure() || !SFX[name]) return;
+  if (!ensure()) return;
+  if (SFX_FILES[name]) {
+    try { const a = new Audio(SFX_FILES[name]); a.volume = Math.max(0, Math.min(1, get().settings.sfx)); a.play().catch(() => SFX[name] && SFX[name]()); return; } catch (e) { /* 退回合成音 */ }
+  }
+  if (!SFX[name]) return;
   try { SFX[name](); } catch (e) { /* 播放失敗不影響遊戲 */ }
 }
 

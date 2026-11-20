@@ -48,7 +48,7 @@ export function stages(st, p, go) {
   </div>
   <div class="nodes">${Array.from({ length: 9 }, (_, i) => `<span class="node${i === 0 && d.records.includes('n01') ? ' done' : ''}">${i === 0 ? (d.records.includes('n01') ? ICON.check : '1') : ICON.lock}</span>${i < 8 ? '<span class="link-line"></span>' : ''}`).join('')}</div>
   <div class="row" style="padding:24px;justify-content:space-between;gap:24px;background:#1a1213;border:1px solid #2f1e1d">
-    <div class="col" style="gap:8px"><h3 class="serif" style="margin:0;font-size:24px;line-height:32px">第一節　不存在的第七分鐘</h3><span style="font-size:16px;line-height:24px;color:var(--text-2)">${n00Done ? '限時 30 分鐘，本節挑戰次數不限。' : '先完成序章後開放。'}</span></div>
+    <div class="col" style="gap:8px"><h3 class="serif" style="margin:0;font-size:24px;line-height:32px">第一節　不存在的第七分鐘</h3><span style="font-size:16px;line-height:24px;color:var(--text-2)">${n00Done ? '不限時挑戰，提供 2 次免費提示。' : '先完成序章後開放。'}</span></div>
     <button type="button" class="btn" id="playN01" style="width:208px"${n00Done ? '' : ' disabled'}>${d.n01 && d.n01.st ? '繼續調查' : d.records.includes('n01') ? '再次挑戰' : '開始挑戰'}</button>
   </div>
 </div>`;

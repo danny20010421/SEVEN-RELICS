@@ -990,3 +990,58 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 .n1-winoff { position: absolute; z-index: 2; background: rgba(8, 10, 14, .85); opacity: 0; pointer-events: none; transition: opacity 80ms linear; }
 .n1-winoff.on { opacity: 1; }
 .n1-hc { font-size: 14px; color: var(--text-2); }
+/* N01 修正：抽屜標籤卡置中、測試表套印在表格裡、控制台螢幕排版 */
+.n1-tag.box { width: 93px; height: 46px; display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 14px; letter-spacing: 0.02em; }
+.n01 .n1-paper .n1-ink.grid { inset: 0; mix-blend-mode: multiply; }
+.n1-gtitle { position: absolute; left: 6%; right: 6%; display: flex; align-items: center; font-family: var(--serif); font-size: 22px; font-weight: 700; color: rgba(30, 22, 16, 0.92); }
+.n1-gcell { position: absolute; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 4px; text-align: center; font-size: 15px; line-height: 18px; color: rgba(30, 22, 16, 0.92); }
+.n1-gcell.head { font-size: 14px; color: rgba(60, 44, 30, 0.8); }
+.n1-gcell.torn { font-style: italic; color: rgba(60, 44, 30, 0.7); }
+.n1-p05s { position: absolute; inset: 0; padding: 12px 18px; }
+.n1-p05s .n1-crt-t { left: 18px; right: 18px; white-space: normal; }
+.n1-p05s .hd { top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; line-height: 18px; }
+.n1-p05s .hd span { font-size: 11px; opacity: 0.75; }
+.n1-p05s .q { top: 34px; width: auto; font-size: 16px; line-height: 22px; }
+.n1-p05s .opt { height: 28px; display: flex; align-items: center; font-size: 15px; line-height: 20px; white-space: nowrap; }
+.n1-p05s .msg { top: 186px; height: 24px; display: flex; align-items: center; font-size: 13px; line-height: 18px; white-space: nowrap; }
+.n1-p05s .q.one { font-size: 15px; white-space: nowrap; }
+.n1-p05s .ask { top: 58px; height: 20px; font-size: 13px; line-height: 18px; opacity: 0.85; }
+.n1-evc { position: absolute; z-index: 1; box-sizing: border-box; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 6px; font-family: 'Consolas', 'Menlo', var(--serif); font-size: 13px; line-height: 16px; color: #ffc970; text-shadow: 0 0 6px rgba(255, 180, 80, 0.85); box-shadow: inset 0 0 0 1px rgba(255, 201, 112, 0.4); border-radius: 4px; }
+.n1-evc.sel { color: #fff1c9; box-shadow: inset 0 0 0 2px #ffc970; background: rgba(255, 190, 90, 0.14); }
+.n1-p05s .back2 { top: 186px; left: auto; right: 18px; height: 24px; display: flex; align-items: center; font-size: 13px; opacity: 0.85; }
+.n1-p05s .msg { right: 110px; }
+/* N01 保安警戒：取代倒數的位置；三格手電筒光，答錯一次亮一格 */
+.n1-alert { height: 48px; padding: 0 16px; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(10, 6, 7, 0.82); border: 1px solid var(--line-dim); font-size: 16px; color: var(--text-2); }
+.n1-alert span { line-height: 48px; margin-right: 4px; }
+.n1-alert i { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255, 210, 140, 0.45); }
+.n1-alert i.on { background: radial-gradient(circle, #fff3c8 0, #ffc970 45%, rgba(255, 170, 60, 0.2) 100%); box-shadow: 0 0 10px rgba(255, 190, 90, 0.9); }
+/* 手電筒光掃過畫面 */
+.n01.n1-sweep::after { content: ''; position: absolute; inset: 0; z-index: 30; pointer-events: none; background: radial-gradient(ellipse 220px 160px at 50% 50%, rgba(255, 236, 190, 0.28), transparent 70%); animation: n1sweep 1.6s ease-in-out; }
+@keyframes n1sweep { from { background-position: -640px 0; } to { background-position: 640px 0; } }
+/* 借閱卡、信：塗掉的名字與潦草署名 */
+.n1-ink .ink-out { position: relative; }
+.n1-ink .blot { display: inline-block; width: 64px; height: 18px; margin-left: 2px; vertical-align: -3px; background: rgba(20, 14, 10, 0.88); border-radius: 40% 60% 50% 45%; filter: blur(0.6px); }
+.n1-ink .sig { text-align: right; margin-top: 16px; }
+.n1-ink .scrawl { font-size: 13px; opacity: 0.6; margin-left: 8px; }
+/* 長老名字：模糊成馬賽克，不留可讀筆畫 */
+.n1-ink .mosaic { display: inline-flex; gap: 2px; vertical-align: -4px; filter: blur(1.2px); }
+.n1-ink .mosaic i { width: 18px; height: 20px; background: repeating-conic-gradient(rgba(30, 22, 16, 0.85) 0 25%, rgba(30, 22, 16, 0.35) 0 50%) 0 0 / 6px 6px; border-radius: 2px; }
+.n1-ink .sig .mosaic { transform: rotate(-4deg); }
+.n1-ink td.hand { white-space: nowrap; }
+/* 借閱卡：馬賽克名字＋旁邊事後補寫的「是他。」 */
+.n1-gcell.name { gap: 16px; }
+.n1-gcell .aside { font-family: 'G01Hand', var(--serif); font-size: 20px; color: rgba(40, 24, 16, 0.9); transform: rotate(-6deg) translateY(-4px); white-space: nowrap; }
+.n1-gcell.torn { font-style: italic; color: rgba(60, 44, 30, 0.7); }
+/* 信紙：字寫在橫線上 */
+.n1-lline { position: absolute; left: 8.8%; right: 8.8%; display: flex; align-items: flex-end; font-family: "G01Hand", var(--serif); font-size: 18px; line-height: 20px; color: rgba(30, 22, 16, 0.9); white-space: nowrap; }
+.n1-lline.sig { justify-content: flex-end; padding-right: 6%; }
+.n1-gcell .sig { font-family: 'G01Hand', var(--serif); font-size: 20px; margin-left: 8px; }
+/* 序幕黑場：HUD、道具欄先隱藏 */
+.n01.n1-cinema #hud, .n01.n1-cinema #slots, .n01.n1-cinema .lvl-goal { visibility: hidden; }
+/* 結尾三選一：深色底＋米白字，壓在亮的背景上也讀得到 */
+.n1-choice .btn-line { background: rgba(10, 6, 6, 0.82); color: #f3e6cc; border-color: rgba(243, 230, 204, 0.55); }
+.n1-choice .btn-line:hover { background: rgba(40, 18, 18, 0.9); }
+/* 手機上加大、加亮的刻字 */
+.n1-stamp.plate { font-size: 17px; color: rgba(14, 10, 8, 0.95); text-shadow: 0 1px 0 rgba(255, 248, 228, 0.7); }
+.n1-stamp.tape.sm { font-size: 20px; color: rgba(16, 12, 8, 0.95); text-shadow: 0 1px 0 rgba(255, 240, 210, 0.45); }
+.n1-book > img { width: 640px; height: auto; object-fit: contain; box-shadow: none; }
