@@ -80,8 +80,14 @@ const SFX = {
   card() { noise(0.18, 'bandpass', 2200, 0.2, 0, 2); tone(300, 0.08, 'triangle', 0.08, 0.15); },
   marquee() { tone(55, 0.6, 'sawtooth', 0.05); noise(0.5, 'highpass', 6000, 0.05); },
 };
+// 有實際錄音檔的音效（找不到檔案時退回合成音）
+const SFX_FILES = { step: 'assets/audio/N01-SFX-STEP.mp3' };
 export function sfx(name) {
-  if (!ensure() || !SFX[name]) return;
+  if (!ensure()) return;
+  if (SFX_FILES[name]) {
+    try { const a = new Audio(SFX_FILES[name]); a.volume = Math.max(0, Math.min(1, get().settings.sfx)); a.play().catch(() => SFX[name] && SFX[name]()); return; } catch (e) { /* 退回合成音 */ }
+  }
+  if (!SFX[name]) return;
   try { SFX[name](); } catch (e) { /* 播放失敗不影響遊戲 */ }
 }
 

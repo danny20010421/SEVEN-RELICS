@@ -1028,3 +1028,20 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 .n1-ink .mosaic i { width: 18px; height: 20px; background: repeating-conic-gradient(rgba(30, 22, 16, 0.85) 0 25%, rgba(30, 22, 16, 0.35) 0 50%) 0 0 / 6px 6px; border-radius: 2px; }
 .n1-ink .sig .mosaic { transform: rotate(-4deg); }
 .n1-ink td.hand { white-space: nowrap; }
+/* 借閱卡：馬賽克名字＋旁邊事後補寫的「是他。」 */
+.n1-gcell.name { gap: 16px; }
+.n1-gcell .aside { font-family: 'G01Hand', var(--serif); font-size: 20px; color: rgba(40, 24, 16, 0.9); transform: rotate(-6deg) translateY(-4px); white-space: nowrap; }
+.n1-gcell.torn { font-style: italic; color: rgba(60, 44, 30, 0.7); }
+/* 信紙：字寫在橫線上 */
+.n1-lline { position: absolute; left: 8.8%; right: 8.8%; display: flex; align-items: flex-end; font-family: "G01Hand", var(--serif); font-size: 18px; line-height: 20px; color: rgba(30, 22, 16, 0.9); white-space: nowrap; }
+.n1-lline.sig { justify-content: flex-end; padding-right: 6%; }
+.n1-gcell .sig { font-family: 'G01Hand', var(--serif); font-size: 20px; margin-left: 8px; }
+/* 序幕黑場：HUD、道具欄先隱藏 */
+.n01.n1-cinema #hud, .n01.n1-cinema #slots, .n01.n1-cinema .lvl-goal { visibility: hidden; }
+/* 結尾三選一：深色底＋米白字，壓在亮的背景上也讀得到 */
+.n1-choice .btn-line { background: rgba(10, 6, 6, 0.82); color: #f3e6cc; border-color: rgba(243, 230, 204, 0.55); }
+.n1-choice .btn-line:hover { background: rgba(40, 18, 18, 0.9); }
+/* 手機上加大、加亮的刻字 */
+.n1-stamp.plate { font-size: 17px; color: rgba(14, 10, 8, 0.95); text-shadow: 0 1px 0 rgba(255, 248, 228, 0.7); }
+.n1-stamp.tape.sm { font-size: 20px; color: rgba(16, 12, 8, 0.95); text-shadow: 0 1px 0 rgba(255, 240, 210, 0.45); }
+.n1-book > img { width: 640px; height: auto; object-fit: contain; box-shadow: none; }

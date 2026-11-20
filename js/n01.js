@@ -12,7 +12,7 @@ const MAX_ALERT = 3; // 答錯 3 次被保安發現 → 失敗、退出、從頭
 // 長老伏筆：名字一律模糊成馬賽克，不給任何可讀的字（主角失憶、閱讀能力下降；身分之後再設定）
 const ELDER_MOSAIC = '<span class="mosaic" aria-label="模糊不清的名字"><i></i><i></i><i></i></span>';
 // 新文件的紙張：美術補圖前先借用現有空白紙（DOC-072 借閱卡、DOC-073 信紙到位後換掉）
-const DOC_ART = { borrow: 'N01-DOC-068', letter: 'N01-DOC-066' };
+const DOC_ART = { borrow: 'N01-DOC-072', letter: 'N01-DOC-073' };
 const WAIT = { P01: 4, P02: 4, P03: 3, P04: 3, P05: 4 }; // 答錯後的等待秒數（縮短）
 const STD0 = 21 * 60 + 7; // 主角醒來：標準時 21:07
 const OFFSET = 7; // 保安終端快 7 分鐘
@@ -30,20 +30,33 @@ const ICO = {
   file: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d8b594" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM15 3v4h4M9 12h6M9 16h6"></path></svg>',
   log: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d8b594" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4zM8 9h8M8 12h5"></path></svg>',
 };
-const RATIO = { 'N01-DOC-072': 1.6, 'N01-DOC-073': 0.74, 'N01-DOC-061': 0.756, 'N01-DOC-062-front': 1.013, 'N01-DOC-062-back': 1.002, 'N01-DOC-063': 0.777, 'N01-DOC-064': 0.768, 'N01-DOC-065': 0.807, 'N01-DOC-066': 0.741, 'N01-DOC-067': 1.831, 'N01-DOC-068': 1.385, 'N01-DOC-069': 0.755, 'N01-DOC-070': 0.979, 'N01-DOC-071': 0.817, 'N01-PROP-039': 0.5 };
+const RATIO = { 'N01-DOC-072': 1.6, 'N01-DOC-073': 0.7385, 'N01-DOC-061': 0.756, 'N01-DOC-062-front': 1.013, 'N01-DOC-062-back': 1.002, 'N01-DOC-063': 0.777, 'N01-DOC-064': 0.768, 'N01-DOC-065': 0.807, 'N01-DOC-066': 0.741, 'N01-DOC-067': 1.831, 'N01-DOC-068': 1.385, 'N01-DOC-069': 0.755, 'N01-DOC-070': 0.979, 'N01-DOC-071': 0.817, 'N01-PROP-039': 0.5 };
 // DOC-065 印好的表格：欄線 4.5／27.6／49.8／72.2／95.3%，列線 15.5／27.3／35.9／44.1％…；字放進格子裡
-const G065 = { x: [4.5, 27.6, 49.8, 72.2, 95.3], y: [15.5, 27.3, 35.9, 44.1, 52.1, 60.3] };
-function gridDoc(title, rows) {
-  const g = G065;
-  return `<div class="n1-gtitle" style="top:4%;height:${g.y[0] - 4}%">${title}</div>` + rows.map((r, ri) => {
+// 印好表格的紙：欄線 x%、列線 y%（量自美術；DOC-072 依 Grok 的 docs/N01-doc-geometry.json）
+const GRID = {
+  '065': { x: [4.5, 27.6, 49.8, 72.2, 95.3], y: [15.5, 27.3, 35.9, 44.1, 52.1, 60.3], title: [4, 15.5] },
+  '069': { x: [5.5, 83.7, 94.6], y: [22.4, 29.0, 36.2, 42.9, 50.0], title: [11.7, 19.4] },
+  '072': { x: [4.34, 24.36, 75.72, 95.58], y: [12.38, 22.83, 36.03, 48.09, 60.61, 73.09, 85.62], title: [2.4, 12.38] },
+};
+// rows[i] 對應第 i 個列格；cell＝'文字' 或 ['文字', 跨欄數, 'class']；文字在格內上下左右置中
+function gridDoc(key, title, rows, headRow = true) {
+  const g = GRID[key];
+  return `<div class="n1-gtitle" style="top:${g.title[0]}%;height:${g.title[1] - g.title[0]}%">${title}</div>` + rows.map((r, ri) => {
     let c = 0;
-    return r.map(cell => {
-      const [t, span] = Array.isArray(cell) ? cell : [cell, 1];
+    return (r || []).map(cell => {
+      const [t, span = 1, cls = ''] = Array.isArray(cell) ? cell : [cell];
       const x0 = g.x[c], x1 = g.x[c + span]; c += span;
-      return `<div class="n1-gcell${ri === 0 ? ' head' : ''}${span > 1 ? ' torn' : ''}" style="left:${x0}%;width:${x1 - x0}%;top:${g.y[ri]}%;height:${g.y[ri + 1] - g.y[ri]}%">${t}</div>`;
+      return t === '' ? '' : `<div class="n1-gcell${headRow && ri === 0 ? ' head' : ''}${cls ? ' ' + cls : ''}" style="left:${x0}%;width:${x1 - x0}%;top:${g.y[ri]}%;height:${g.y[ri + 1] - g.y[ri]}%">${t}</div>`;
     }).join('');
   }).join('');
 }
+// 信紙 DOC-073：字寫在橫線上（線 y% ＝ px÷20），跳過對折折痕那一行
+const L073 = [15.25, 18.94, 22.56, 26.18, 29.78, 33.37, 37.01, 40.65, 44.28, 47.78, 51.85, 55.5, 59.15, 62.69, 66.21, 69.73];
+function letterDoc(lines) {
+  return lines.map(([li, t, cls = '']) => `<div class="n1-lline${cls ? ' ' + cls : ''}" style="top:${L073[li] - 3.2}%;height:3.2%">${t}</div>`).join('');
+}
+// 撕掉的紙：從 y% 以下撕去，鋸齒邊
+const tornClip = y => { const pts = []; for (let i = 0; i <= 20; i++) pts.push(`${i * 5}% ${y + (i % 2 ? 1.2 : -0.6) + ((i * 37) % 5) * 0.3}%`); return `polygon(0 0, 100% 0, ${pts.reverse().join(', ')})`; };
 const hm = m => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 
 // ---------- 文件（真正的 UI 文字；正式版紙張底圖用文件 ID） ----------
@@ -52,16 +65,16 @@ function docBody(id, ctx) {
   switch (id) {
     case 'form': return { title: '資料申請單', asset: 'N01-DOC-061', html: `<h4>灰橋舊文獻館　資料申請單</h4><table><tr><th>借閱編號</th><td><b>GB-17-042</b></td></tr><tr><th>申請人</th><td>${name}</td></tr><tr><th>登記時間（標準時）</th><td>20:55</td></tr><tr><th>簽名</th><td class="sig">${name}</td></tr></table>` };
     case 'noteF': return { title: '紙條（正面）', asset: 'N01-DOC-062-front', html: '<p class="hand">不要讓別人替你描述，你當時看見了什麼。</p><p class="hand">尤其不要急著相信，你自己寫下的版本。</p>' };
-    case 'borrow': return { title: '借閱紀錄卡', asset: DOC_ART.borrow, html: `<h4>借閱紀錄卡　卷宗 1204-M-03</h4><table><tr><th>日期</th><th>借閱人</th><th>歸還</th></tr><tr><td>2021.04.12</td><td>館務組</td><td>已還</td></tr><tr><td>2024.12.04</td><td>維修課</td><td>已還</td></tr><tr><td>——</td><td>${ELDER_MOSAIC}</td><td class="hand">是他。</td></tr></table>` };
-    case 'letter': return { title: '夾在書裡的信', asset: DOC_ART.letter, html: `<p class="hand">館長：</p><p class="hand">第三櫃的捐贈文獻，照舊不對外開放。借閱紀錄由你親自保管，不必經過館務組。</p><p class="hand">若有人問起，就說那批資料早已銷毀。</p><p class="hand sig">${ELDER_MOSAIC}</p>` };
+    case 'borrow': return { title: '借閱紀錄卡', asset: DOC_ART.borrow, grid: true, html: gridDoc('072', '借閱紀錄卡　卷宗 1204-M-03', [['日期', '借閱人', '歸還'], ['2021.04.12', '館務組', '已還'], ['2024.12.04', '維修課', '已還'], ['——', [`${ELDER_MOSAIC}<span class="hand aside">是他。</span>`, 1, 'name'], '']]) };
+    case 'letter': return { title: '夾在書裡的信', asset: DOC_ART.letter, grid: true, h: 632, html: letterDoc([[0, '館長：'], [1, '第三櫃的捐贈文獻，照舊不對外開放。'], [2, '借閱紀錄由你親自保管，'], [3, '不必經過館務組。'], [5, '若有人問起，'], [6, '就說那批資料早已銷毀。'], [13, ELDER_MOSAIC, 'sig']]) };
     case 'noteB': return { title: '紙條（背面）', asset: 'N01-DOC-062-back', html: '<p class="press">GB-17-042</p>' };
     case 'visit': return { title: '訪客出入紀錄', asset: 'N01-DOC-063', html: '<h4>訪客出入紀錄</h4><div class="base">時間：標準時（獨立讀卡器）</div><table><tr><th>20:43</th><td>測試卡 T-07 讀卡（維修）</td></tr><tr><th>20:48</th><td>E. Ward 入館</td></tr><tr><th>20:55</th><td>訪客登記</td></tr><tr><th>21:02</th><td>安全測試啟動</td></tr><tr><th>21:06</th><td>清場簽名</td></tr></table>' };
     case 'termlog': return { title: '夜間設備終端紀錄', asset: 'N01-DOC-064', html: `<h4>保安終端　夜間設備紀錄</h4><div class="base">時間：終端時間（尚未校時）</div><table><tr><th>21:14</th><td>備用電源切換／監控訊號中斷</td></tr></table>${ctx.p02 ? `<p class="calc">校正後：終端 21:14 ＝ 標準時 ${hm(21 * 60 + 14 - OFFSET)}</p>` : ''}` };
-    case 'test': return { title: '讀卡器測試表', asset: 'N01-DOC-065', grid: true, html: gridDoc('讀卡器維修測試', [['測試卡', '記錄來源', '時間', '備註'], ['T-07', '保安終端', '20:50', ''], ['T-07', '獨立讀卡器', ['（此處以下被撕去）', 2]]]) };
+    case 'test': return { title: '讀卡器測試表', asset: 'N01-DOC-065', grid: true, clip: tornClip(46), html: gridDoc('065', '讀卡器維修測試', [['測試卡', '記錄來源', '時間', '備註'], ['T-07', '保安終端', '20:50', ''], ['T-07', '獨立讀卡器', ['（撕去）', 1, 'torn'], '']]) };
     case 'notice': return { title: '終端維護公告', asset: 'N01-DOC-066', html: '<h4>終端維護公告</h4><p>保安終端校時中，已停止自動同步。</p>' };
     case 'label': return { title: '維修標籤', asset: 'N01-DOC-067', html: '<h4>維修標籤</h4><p class="hand big">12/4　M　03</p><p class="hand">（春季例行）</p>' };
     case 'rule': return { title: '文件命名規則', asset: 'N01-DOC-068', html: '<h4>文件命名規則</h4><p class="big">DDMM－類別－序號</p>' };
-    case 'clear': return { title: '人工清場簽名表', asset: 'N01-DOC-069', html: '<h4>人工清場簽名表</h4><table><tr><th>時間（標準時）</th><td>21:06</td></tr><tr><th>簽名</th><td class="sig ink2">E. Ward</td></tr><tr><th>清場</th><td>無其他人員</td></tr></table>' };
+    case 'clear': return { title: '人工清場簽名表', asset: 'N01-DOC-069', grid: true, html: gridDoc('069', '人工清場簽名表', [['時間（標準時）　21:06', '✓'], ['清場結果　無其他人員', '✓'], [['簽名　<span class="sig ink2">E. Ward</span>', 1], '']], false) };
     case 'order': return { title: '設備操作順序便條', asset: 'N01-DOC-070', html: '<h4>操作順序</h4><p class="hand">① 按鈴通知櫃台</p><p class="hand">② 開機掃描</p><p class="hand">③ 收片入盒</p>' };
     case 'cardback': return { title: '訪客卡（背面）', asset: 'N01-PROP-039', html: '<p class="hand" style="margin:318px -40px 0;text-align:center;font-size:19px;line-height:28px">20:55 發卡<br>——櫃台</p>' };
     case 'loadsheet': return { title: '迴路負載表', asset: 'N01-DOC-066', html: '<h4>備用電源　迴路負載表</h4><table><tr><th>A 照明</th><td>2A</td></tr><tr><th>B 監控</th><td class="smudge">▒A</td></tr><tr><th>C 門禁</th><td>3A</td></tr><tr><th>額定</th><td>6A</td></tr></table><p>※ 讀卡器指示燈接 A 迴路</p><p>※ 過載跳脫後冷卻 20 秒方可重新投入</p>' };
@@ -178,7 +191,7 @@ export function render(st, params, go) {
     cu.innerHTML = inner;
     const b = html(`<button type="button" class="btn-line g1-cuback">${ICON.back}<span>返回</span></button>`);
     b.addEventListener('click', ev => { ev.stopPropagation(); sfx('tap'); emit({ type: 'hs', id: 'back', item: null }); });
-    cu.appendChild(b); setHs(list, cu);
+    cu.appendChild(b); if (inner.includes('BG_DETAIL-009')) b.style.top = '552px'; setHs(list, cu);
     cu.style.transformOrigin = `${lastOrigin[0]}px ${lastOrigin[1]}px`;
     cu.classList.remove('hidden', 'out'); hsLayer.classList.add('hidden'); $(el, '#slots').classList.add('cu-hide');
     if (!wasOpen) { cu.classList.remove('in'); void cu.offsetWidth; cu.classList.add('in'); }
@@ -238,8 +251,8 @@ export function render(st, params, go) {
     return new Promise(res => {
       const doc = docBody(id, { pname, p02: !!F.P02_SOLVED });
       const r = RATIO[doc.asset] || 0.78;
-      const h = r < 1.2 ? 576 : Math.round(800 / r), w = Math.round(h * r);
-      const m = html(`<div class="g1-docback n1-docback" role="dialog" aria-label="${doc.title}"><div class="n1-paper${r >= 1.2 ? ' wide' : ''}" style="left:${Math.round(572 - w / 2)}px;top:${Math.round(376 - h / 2)}px;width:${w}px;height:${h}px"><img src="${IMG(doc.asset + '.webp')}" alt="" onerror="this.remove()"><div class="n1-ink${doc.grid ? ' grid' : ''}">${doc.html}</div></div><div class="g1-dochint">點旁邊收起</div></div>`);
+      const h = doc.h || (r < 1.2 ? 576 : Math.round(800 / r)), w = Math.round(h * r);
+      const m = html(`<div class="g1-docback n1-docback" role="dialog" aria-label="${doc.title}"><div class="n1-paper${r >= 1.2 ? ' wide' : ''}" style="left:${Math.round(572 - w / 2)}px;top:${Math.round(376 - h / 2)}px;width:${w}px;height:${h}px${doc.clip ? `;clip-path:${doc.clip};box-shadow:none` : ''}"><img src="${IMG(doc.asset + '.webp')}" alt="" onerror="this.remove()"><div class="n1-ink${doc.grid ? ' grid' : ''}">${doc.html}</div></div><div class="g1-dochint">點旁邊收起</div></div>`);
       m.addEventListener('click', e => { if (e.target.closest('.n1-paper')) return; sfx('tap'); m.remove(); res(); });
       el.appendChild(m);
     });
@@ -454,7 +467,12 @@ export function render(st, params, go) {
       if (id === 'lamp') { if (!F.P01_SOLVED) return void sys(['照明：未供電'], 1400); await inspect('lamp'); return; }
       if (id === 'i-shelf') { await inspect('shelf'); return; }
       if (id === 'book') { // 隱藏伏筆：不進提示、不進目標
-        if (!F.LETTER_FOUND) { flag('LETTER_FOUND'); sfx('pick'); await sys(['一本舊館藏目錄，書頁間夾著一封信'], 1600); S(); }
+        if (!F.LETTER_FOUND) {
+          flag('LETTER_FOUND'); sfx('pick');
+          const v = html(`<div class="g1-docback n1-drawer n1-book" role="dialog" aria-label="舊館藏目錄"><img src="${IMG('N01-PROP-074.png')}" alt="打開的舊館藏目錄，書頁間夾著一封信"><div class="g1-dochint">點信紙抽出來</div></div>`);
+          el.appendChild(v);
+          await new Promise(r => v.addEventListener('click', () => { sfx('card'); v.remove(); r(); })); S();
+        }
         await readDoc('letter'); S();
         if (S0.read.includes('borrow') && !F.LETTER_LINK) { flag('LETTER_LINK'); await me('這個簽名的筆畫，跟借閱卡上那個名字很像。'); S(); }
         return;
@@ -483,8 +501,9 @@ export function render(st, params, go) {
   // P01：照明 2A、監控 5A（負載表上被弄髒）、門禁 3A，額定 6A。開場＝跳脫當下的拉桿位置 ↑↑↓（7A）
   // 電流錶（G03）：黑針＝目前負載（程式旋轉，蓋掉畫死的黑針），紅針＝上次跳脫 7A（畫死）
   async function p01() {
-    const sw = F.P01_SW || { A: true, B: true, C: false };
     if (F.P01_TRIP === undefined) F.P01_TRIP = true;
+    // 已跳脫＝三個拉桿都落下（物理上跳脫會把所有迴路切斷）
+    const sw = F.P01_TRIP ? { A: false, B: false, C: false } : (F.P01_SW || { A: true, B: true, C: false });
     const AMP = { A: 2, B: 5, C: 3 }, NAME = { A: '照明', B: '監控', C: '門禁' };
     const LX = { A: 373, B: 526, C: 678 }, MX = { A: 384, B: 535, C: 687.5 };
     const TBL = [['A 照明', '2A'], ['B 監控', ''], ['C 門禁', '3A'], ['額定', '6A']], TY = [251, 305, 360, 414];
@@ -982,6 +1001,7 @@ export function render(st, params, go) {
 
   // ---------- 序幕、開場、結尾 ----------
   async function prologue() {
+    el.classList.add('n1-cinema'); // 黑場序幕：隱藏 HUD 與道具欄
     cine.classList.remove('hidden');
     cine.innerHTML = `<div class="n1-shot" id="shot"></div>${meta.seenPrologue ? '<button type="button" class="btn-line n1-skip">略過</button>' : ''}`;
     $(el, '#black').classList.remove('on');
@@ -995,7 +1015,7 @@ export function render(st, params, go) {
     if (!skip) { await say('事情已經結束了。你不需要再記得。', 'mv'); S(); }
     if (!skip) { await me('那不是我記得的版本。', { pic: false }); S(); }
     meta.seenPrologue = true; save();
-    cine.classList.add('hidden'); cine.innerHTML = '';
+    cine.classList.add('hidden'); cine.innerHTML = ''; el.classList.remove('n1-cinema');
   }
   async function opening() {
     await say('謝天謝地，你終於接電話了。', 'ind'); S();
