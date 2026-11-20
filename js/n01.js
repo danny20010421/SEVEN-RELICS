@@ -7,7 +7,7 @@ import { html, $, IMG, ICON, wait, esc, modal, toast } from './ui.js';
 
 const TOTAL = 1800; // 劇情時鐘基準（第一節不限時，只用來推算標準時）
 const NO_LIMIT = true; // 第一章第一節：不限時挑戰
-const FREE_HINTS = 2; // 本節免費提示次數
+const FREE_HINTS = 2; // 每章第一節：每次挑戰各有 2 次免費提示（失敗重來會補回 2 次）
 const MAX_ALERT = 3; // 答錯 3 次被保安發現 → 失敗、退出、從頭開始
 // 長老伏筆：名字一律模糊成馬賽克，不給任何可讀的字（主角失憶、閱讀能力下降；身分之後再設定）
 const ELDER_MOSAIC = '<span class="mosaic" aria-label="模糊不清的名字"><i></i><i></i><i></i></span>';
