@@ -95,7 +95,7 @@
 ## 五、音效（Claude 用程式合成，之後可換成錄音檔）
 | 名稱 | 用在 |
 |---|---|
-| bike | 序：機車熄火 |
+| caroff | 序：車子熄火（資產 N02-SFX-CAROFF.mp3）；cardoor＝上車關門（N02-SFX-CARDOOR.mp3） |
 | dial | 謎題 1：轉盤每格喀噠 |
 | latch | 置物櫃、鐵門打開 |
 | beep / beepErr | 謎題 2：按鍵、密碼錯誤 |
