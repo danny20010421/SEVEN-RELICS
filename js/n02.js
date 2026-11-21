@@ -3,7 +3,7 @@
 // 美術：Grok 交件（docs/N02-grok-art.md），熱點與文件格線照 docs/N02-geometry.json 的舞台座標。
 import { get, save } from './store.js';
 import { sfx, bgm, applyVolume } from './audio.js';
-import { html, $, IMG, ICON, wait, esc, modal, toast, bustImg } from './ui.js';
+import { html, $, IMG, ICON, wait, esc, modal, toast, clearToast, bustImg } from './ui.js';
 
 const MAX_FAIL = 3; // 整理與解讀文件錯 3 次 → 達克收走文件離開 → 整節從頭
 const HINT_COST = 1; // 第二節起：每次提示 1 顆鑽石
@@ -236,6 +236,7 @@ export function render(st, params, go) {
   // ---------- 文件：依紙張原比例顯示 ----------
   const paperBox = r => { const h = r < 1.2 ? 600 : Math.round(820 / r), w = Math.round(h * r); return { w, h, x: Math.round(572 - w / 2), y: Math.round(380 - h / 2) }; };
   function readDoc(id) {
+    clearToast();
     if (id !== 'last' && !S0.read.includes(id)) { S0.read.push(id); persist(); }
     sfx('page');
     return new Promise(res => {
@@ -375,7 +376,7 @@ export function render(st, params, go) {
     meta.st = null; meta.cleared = false; save();
     const b = html(`<div class="n1-fail"><div class="col" style="align-items:center;gap:16px;z-index:2">
 <h2>達克失去了耐心</h2><p>文件被收走了。再來一次的話，會從整理文件開始。</p>
-<p>已保留：置物櫃、家門進度與已買提示</p>
+<p>已保留：置物櫃與家門進度、已買提示</p>
 <div class="row" style="gap:16px;height:56px"><button type="button" class="btn-line" data-a="out" style="width:208px">返回關卡選擇</button><button type="button" class="btn" data-a="retry" style="width:208px">繼續調查</button></div></div></div>`);
     b.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (!a) return; sfx('tap'); if (a.dataset.a === 'retry') go('n02', { retry: true }); else go('stages', { tab: 0 }); });
     el.appendChild(b);
@@ -401,8 +402,7 @@ export function render(st, params, go) {
       ['dark', '上車吧！教授叫我來帶你回去。'],
     ]);
     await tapTask('car', '點擊那台黑色轎車', [
-      { id: 'dark', x: 1055, y: 300, w: 150, h: 290, label: '靠在車旁的人' },
-      { id: 'car', x: 922, y: 375, w: 310, h: 185, label: '黑色轎車' },
+      { id: 'car', x: 922, y: 375, w: 133, h: 185, label: '黑色轎車' },
     ], { hint: '點右邊那台黑色轎車。', miss: '要上車，點右邊那台黑色轎車。' });
     await say('謝謝……', 'me'); S();
     if (d02 === 1) await say('那個保安……我總覺得他沒把話說完。', 'me', { think: true });
@@ -632,7 +632,7 @@ export function render(st, params, go) {
       if (F.C_RETRY) {
         await lines([
           ['dark', '（把文件扔回地上）這次放仔細點。'],
-          ['dark', '三次，文件我就帶走。'],
+          ['dark', '再錯三次，文件我就帶走。'],
         ]);
       } else {
         await lines([

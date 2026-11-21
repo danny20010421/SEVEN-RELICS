@@ -66,6 +66,12 @@ export function toast(text, ms = 2200) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => w.remove(), ms);
 }
+export function clearToast() {
+  clearTimeout(toastTimer);
+  const st = stage();
+  const w = st && st.querySelector('.toast-wrap');
+  if (w) w.remove();
+}
 
 // 對話框：buttons = [{ label, kind: 'btn'|'btn-line', value }]
 export function modal({ title = '', body = '', bodyHtml = '', scroll = '', buttons = [{ label: '確定', kind: 'btn', value: true }], closable = true, width = 560, validate = null }) {
