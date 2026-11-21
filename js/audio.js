@@ -19,9 +19,15 @@ function ensure() {
 export function unlock() {
   const c = ensure();
   if (c && c.state === 'suspended') c.resume();
-  // 瀏覽器擋下自動播放時，等第一次點擊再播
-  if (bgmEl && bgmEl.paused) bgmEl.play().catch(() => {});
+  // 瀏覽器擋下自動播放時，等下一次點擊再播
+  if (bgmEl && currentBgm && FILES[currentBgm] && bgmEl.paused) bgmEl.play().catch(() => {});
 }
+// 切回分頁或從背景回來時，繼續播放
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (bgmEl && !bgmEl.paused) bgmEl.pause(); return; }
+  if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+  if (bgmEl && currentBgm && FILES[currentBgm] && bgmEl.paused) bgmEl.play().catch(() => {});
+});
 export function applyVolume() {
   const s = get().settings;
   if (sfxBus) sfxBus.gain.value = s.sfx;
@@ -89,11 +95,20 @@ const SFX = {
   marquee() { tone(55, 0.6, 'sawtooth', 0.05); noise(0.5, 'highpass', 6000, 0.05); },
 };
 // 有實際錄音檔的音效（找不到檔案時退回合成音）
+// 用 Web Audio 播放（不另開 <audio>，避免 iOS 上把背景音樂擠掉）
 const SFX_FILES = { step: 'assets/audio/N01-SFX-STEP.mp3' };
+const sfxBuf = {};
+function loadSfx(name) {
+  if (sfxBuf[name] !== undefined) return;
+  sfxBuf[name] = null;
+  fetch(SFX_FILES[name]).then(r => r.arrayBuffer()).then(a => new Promise((ok, ng) => ctx.decodeAudioData(a, ok, ng))).then(b => { sfxBuf[name] = b; }).catch(() => { sfxBuf[name] = false; });
+}
 export function sfx(name) {
   if (!ensure()) return;
   if (SFX_FILES[name]) {
-    try { const a = new Audio(SFX_FILES[name]); a.volume = Math.max(0, Math.min(1, get().settings.sfx)); a.play().catch(() => SFX[name] && SFX[name]()); return; } catch (e) { /* 退回合成音 */ }
+    loadSfx(name);
+    const b = sfxBuf[name];
+    if (b) { try { const s = ctx.createBufferSource(); s.buffer = b; s.connect(sfxBus); s.start(); return; } catch (e) { /* 退回合成音 */ } }
   }
   if (!SFX[name]) return;
   try { SFX[name](); } catch (e) { /* 播放失敗不影響遊戲 */ }
@@ -132,13 +147,15 @@ const FILES = { login: 'assets/audio/bgm-login.mp3', n00: 'assets/audio/bgm-n00.
 export async function bgm(name) {
   if (!ensure() || currentBgm === name) return;
   currentBgm = name;
-  if (bgmEl) { bgmEl.pause(); bgmEl = null; }
+  if (bgmEl) bgmEl.pause();
   stopDrone();
   if (!name) return;
   const src = FILES[name];
   if (src) {
-    bgmEl = new Audio(src); bgmEl.loop = true; bgmEl.preload = 'auto'; applyVolume();
-    bgmEl.play().catch(() => { /* 等使用者第一次點擊後由 unlock() 播放 */ });
+    // 同一個 <audio> 換曲目：手機瀏覽器解鎖過一次就能一直用，不會每換一頁就被擋
+    if (!bgmEl) { bgmEl = new Audio(); bgmEl.loop = true; bgmEl.preload = 'auto'; bgmEl.setAttribute('playsinline', ''); }
+    bgmEl.src = src; bgmEl.currentTime = 0; applyVolume();
+    bgmEl.play().catch(() => { /* 等使用者下一次點擊後由 unlock() 播放 */ });
     return;
   }
   if (currentBgm === name) startDrone(name);
