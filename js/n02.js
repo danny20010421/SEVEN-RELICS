@@ -81,9 +81,12 @@ export function render(st, params, go) {
       log: (keep.log || []).slice(),
     };
   };
-  let S0 = params && params.retry && meta.keep && !meta.cleared
-    ? restoreFailKeep()
-    : (params && params.resume && meta.st ? meta.st : fresh());
+  const freshStart = !!(params && params.freshStart);
+  let S0 = (!freshStart && meta.st)
+    ? meta.st
+    : (!freshStart && meta.keep && !meta.cleared)
+      ? restoreFailKeep()
+      : fresh();
   const F = S0.flags;
   const n01c = ((d.n01 && d.n01.last && d.n01.last.choices) || {});
   const d01 = n01c.D01, d02 = n01c.D02;
@@ -400,7 +403,7 @@ export function render(st, params, go) {
         ['dark', '從見面就這樣……'],
         ['prof', '看來是真的。（停頓）'],
       ]);
-      if (d01 === 2) await say('他要我先相信他。現在站在面前，我還是不敢說自己完全信。', 'me', { think: true });
+      if (d01 === 2) await say('他要我先相信他。現在人就在眼前，我還是不敢說自己完全信。', 'me', { think: true });
       else if (d01 === 0) await say('他在電話裡說，從我能確認的事情開始。可是我能確認的，好像很少。', 'me', { think: true });
       else if (d01 === 1) await say('他在電話裡說，先處理眼前的問題。現在眼前的問題，變成回家。', 'me', { think: true });
       await lines([
@@ -646,7 +649,7 @@ export function render(st, params, go) {
   async function p4() {
     const Q = [
       { q: '這些文件的共同點是？', o: ['這些事件的發生地點都在亞洲一帶，沒有例外', '都以研究為名帶走，送往 90-S，從未公開', '這些全部都是各國政府主導的官方研究計畫', '這些全都和兩次世界大戰的軍備擴張直接有關'], a: 1 },
-      { q: '我之前在查什麼？', o: ['二十世紀各國科學界的造假與掩飾事件', '一群不斷改名、以研究為名收走樣本的人', '各地博物館失竊案串連起來的走私網路', '冷戰時期各國隱匿未報的核子試驗紀錄'], a: 1 },
+      { q: '我之前在查什麼？', o: ['二十世紀各國科學界一連串的造假與掩飾事件', '一群不斷改名、以研究為名收走樣本或器物的人', '各地博物館失竊案被一一串連起來的走私網路', '冷戰時期各國所隱匿未報的核子試驗完整紀錄'], a: 1 },
     ];
     const PIN = [[400, 218], [638, 218], [875, 218], [400, 418], [638, 418], [875, 418]];
     const KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -705,7 +708,7 @@ export function render(st, params, go) {
     ended = true;
     const dd = get();
     if (!dd.records.includes('n02')) dd.records.push('n02');
-    meta.st = null; meta.cleared = true; meta.keep = null; save();
+    meta.st = null; meta.cleared = true; meta.keep = null; meta.hintsKept = null; save();
     $(el, '#black').classList.add('on'); await wait(600); S();
     const card = html(`<div class="n1-fail"><div class="col" style="align-items:center;gap:16px;z-index:2"><div class="label">第一章・第二節</div><h2>留下來的人</h2><p>完</p><p class="n2-credit">背景音樂　HORROR — Mehul ShaRma</p><div class="row" style="height:56px"><button type="button" class="btn" data-a="out" style="width:208px">返回關卡選擇</button></div></div></div>`);
     el.appendChild(card);
@@ -716,7 +719,7 @@ export function render(st, params, go) {
   async function flow() {
     paintSlots(); paintGoal(); bgm('n02'); // 背景音樂：HORROR — Mehul ShaRma
     let where = S0.scene || 'S';
-    if (params && params.retry && meta.keep && !meta.cleared) where = 'C'; // 失敗重來：回到整理文件，保留 P1／P2
+    if (!freshStart && meta.keep && !meta.cleared && (F.C_RETRY || !meta.st)) where = 'C'; // 失敗後再進關：回到整理文件，保留 P1／P2
     else if (params && params.retry && meta.seenIntro) where = 'A'; // 手動重來：略過舊館外的劇情
     const RUN = { S: sceneS, A: sceneA, B: sceneB, C: sceneC };
     let first = true;
