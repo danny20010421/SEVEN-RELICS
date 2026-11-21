@@ -114,10 +114,10 @@ const BUST = {
   'N01-CHAR-014': [55, 470, 600, 1120],
   'N02-CHAR-015': [8, 640, 867, 1815],
 };
-const BUST_HEAD = 88, BUST_WAIST = 560; // 舞台上頭頂、腰的位置
+const BUST_HEAD = 88, BUST_WAIST = 560; // 舞台上頭頂、腰的位置（用全身圖，身體自然延伸到畫面底邊，不在腰部裁切）
 export function bustImg(file, side = 'left') {
   const [top, waist, w, h] = BUST[file] || [50, 420, 600, 1120];
   const k = (BUST_WAIST - BUST_HEAD) / (waist - top);
   const iw = Math.round(w * k), ih = Math.round(h * k), cx = side === 'left' ? 256 : 900;
-  return `<div class="bust ${side}" aria-hidden="true" style="height:${BUST_WAIST + 24}px"><img src="${IMG(file + '.webp')}" alt="" style="left:${Math.round(cx - iw / 2)}px;top:${Math.round(BUST_HEAD - top * k)}px;width:${iw}px;height:${ih}px"></div>`;
+  return `<div class="bust ${side}" aria-hidden="true" style="height:720px"><img src="${IMG(file + '.webp')}" alt="" style="left:${Math.round(cx - iw / 2)}px;top:${Math.round(BUST_HEAD - top * k)}px;width:${iw}px;height:${ih}px"></div>`;
 }
