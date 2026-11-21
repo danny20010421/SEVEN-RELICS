@@ -44,7 +44,7 @@ export function stages(st, p, go) {
       <div class="col" style="gap:4px"><div class="label">第一章</div><h2 class="serif" style="margin:0;font-size:32px;line-height:40px">******</h2></div>
       ${tries}
     </div>
-    <p style="margin:0;font-size:16px;line-height:24px;color:var(--muted)">九個小節環環相扣，須依序限時破解。每日可挑戰 2 次，額外次數需消耗鑽石；已破關的小節再次挑戰不扣次數，但不會再獲得獎勵。</p>
+    <p style="margin:0;font-size:16px;line-height:24px;color:var(--muted)">九個小節環環相扣，須依序挑戰，不限時。每日可挑戰 2 次，額外次數需消耗鑽石；已破關的小節再次挑戰不扣次數，但不會再獲得獎勵。</p>
   </div>
   <div class="nodes">${Array.from({ length: 9 }, (_, i) => { const id = 'n0' + (i + 1), done = d.records.includes(id), open = i === 0 || (i === 1 && d.records.includes('n01')); return `<${open ? 'button type="button" data-sec="' + i + '"' : 'span'} class="node${done ? ' done' : ''}${secSel === i ? ' cur' : ''}" aria-label="第${i + 1}節">${done ? ICON.check : open ? String(i + 1) : ICON.lock}</${open ? 'button' : 'span'}>${i < 8 ? '<span class="link-line"></span>' : ''}`; }).join('')}</div>
   ${secSel === 1 ? `<div class="row" style="padding:24px;justify-content:space-between;gap:24px;background:#1a1213;border:1px solid #2f1e1d">

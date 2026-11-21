@@ -44,14 +44,14 @@ const DOCS = {
   rule: { title: '牆上的分類規則', asset: 'N02-DOC-013', r: 0.992, html: T(8.06, 21, 83.67, 46, '依年代歸檔。<br>每十年一個資料夾。', 'hand big') + T(8.06, 70, 83.67, 18, '（下半張被撕掉了）', 'muted') },
   pass: { title: '研究室出入證', asset: 'N02-DOC-014', r: 1.609, html: T(4.75, 14.56, 90.5, 13.36, '研究室出入證', 'band') + T(34.9, 36.69, 61, 14.48, '姓名　{name}', 'fld') + T(34.9, 56.23, 61, 14.4, '研究室　因杜阿森研究室', 'fld') + T(34.9, 76.1, 61, 14.4, '首次登記　2023.09.18', 'fld') },
   bill: { title: '帳單信封', asset: 'N02-DOC-015', r: 1.815, html: T(5.25, 37.39, 48.75, 32.94, '<p>{name}　收</p><p>三樓　37 號</p>', 'fld para') + T(5.25, 12, 60, 14, '水費繳費通知', 'muted l') },
-  note1: { title: '筆記本・第一頁', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[2, '家門：門牌，接上我第一次'], [3, '進研究室的那天（月日）。'], [5, '歸檔：所有年份先換成西元，'], [6, '再分。']], 14.4, 82.3) },
+  note1: { title: '筆記本・第一頁', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[2, '家門：門牌，接上我第一次'], [3, '進研究室的那天（月日）。'], [5, '歸檔：所有年份先換成西元，'], [6, '再分。已經是西元的，不用換。']], 14.4, 82.3) },
   conv: { title: '紀年換算對照表', asset: 'N02-DOC-022', r: 0.7495, html: T(3.74, 4.65, 92.39, 18.65, '紀年換算對照表', 'title') + grid([3.74, 32.56, 96.13], [23.3, 31.3, 44.4, 56.9, 69.4, 81.9], [[['紀年', 1, 'head'], ['換算成西元', 1, 'head']], ['明治', '＋1867'], ['昭和', '＋1925'], ['民國', '＋1911'], ['佛曆', '－543']]) },
   A: { title: '📄 A　現場調查報告', asset: 'N02-DOC-016', r: 0.7475, html: T(4.55, 5.65, 91.1, 10.9, '現場調查報告', 'title') + onLines(L016, [[0, '日期：西元 1908 年'], [2, '西伯利亞通古斯河谷大爆炸後，'], [3, '北方礦物學會派員進入現場，'], [4, '回收「異常結晶樣本」三箱，'], [5, '運往「90-S」。'], [21, '樣本不列入公開紀錄。']], 8, 84, 2.4, 'type') },
   B: { title: '📄 B　考古發掘報告', asset: 'N02-DOC-018', r: 1.1488, html: vertical(['發掘報告', '昭和十二年', '東亞古代文明研究所', '發掘青銅器一批', '表面刻有無法辨識', '的文字', '全數移交', '「90-S」']) },
-  C: { title: '📄 C　剪報', asset: 'N02-DOC-017', r: 0.75, html: T(2, 5.55, 96, 13.25, '南海沉船打撈古儀器<br>海外基金會「代為研究」', 'headline') + T(3.5, 20.5, 29, 60, '<p>【本報訊】民國四十四年，南海一艘沉船中，打撈出一具古代天文儀器的殘件。</p>', 'col') + T(35.4, 20.5, 29, 60, '<p>儀器已由一家海外基金會以「代為研究」為名運走。</p><p>博物館方面表示，事後才得知此事。</p>', 'col') + T(67.5, 49, 30, 8, '（打撈出的儀器殘件）', 'caption') },
+  C: { title: '📄 C　剪報', asset: 'N02-DOC-017', r: 0.75, html: T(2, 5.55, 96, 13.25, '北大西洋沉船打撈古儀器<br>海外基金會「代為研究」', 'headline') + T(3.5, 20.5, 29, 60, '<p>【本報訊】據海外通訊，民國四十四年，北大西洋一艘沉船中，打撈出一具古代天文儀器的殘件。</p>', 'col') + T(35.4, 20.5, 29, 60, '<p>儀器已由一家海外基金會以「代為研究」為名運走。</p><p>博物館方面表示，事後才得知此事。</p>', 'col') + T(67.5, 49, 30, 8, '（打撈出的儀器殘件）', 'caption') },
   D: { title: '📄 D　研究站採集紀錄', asset: 'N02-DOC-019', r: 0.748, html: T(4.81, 8.3, 89.84, 7.65, '熱帶生命科學協會　研究站採集紀錄', 'title sm') + grid([4.81, 27.87, 50.47, 72.53], [18.7, 28.0, 36.15, 44.3], [[['日期', 1, 'head'], ['樣本', 1, 'head'], ['去向', 1, 'head']], ['佛曆<br>二五二一年', '雨林深處採得<br>不明植物種子', '全數移送<br>90-S'], [['備註：研究站同年因火災關閉，<br>紀錄僅存此頁。', 3]]]) },
   E: { title: '📄 E　無署名的信', asset: 'N02-DOC-020', r: 0.747, html: T(10.04, 9, 79.92, 22, '<p>各地機構更名一事，已照辦。</p><p>一律送往 90-S。</p><p>不得公開，不得歸還。</p>', 'hand para l') },
-  F: { title: '📄 F　我的筆記', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[1, '北方礦物學會（1908）'], [2, '東亞古代文明研究所（1937）'], [3, '？基金會（1955）'], [4, '熱帶生命科學協會（1978）'], [6, '國家不同，名字不同。'], [7, '都說「為了研究」。'], [8, '最後都送到同一個地方。'], [9, '之後都沒有公開。'], [11, '90-S……'], [12, '是編號，還是座標？']], 14.4, 82.3) },
+  F: { title: '📄 F　我的筆記', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[1, '北方礦物學會（1908）'], [2, '東亞古代文明研究所（1937）'], [3, '？基金會（1955）'], [4, '熱帶生命科學協會（1978）'], [6, '國家不同，名字不同。'], [7, '都說「為了研究」。'], [9, '90-S……'], [10, '是編號，還是座標？']], 14.4, 82.3) },
   last: { title: '筆記本・最後一頁', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[10, '是他。', 'center big'], [12, SCRIBBLE, 'center']], 14.4, 82.3, 4.2) },
 };
 const SORT = { A: '1900', B: '1930', C: '1950', D: '1970' }; // 正確資料夾
@@ -68,8 +68,25 @@ export function render(st, params, go) {
   d.n02 = d.n02 || {};
   const meta = d.n02; // seenIntro 跨次保留
   const fresh = () => ({ scene: 'S', items: ['slip'], read: [], flags: {}, hints: {}, fail: 0, placed: {}, log: [] });
-  let S0 = params && params.resume && meta.st ? meta.st : fresh();
+  const restoreFailKeep = () => {
+    const keep = meta.keep || {};
+    return {
+      scene: 'C',
+      items: (keep.items || ['slip']).slice(),
+      read: (keep.read || []).slice(),
+      flags: { ...(keep.flags || {}), P3: false, P4: false, C_IN: false, C_RETRY: true, P4_Q: 0 },
+      hints: { ...(meta.hintsKept || {}) },
+      fail: 0,
+      placed: {},
+      log: (keep.log || []).slice(),
+    };
+  };
+  let S0 = params && params.retry && meta.keep && !meta.cleared
+    ? restoreFailKeep()
+    : (params && params.resume && meta.st ? meta.st : fresh());
   const F = S0.flags;
+  const n01c = ((d.n01 && d.n01.last && d.n01.last.choices) || {});
+  const d01 = n01c.D01, d02 = n01c.D02;
 
   const el = html(`<div class="scr g01 n01 n02">
 <div class="layer" id="scene"></div>
@@ -128,6 +145,14 @@ export function render(st, params, go) {
       b.addEventListener('click', ev => { ev.stopPropagation(); sfx('tap'); emit({ type: 'hs', id }); });
       layer.appendChild(b);
     });
+  }
+  async function tapTask(id, text, list) {
+    const ban = html(`<div class="use-banner"><div>任務：${text}</div></div>`);
+    el.appendChild(ban);
+    setHs(list);
+    await act(x => x.type === 'hs' && x.id === id); S();
+    ban.remove();
+    setHs([]);
   }
   async function loop(handler) {
     for (;;) {
@@ -241,13 +266,13 @@ export function render(st, params, go) {
 
   // ---------- 目標與提示（每次 1 顆鑽石） ----------
   const STEPS = [
-    { k: 'P1', done: () => F.P1, goal: '打開自己的置物櫃', hl: ['desk', 'locker'], hints: ['先看看自己的座位。', '便條說密碼是「論文的第一個年份」。論文草稿就在桌上。', '論文題目是 1908—1978 年，置物櫃密碼 1908。'] },
-    { k: 'GO', done: () => F.AT_HOME, goal: '回住處', hl: ['door'], hints: ['拿到鑰匙了，從門口離開。', '點研究室的門。', '點研究室的門。'] },
-    { k: 'GATE', done: () => F.GATE, goal: '打開鐵門', hl: ['gate'], hints: ['住處鑰匙可以開鐵門。', '點鐵門。', '點鐵門，會自動用鑰匙。'] },
-    { k: 'P2', done: () => F.P2, goal: '打開家門', hl: ['plate', 'keypad'], hints: ['筆記本第一頁寫著家門密碼的規則。', '門牌是 37；出入證上有第一次登記的日期。', '37＋0918＝370918。'] },
-    { k: 'P3', done: () => F.P3, goal: '整理文件', hl: ['wall', 'shelf', 'pile'], hints: ['牆上的規則只寫了一半，另一半在筆記本裡。', '所有年份先換成西元。書架上有換算對照表；佛曆是減 543。', 'A 1908→1900 年代、B 昭和12＝1937→1930 年代、C 民國44＝1955→1950 年代、D 佛曆2521＝1978→1970 年代。'] },
-    { k: 'P4', done: () => F.P4, goal: '讀懂文件', hl: ['board'], hints: ['先看軟木板上的信（E）和你自己的筆記（F）。', '四份文件的機構名字都不一樣，但做的事和東西的去向一樣。', '第一題選「以研究為名帶走、送往 90-S、從未公開」；第二題選「一群不斷改名、以研究為名收走樣本與器物的人」。'] },
-    { k: 'END', done: () => false, goal: '翻到筆記本最後一頁', hl: ['desk'], hints: ['書桌上的筆記本。', '點書桌上的筆記本。', '點書桌上的筆記本。'] },
+    { k: 'P1', done: () => F.P1, goal: '打開自己的置物櫃', hl: ['desk', 'locker'], hints: ['桌上不是有東西嗎。', '便條說密碼是「論文的第一個年份」。論文草稿就在桌上。', '論文封面標題的第一個數字，就是那個年份。'] },
+    { k: 'GO', done: () => F.AT_HOME, goal: '回住處', hl: ['door'], hints: ['鑰匙拿到了，還站著做什麼。', '點研究室的門離開。', '從研究室的門出去。'] },
+    { k: 'GATE', done: () => F.GATE, goal: '打開鐵門', hl: ['gate'], hints: ['鑰匙不只開家門。', '點鐵門。', '點鐵門，會自動用鑰匙。'] },
+    { k: 'P2', done: () => F.P2, goal: '打開家門', hl: ['plate', 'keypad'], hints: ['你自己寫過規則。', '門牌是 37；出入證上有第一次登記的日期。', '門牌號碼，接上第一次進研究室的月日。'] },
+    { k: 'P3', done: () => F.P3, goal: '整理文件', hl: ['wall', 'shelf', 'pile'], hints: ['牆上只寫了一半。', '所有年份先換成西元。書架上有換算對照表；佛曆是減 543。已經是西元的，不用換。', '各換成西元以後，再依十年歸檔。別只看文件上原本的紀年。'] },
+    { k: 'P4', done: () => F.P4, goal: '讀懂文件', hl: ['board'], hints: ['看完再下結論。', '四份文件的機構名字都不一樣，但做的事和東西的去向一樣。', '共同點不在地點，而在「帶走之後去了哪裡」。你當時在追的，也是這件事。'] },
+    { k: 'END', done: () => false, goal: '翻到筆記本最後一頁', hl: ['desk'], hints: ['你自己的筆記本，最後一頁還沒看。', '點書桌上的筆記本。', '筆記本就在書桌上。'] },
   ];
   const cur = () => STEPS.find(s => !s.done()) || STEPS[STEPS.length - 1];
   const paintGoal = () => { $(el, '#goal').textContent = '目標　' + (F.START ? cur().goal : '—'); };
@@ -255,17 +280,20 @@ export function render(st, params, go) {
   $(el, '#hintBtn').addEventListener('click', async () => {
     sfx('tap');
     if (!F.START) { toast('這裡不需要提示，往下看劇情吧。'); return; }
-    const stp = cur(); const lv = Math.min((S0.hints[stp.k] || 0) + 1, 3);
-    if (lv > (S0.hints[stp.k] || 0)) {
+    const stp = cur(); const have = S0.hints[stp.k] || 0;
+    const lv = Math.min(have + 1, 3);
+    const isNew = lv > have;
+    if (isNew && lv >= 2) {
       const dd = get();
       const ok = await modal({ title: '使用提示', body: `消耗 ${HINT_COST} 顆鑽石，取得第 ${lv} 段提示。`, bodyHtml: `<div class="col" style="align-items:center;gap:4px"><div class="row" style="height:48px;gap:12px;font-size:18px"><span style="color:var(--text-2)">消耗</span><img src="${IMG('diamond.webp')}" alt="鑽石" style="width:40px;height:40px"><b style="font-size:24px">×${HINT_COST}</b></div><div style="font-size:14px;line-height:24px;color:var(--muted)">第 ${lv}／3 段提示　目前持有 ${dd.diamonds} 顆鑽石</div></div>`, buttons: [{ label: '取消', kind: 'btn-line', value: false }, { label: '使用提示', kind: 'btn', value: true }] });
       if (!ok || !alive) return;
       if (dd.diamonds < HINT_COST) { await modal({ title: '鑽石不足', body: '鑽石不足，可以完成每日任務或前往儲值取得。', buttons: [{ label: '知道了', kind: 'btn', value: true }] }); return; }
       dd.diamonds -= HINT_COST; save();
-      S0.hints[stp.k] = lv; persist();
     }
+    if (isNew) { S0.hints[stp.k] = lv; persist(); }
     sfx('hint'); if (lv >= 2) flash(stp.hl);
-    sys([`提示 ${lv}／3：${stp.hints[lv - 1]}`], 4600);
+    if (lv === 1) { await say(stp.hints[0], 'dark'); S(); }
+    else sys([`提示 ${lv}／3：${stp.hints[lv - 1]}`], 4600);
   });
 
   // ---------- 設定、離開 ----------
@@ -286,7 +314,7 @@ export function render(st, params, go) {
     if (ok && alive) { persist(); go('stages', { tab: 0 }); }
   });
 
-  // ---------- 失誤：整理與解讀文件錯一次＋1，滿 3 次 → 達克收走文件 → 失敗、整節從頭 ----------
+  // ---------- 失誤：整理與解讀文件錯一次＋1，滿 3 次 → 達克收走文件離開；重來回到分類，保留 P1／P2 與已買提示 ----------
   const paintFail = () => { const n = $(el, '#alert'); n.classList.toggle('hidden', !F.AT_ROOM); n.querySelectorAll('i').forEach((x, i) => x.classList.toggle('on', i < S0.fail)); };
   const FAIL_LINE = ['那份放錯了。', '（看了你一眼）你確定你看得懂？'];
   async function miss() {
@@ -303,9 +331,11 @@ export function render(st, params, go) {
     ]);
     if (ended) return;
     ended = true; alive = false; sfx('door');
-    meta.st = null; save();
+    meta.hintsKept = { ...(meta.hintsKept || {}), ...(S0.hints || {}) };
+    meta.keep = { items: S0.items.slice(), read: S0.read.slice(), flags: { ...F }, log: S0.log.slice() };
+    meta.st = null; meta.cleared = false; save();
     const b = html(`<div class="n1-fail"><div class="col" style="align-items:center;gap:16px;z-index:2">
-<div class="label">EV_N02_FAIL</div><h2>達克失去了耐心</h2><p>文件被收走了。這一晚，什麼都沒查到。</p>
+<div class="label">EV_N02_FAIL</div><h2>達克失去了耐心</h2><p>文件被收走了。再來一次的話，會從整理文件開始。</p>
 <div class="row" style="gap:16px;height:56px"><button type="button" class="btn-line" data-a="out" style="width:208px">返回關卡選擇</button><button type="button" class="btn" data-a="retry" style="width:208px">重新挑戰</button></div></div></div>`);
     b.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (!a) return; sfx('tap'); if (a.dataset.a === 'retry') go('n02', { retry: true }); else go('stages', { tab: 0 }); });
     el.appendChild(b);
@@ -316,6 +346,10 @@ export function render(st, params, go) {
   async function sceneS() {
     setScene('N02-BG-001', '舊館外・深夜', []);
     $(el, '#black').classList.remove('on'); await wait(600); S();
+    await say('樓上還有一扇窗亮著。樓下那扇，是暗的。', 'me', { think: true }); S();
+    await tapTask('dark', '點擊靠在車旁的人', [
+      { id: 'dark', x: 1055, y: 300, w: 150, h: 290, label: '靠在車旁的人' },
+    ]);
     await lines([
       ['dark', '（看了一眼，嘆氣）看來我不值得你記住？'],
       ['me', '……'],
@@ -324,9 +358,15 @@ export function render(st, params, go) {
       ['dark', '同一個研究室。僅此而已！'],
       ['me', '那現在……？'],
       ['dark', '上車吧！教授叫我來帶你回去。'],
-      ['me', '謝謝……'],
-      ['me', '他好像有點眼熟。', { think: true }],
     ]);
+    await tapTask('car', '點擊那台黑色轎車', [
+      { id: 'car', x: 922, y: 375, w: 310, h: 185, label: '黑色轎車' },
+    ]);
+    await say('謝謝……', 'me'); S();
+    if (d02 === 1) await say('那個保安……我總覺得他沒把話說完。', 'me', { think: true });
+    else if (d02 === 0) await say('系統會出錯。簽名不會。', 'me', { think: true });
+    else if (d02 === 2) await say('我還是不知道，今晚到底出了什麼事。', 'me', { think: true });
+    await say('他好像有點眼熟。', 'me', { think: true }); S();
     sfx('cardoor'); await wait(700); S(); sfx('caroff');
     await sys(['前往：學校・教授研究室'], 1600); S();
     return 'A';
@@ -343,16 +383,27 @@ export function render(st, params, go) {
   async function sceneA() {
     setScene('N02-BG-002', '學校・教授研究室', A_HS);
     if (!meta.seenIntro) {
+      await tapTask('prof', '點擊窗邊的教授', [
+        { id: 'prof', x: 560, y: 130, w: 160, h: 470, label: '因杜阿森' },
+      ]);
       await lines([
         ['prof', '你回來了。很好！'],
         ['me', '教授，我好像……'],
         ['prof', '嗯……先坐著休息吧！剩下的之後說……'],
+      ]);
+      await tapTask('desk', '點擊自己的座位坐下', [A_HS.find(h => h.id === 'desk')]);
+      await lines([
         ['prof', '（看向達克）辛苦你了，讓你跑了這趟。'],
         ['dark', '幫一個小忙而已，不過這小子……'],
         ['prof', '（看向你）你還記得他嗎？'],
         ['me', '也是你的學生……'],
         ['dark', '從見面就這樣……'],
         ['prof', '看來是真的。（停頓）'],
+      ]);
+      if (d01 === 2) await say('他要我先相信他。現在站在面前，我還是不敢說自己完全信。', 'me', { think: true });
+      else if (d01 === 0) await say('他在電話裡說，從我能確認的事情開始。可是我能確認的，好像很少。', 'me', { think: true });
+      else if (d01 === 1) await say('他在電話裡說，先處理眼前的問題。現在眼前的問題，變成回家。', 'me', { think: true });
+      await lines([
         ['prof', '他不是裝的。達克，他失憶了！'],
         ['dark', '？'],
         ['prof', '{主角}，你還記得多少？'],
@@ -373,12 +424,17 @@ export function render(st, params, go) {
         ['me', '住處的鑰匙……應該在我的置物櫃裡。'],
       ]);
       meta.seenIntro = true; save();
+      setHs(A_HS);
     }
     flag('START'); paintGoal();
     return loop(async id => {
       if (id === 'back') { closeCu(); return; }
       if (id === 'desk') { await deskCu(); return; }
-      if (id === 'locker') { if (F.P1_TAKEN) return void sys(['置物櫃裡只剩一條灰色圍巾'], 1400); await p1(); paintGoal(); return; }
+      if (id === 'locker') {
+        if (F.P1_TAKEN) return void sys(['置物櫃裡只剩一條灰色圍巾'], 1400);
+        if (!F.LOCKER_TAUNT) { flag('LOCKER_TAUNT'); await say('自己的東西，自己想辦法。', 'dark'); S(); }
+        await p1(); paintGoal(); return;
+      }
       if (id === 'window') return void sys(['校園的燈都熄了。'], 1400);
       if (id === 'shelf') return void sys(['教授的書，大部分是外文。'], 1400);
       if (id === 'prof') { await say('文件整理好了，再來告訴我。', 'prof'); S(); return; }
@@ -530,14 +586,21 @@ export function render(st, params, go) {
     flag('AT_ROOM'); paintFail();
     if (!F.C_IN) {
       flag('C_IN');
-      await lines([
-        ['dark', '（掃了一眼）你的東西，你自己整理。我在這裡等。'],
-        ['me', '這些……都是我收集的？'],
-        ['dark', '房間是你的，不然是誰的。'],
-        ['me', '我在找什麼？'],
-        ['dark', '我不知道，也沒興趣。不過你半夜一個人去那間舊館，應該不是去散步。'],
-      ]);
-      await sys([`整理或解讀文件錯 ${MAX_FAIL} 次，達克會收走文件離開`], 2400); S();
+      if (F.C_RETRY) {
+        await lines([
+          ['dark', '（把文件扔回地上）最後一次。'],
+          ['dark', '再放錯，我就帶走。'],
+        ]);
+      } else {
+        await lines([
+          ['dark', '（掃了一眼）你的東西，你自己整理。我在這裡等。'],
+          ['me', '這些……都是我收集的？'],
+          ['dark', '房間是你的，不然是誰的。'],
+          ['me', '我在找什麼？'],
+          ['dark', '我不知道，也沒興趣。不過你半夜一個人去那間舊館，應該不是去散步。'],
+        ]);
+        await sys([`整理或解讀文件錯 ${MAX_FAIL} 次，達克會收走文件離開`], 2400); S();
+      }
     }
     paintGoal();
     return loop(async id => {
@@ -570,7 +633,7 @@ export function render(st, params, go) {
       if (id[0] === 'f') {
         if (!sel) { paint('先拿起一份文件'); return; }
         const f = id.slice(1);
-        if (SORT[sel] !== f) { const s = sel; sel = null; paint(); await miss(); S(); if (!ended) paint(`文件 ${s} 不屬於 ${f} 年代`); return; }
+        if (SORT[sel] !== f) { sel = null; paint(); await miss(); S(); if (!ended) paint('這份不該放在這裡。'); return; }
         S0.placed[sel] = f; persist(); sfx('file'); sel = null;
         if (left().length) { paint(); return; }
         flag('P3'); paint('四份文件都歸檔好了'); await wait(1000); S(); closeCu();
@@ -582,8 +645,8 @@ export function render(st, params, go) {
   // 謎題 4：軟木板（DETAIL-010）：六份文件釘在圖釘上，點來讀；整理好後回答兩題
   async function p4() {
     const Q = [
-      { q: '這些文件的共同點是？', o: ['都發生在亞洲', '都以研究為名帶走樣本或器物，送往代號「90-S」的地方，從未公開', '都是政府主導的計畫', '都和戰爭有關'], a: 1 },
-      { q: '我之前在查什麼？', o: ['二十世紀的科學造假事件', '一群在世界各地不斷改名、以研究為名收走樣本與器物的人', '各國的考古走私網', '冷戰時期的核子試驗'], a: 1 },
+      { q: '這些文件的共同點是？', o: ['這些事件的發生地點都在亞洲一帶，沒有例外', '都以研究為名帶走，送往 90-S，從未公開', '這些全部都是各國政府主導的官方研究計畫', '這些全都和兩次世界大戰的軍備擴張直接有關'], a: 1 },
+      { q: '我之前在查什麼？', o: ['二十世紀各國科學界的造假與掩飾事件', '一群不斷改名、以研究為名收走樣本的人', '各地博物館失竊案串連起來的走私網路', '冷戰時期各國隱匿未報的核子試驗紀錄'], a: 1 },
     ];
     const PIN = [[400, 218], [638, 218], [875, 218], [400, 418], [638, 418], [875, 418]];
     const KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -597,6 +660,8 @@ export function render(st, params, go) {
       if (id === 'back') { closeCu(); return true; }
       if (id[0] === 'r') { await readDoc(id[1]); S(); return; }
       if (id !== 'ans') return;
+      const unread = ['A', 'B', 'C', 'D', 'E', 'F'].filter(k => !S0.read.includes(k));
+      if (unread.length) { await say('看完再下結論。', 'dark'); S(); return; }
       const ansBtn = $(cu, '.n2-answer'); if (ansBtn) ansBtn.style.visibility = 'hidden';
       const showAns = () => { const b = $(cu, '.n2-answer'); if (b) b.style.visibility = ''; };
       for (let qi = F.P4_Q || 0; qi < Q.length; qi++) {
@@ -607,7 +672,7 @@ export function render(st, params, go) {
       }
       flag('P4'); closeCu();
             await lines([
-        ['me', '西伯利亞、京都、香港、泰國……幾十年、好幾個國家，都有同一群人經手。'],
+        ['me', '西伯利亞、北大西洋……幾十年、好幾個地方，都有同一群人經手。'],
         ['dark', '同一群人？'],
         ['me', '名字每次都不一樣。可是做事的方法一模一樣。'],
         ['dark', '（看著文件，安靜了很久）'],
@@ -625,6 +690,7 @@ export function render(st, params, go) {
       ['me', '這一頁……「是他。」旁邊原本寫著一個名字，被我自己塗掉了。'],
       ['me', '舊館那張借閱卡，旁邊的字也是我寫的。'],
       ['me', '我在找一個人。'],
+      ['me', '可是那個名字，是我自己塗掉的。'],
     ]);
         await lines([
       ['dark', '（拿起外套）我走了。'],
@@ -639,7 +705,7 @@ export function render(st, params, go) {
     ended = true;
     const dd = get();
     if (!dd.records.includes('n02')) dd.records.push('n02');
-    meta.st = null; meta.cleared = true; save();
+    meta.st = null; meta.cleared = true; meta.keep = null; save();
     $(el, '#black').classList.add('on'); await wait(600); S();
     const card = html(`<div class="n1-fail"><div class="col" style="align-items:center;gap:16px;z-index:2"><div class="label">第一章・第二節</div><h2>留下來的人</h2><p>完</p><p class="n2-credit">背景音樂　HORROR — Mehul ShaRma</p><div class="row" style="height:56px"><button type="button" class="btn" data-a="out" style="width:208px">返回關卡選擇</button></div></div></div>`);
     el.appendChild(card);
@@ -650,7 +716,8 @@ export function render(st, params, go) {
   async function flow() {
     paintSlots(); paintGoal(); bgm('n02'); // 背景音樂：HORROR — Mehul ShaRma
     let where = S0.scene || 'S';
-    if (params && params.retry && meta.seenIntro) where = 'A'; // 重新挑戰：略過舊館外的劇情
+    if (params && params.retry && meta.keep && !meta.cleared) where = 'C'; // 失敗重來：回到整理文件，保留 P1／P2
+    else if (params && params.retry && meta.seenIntro) where = 'A'; // 手動重來：略過舊館外的劇情
     const RUN = { S: sceneS, A: sceneA, B: sceneB, C: sceneC };
     let first = true;
     for (;;) {
