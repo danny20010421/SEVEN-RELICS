@@ -83,12 +83,19 @@ const SFX = {
   hum() { tone(98, 1.4, 'sawtooth', 0.06); tone(196, 1.4, 'triangle', 0.04); noise(1.2, 'lowpass', 300, 0.12); },
   snap() { noise(0.05, 'highpass', 2500, 0.35); tone(420, 0.06, 'square', 0.08); },
   step() { for (const d of [0, 0.45, 0.9]) noise(0.12, 'lowpass', 220, 0.4, d, 2); },
+  dial() { noise(0.03, 'highpass', 3200, 0.25); tone(2400, 0.02, 'square', 0.05); },
+  latch() { noise(0.08, 'bandpass', 1200, 0.35, 0, 3); tone(260, 0.12, 'square', 0.08, 0.05, 160); },
+  beep() { tone(1760, 0.07, 'square', 0.06); },
+  beepErr() { tone(440, 0.12, 'square', 0.08); tone(330, 0.2, 'square', 0.08, 0.14); },
+  page() { noise(0.25, 'bandpass', 2600, 0.18, 0, 1.2, 1200); },
+  file() { noise(0.12, 'lowpass', 900, 0.3); tone(180, 0.1, 'triangle', 0.08, 0.05); },
+  pin() { tone(2600, 0.05, 'triangle', 0.08); noise(0.04, 'highpass', 4000, 0.12); },
   card() { noise(0.18, 'bandpass', 2200, 0.2, 0, 2); tone(300, 0.08, 'triangle', 0.08, 0.15); },
   marquee() { tone(55, 0.6, 'sawtooth', 0.05); noise(0.5, 'highpass', 6000, 0.05); },
 };
 // 有實際錄音檔的音效（找不到檔案時退回合成音）
 // 用 Web Audio 播放（不另開 <audio>，避免 iOS 上把背景音樂擠掉）
-const SFX_FILES = { step: 'assets/audio/N01-SFX-STEP.mp3' };
+const SFX_FILES = { step: 'assets/audio/N01-SFX-STEP.mp3', caroff: 'assets/audio/N02-SFX-CAROFF.mp3', cardoor: 'assets/audio/N02-SFX-CARDOOR.mp3', dial: 'assets/audio/N02-SFX-DIAL.mp3', page: 'assets/audio/N02-SFX-PAGE.mp3', file: 'assets/audio/N02-SFX-FOLDER.mp3' };
 const sfxBuf = {};
 function loadSfx(name) {
   if (sfxBuf[name] !== undefined) return;
