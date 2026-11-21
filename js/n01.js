@@ -632,7 +632,7 @@ export function render(st, params, go) {
   }
   // 壁鐘近景（008）：停在 21:07:34，不播滴答聲
   async function clockCu() {
-    openCu(`<img class="bg" src="${IMG('N01-BG_DETAIL-008.webp')}" alt="壁鐘近景">`, [{ id: 'plug', x: 610, y: 562, w: 30, h: 45, label: '插座' }]);
+    openCu(`<img class="bg" src="${IMG('N01-BG_DETAIL-008.webp')}" alt="壁鐘近景">`, [{ id: 'plug', x: 1054, y: 280, w: 54, h: 58, label: '插座' }]);
     if (!F.n01_clock_seen) { flag('n01_clock_seen'); await me('秒針沒在動，是沒電了嗎？'); S(); await me('鐘停在九點零七分。'); S(); }
     return loop(async id => {
       if (id === 'back') { closeCu(); return true; }
