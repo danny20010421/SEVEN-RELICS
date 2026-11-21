@@ -343,13 +343,18 @@ export function render(st, params, go) {
   // 提示鈕預設 .dim；同一步驟 90 秒沒進展 → .pulse（不再自動閃熱點）
   let idleT = 0, idleK = null;
   const hintBtn = $(el, '#hintBtn'); hintBtn.classList.add('dim');
-  const paintHintBtn = () => { const n = Math.max(0, FREE_HINTS - (S0.hintUsed || 0)); hintBtn.querySelector('span').textContent = `提示 ${n}`; hintBtn.setAttribute('aria-label', `提示，剩 ${n} 次`); };
+  const freeLeft = () => Math.max(0, FREE_HINTS - (S0.hintUsed || 0));
+  const paintHintBtn = () => { const n = freeLeft(); hintBtn.querySelector('span').textContent = `提示 ${n}`; hintBtn.setAttribute('aria-label', `提示，剩 ${n} 次`); };
+  const pulseHint = on => {
+    if (on && freeLeft() > 0) { hintBtn.classList.remove('dim'); hintBtn.classList.add('pulse'); }
+    else { hintBtn.classList.remove('pulse'); hintBtn.classList.add('dim'); }
+  };
   paintHintBtn();
   const armIdle = () => {
     const k = F.EV_N01_START ? cur().k : null;
     if (k === idleK && idleT) return;
     idleK = k; clearTimeout(idleT); hintBtn.classList.remove('pulse'); hintBtn.classList.add('dim');
-    idleT = setTimeout(() => { if (alive && F.EV_N01_START) { hintBtn.classList.remove('dim'); hintBtn.classList.add('pulse'); } idleT = 0; }, window.__N01_IDLE_MS || 90000);
+    idleT = setTimeout(() => { if (alive && F.EV_N01_START) pulseHint(true); idleT = 0; }, window.__N01_IDLE_MS || 90000);
   };
   el.addEventListener('pointerdown', armIdle);
   hintBtn.addEventListener('click', async () => {
@@ -395,8 +400,13 @@ export function render(st, params, go) {
     sfx('step'); el.classList.add('n1-sweep'); setTimeout(() => el.classList.remove('n1-sweep'), 1600);
     await say(ALERT_LINE[S0.alert - 1], 'guardv'); S();
     if (S0.alert === 1) { await say('你聽到了嗎？他在附近。動作快一點，但別慌。', 'ind'); S(); }
-    if (S0.alert === 2) { await me('腳步聲越來越近了……'); S(); await say('再錯一次，他就會發現。想不清楚的話，用提示。', 'ind'); S(); }
-    hintBtn.classList.remove('dim'); hintBtn.classList.add('pulse');
+    if (S0.alert === 2) {
+      await me('腳步聲越來越近了……'); S();
+      await say(freeLeft() > 0
+        ? '再錯一次，他就會發現。想不清楚的話，用提示。'
+        : '再錯一次，他就會發現。慢慢想，想清楚再動手。', 'ind'); S();
+    }
+    pulseHint(true);
   }
   async function caught() {
     running = false;
@@ -406,7 +416,7 @@ export function render(st, params, go) {
     ended = true; alive = false; F.N01_CAUGHT = true;
     meta.st = null; save();
     const b = html(`<div class="n1-fail"><div class="n1-shut" aria-hidden="true"></div><div class="col" style="align-items:center;gap:16px;z-index:2">
-<div class="label">EV_CAUGHT</div><h2>被保安發現了</h2><p>警察正在趕來的路上。這一晚，你沒能離開。</p>
+<h2>被保安發現了</h2><p>警察正在趕來的路上。這一晚，你沒能離開。</p>
 <div class="row" style="gap:16px;height:56px"><button type="button" class="btn-line" data-a="out" style="width:208px">返回關卡選擇</button><button type="button" class="btn" data-a="retry" style="width:208px">重新挑戰</button></div></div></div>`);
     b.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (!a) return; sfx('tap'); if (a.dataset.a === 'retry') go('n01', { retry: true }); else go('stages', { tab: 0 }); });
     el.appendChild(b); sfx('error');
@@ -790,7 +800,7 @@ export function render(st, params, go) {
         if (isM(code)) { lockFor('P03_MLOCK', WAIT.P03); sfx('error'); await me('這份維護卷宗不是那一天的。', { pic: false }); S(); await alarm(); }
         await new Promise(r => v.addEventListener('click', () => { sfx('tap'); v.remove(); r(); })); S();
         F.P03_MISS = (F.P03_MISS || 0) + 1; persist();
-        if (!isM(code) && F.P03_MISS >= 2) { hintBtn.classList.remove('dim'); hintBtn.classList.add('pulse'); }
+        if (!isM(code) && F.P03_MISS >= 2) pulseHint(true);
         paint(); return;
       }
       flag('P03_SOLVED'); sfx('unlock'); paint(); await wait(700); S();

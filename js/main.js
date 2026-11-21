@@ -41,6 +41,7 @@ function fit() {
   const vw = window.innerWidth, vh = window.innerHeight;
   const s = Math.min(vw / 1280, vh / 720);
   document.documentElement.style.setProperty('--s', s);
+  document.documentElement.classList.toggle('tight-text', s < 0.72);
   const portrait = vh > vw;
   const touch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
   document.getElementById('rotate').hidden = !(portrait && touch);

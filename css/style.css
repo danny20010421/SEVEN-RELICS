@@ -955,7 +955,10 @@ select.field { height: 48px; width: 240px; font-size: 16px; }
 .n1-failscr { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .35; mix-blend-mode: screen; pointer-events: none; }
 #hintBtn.dim { opacity: .55; }
 #hintBtn.pulse { opacity: 1; animation: n1hintPulse 1.6s ease-in-out infinite; }
-@keyframes n1hintPulse { 0%, 100% { box-shadow: 0 0 0 rgba(216, 181, 148, 0); } 50% { box-shadow: 0 0 18px rgba(216, 181, 148, .75); } }
+@keyframes n1hintPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(216, 181, 148, 0); transform: scale(1); }
+  50% { box-shadow: 0 0 0 3px rgba(232, 208, 160, 0.9), 0 0 20px rgba(216, 181, 148, 0.75); transform: scale(1.06); }
+}
 .area.n1-glow { animation: n1glow 4s ease-in-out infinite; border-color: transparent; }
 @keyframes n1glow { 0%, 100% { box-shadow: inset 0 0 18px rgba(255, 236, 200, .12), 0 0 10px rgba(255, 236, 200, .12); } 50% { box-shadow: inset 0 0 22px rgba(255, 236, 200, .28), 0 0 16px rgba(255, 236, 200, .28); } }
 .area.n1-glow.show { animation: areaPulse 1.4s ease-in-out infinite; border-color: var(--pink); }
@@ -1125,3 +1128,73 @@ button.node { cursor: pointer; }
 .bust { position: absolute; left: 0; top: 0; width: 1280px; overflow: hidden; z-index: 23; pointer-events: none; animation: fadeIn 0.3s ease both; }
 .bust img { position: absolute; filter: drop-shadow(0 0 24px rgba(0, 0, 0, 0.9)); }
 .n2-credit { margin: 0; font-size: 14px; line-height: 24px; color: var(--text-2); letter-spacing: 0.05em; }
+
+.btn:disabled, .btn[disabled] { opacity: 0.45; cursor: not-allowed; filter: grayscale(0.3); pointer-events: none; }
+
+/* N02 開場任務：約 3 秒後目標熱點呼吸光（暖白／琥珀，不用紅） */
+.area.task-glow {
+  border-color: rgba(232, 208, 160, 0.95) !important;
+  box-shadow: 0 0 0 2px rgba(232, 208, 160, 0.7), 0 0 18px rgba(216, 181, 148, 0.65);
+  animation: taskGlow 1.6s ease-in-out infinite;
+}
+@keyframes taskGlow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(232, 208, 160, 0.4), 0 0 8px rgba(216, 181, 148, 0.3); border-color: rgba(232, 208, 160, 0.55); }
+  50% { box-shadow: 0 0 0 3px rgba(232, 208, 160, 0.95), 0 0 22px rgba(216, 181, 148, 0.8); border-color: rgba(244, 226, 186, 1); }
+}
+.n02 #scene:has(> img.bg) ~ #hsLayer .area.task-glow span { display: none; }
+.area.n2-missfill { background: none; border: none !important; z-index: 4; }
+
+/* 提示鈕底下的費用標 */
+.hint-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.hint-meta { font-size: 12px; line-height: 16px; color: var(--gold-2); white-space: nowrap; text-shadow: 0 1px 2px #000; pointer-events: none; }
+
+/* P4 未讀角標、未齊時結論鈕半透明 */
+.n2-unread {
+  position: absolute; top: 2px; right: 2px; z-index: 3;
+  min-width: 22px; height: 22px; padding: 0 4px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(16, 10, 8, 0.88); border: 1px solid var(--gold-2);
+  color: var(--gold-2); font-size: 12px; line-height: 16px; font-weight: 700;
+  pointer-events: none;
+}
+.n2-answer.is-wait { opacity: 0.45; }
+
+/* P4 題目標題：半透明深色底，避免疊在文件上對比不足 */
+.n2-choice .n2-q {
+  background: rgba(10, 6, 7, 0.86);
+  border: 1px solid rgba(243, 230, 204, 0.28);
+  height: auto; min-height: 40px; padding: 8px 16px;
+  color: #f3e6cc;
+}
+
+/* 窄螢幕（舞台縮放 < 0.72，例如 844×390）拉高對白／選項／狀態／文件字，有效約 11–13px */
+html.tight-text .sub .who span,
+html.tight-text .sub .cn { font-size: 24px; line-height: 36px; }
+html.tight-text .n2-choice .n2-q { font-size: 24px; line-height: 34px; }
+html.tight-text .n1-choice .btn-line,
+html.tight-text .n2-choice .btn-line { font-size: 22px; line-height: 32px; }
+html.tight-text .n1-state { font-size: 24px; line-height: 32px; }
+html.tight-text .toast { font-size: 22px; line-height: 30px; }
+html.tight-text .n2t { font-size: 22px; line-height: 30px; }
+html.tight-text .n2t.hand { font-size: 24px; }
+html.tight-text .n2t.type { font-size: 20px; }
+html.tight-text .n2t.big { font-size: 28px; line-height: 40px; }
+html.tight-text .n2t.title { font-size: 26px; line-height: 36px; }
+html.tight-text .n2t.title.sm { font-size: 22px; line-height: 30px; }
+html.tight-text .n2t.muted,
+html.tight-text .n2t.cellb,
+html.tight-text .n2t.col,
+html.tight-text .n2t.wk,
+html.tight-text .n2t.dd,
+html.tight-text .n2t.caption { font-size: 20px; line-height: 28px; }
+html.tight-text .n2t.headline { font-size: 24px; line-height: 32px; }
+html.tight-text .n2t.fld,
+html.tight-text .n2t.cell,
+html.tight-text .n2t.band { font-size: 22px; line-height: 30px; }
+html.tight-text .n2-paper .n1-ink .big { font-size: 26px; line-height: 36px; }
+html.tight-text .n1-paper,
+html.tight-text .n1-paper p,
+html.tight-text .n1-ink,
+html.tight-text .gdoc,
+html.tight-text .gdoc p { font-size: 20px; line-height: 28px; }
+html.tight-text .hint-meta { font-size: 16px; line-height: 20px; }

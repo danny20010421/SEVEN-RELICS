@@ -103,7 +103,7 @@ export function render(st, params, go) {
   <div class="n1-alert hidden" id="alert" aria-label="失誤次數"><span>失誤</span><i></i><i></i><i></i></div>
 </div>
 <div class="lvl-right" style="height:64px">
-  <button type="button" class="iconbtn hud-big" id="hintBtn">${ICO.hint}<span>提示</span></button>
+  <div class="hint-wrap"><button type="button" class="iconbtn hud-big" id="hintBtn">${ICO.hint}<span>提示</span></button><span class="hint-meta" id="hintMeta"></span></div>
   <button type="button" class="iconbtn hud-big" id="fileBtn">${ICO.file}<span>檔案</span></button>
   <button type="button" class="iconbtn hud-big" id="logBtn">${ICO.log}<span>紀錄</span></button>
   <button type="button" class="iconbtn hud-big" id="setBtn">${ICON.gear.replace('<svg', '<svg width="24" height="24"')}<span>設定</span></button>
@@ -141,21 +141,41 @@ export function render(st, params, go) {
     setHs(objs);
   }
   const setBg = f => { const b = $(scene, '#bgimg'); if (b) b.src = IMG(f + '.webp'); };
+  let task = null; // 開場點擊任務 { id, hint, miss, glowT }
   function setHs(list, layer = hsLayer) {
     if (layer === hsLayer) hsLayer.innerHTML = '';
+    if (layer === hsLayer && task) {
+      const bg = html(`<button type="button" class="area n2-missfill" data-hs="__miss" style="left:0;top:0;width:1280px;height:720px" aria-label="場景"></button>`);
+      bg.addEventListener('click', ev => { ev.stopPropagation(); sfx('tap'); emit({ type: 'hs', id: '__miss' }); });
+      layer.appendChild(bg);
+    }
     list.forEach(({ id, x, y, w, h, label }) => {
       const b = html(`<button type="button" class="area n2-gb" data-hs="${id}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px" aria-label="${label}"><span>${label}</span></button>`);
       b.addEventListener('click', ev => { ev.stopPropagation(); sfx('tap'); emit({ type: 'hs', id }); });
       layer.appendChild(b);
     });
   }
-  async function tapTask(id, text, list) {
+  async function tapTask(id, text, list, { hint, miss } = {}) {
+    task = { id, hint: hint || text, miss: miss || '再找找看。' };
+    paintHintMeta();
     const ban = html(`<div class="use-banner"><div>任務：${text}</div></div>`);
     el.appendChild(ban);
-    setHs(list);
-    await act(x => x.type === 'hs' && x.id === id); S();
+    const others = list.filter(h => h.id !== id);
+    const target = list.filter(h => h.id === id);
+    setHs([...others, ...target]);
+    const glowT = setTimeout(() => {
+      el.querySelectorAll(`[data-hs="${id}"]`).forEach(b => b.classList.add('task-glow'));
+    }, 3000);
+    for (;;) {
+      const a = await act(x => x.type === 'hs'); S();
+      if (a.id === id) break;
+      toast(task.miss);
+    }
+    clearTimeout(glowT);
+    task = null;
     ban.remove();
     setHs([]);
+    paintHintMeta();
   }
   async function loop(handler) {
     for (;;) {
@@ -280,23 +300,37 @@ export function render(st, params, go) {
   const cur = () => STEPS.find(s => !s.done()) || STEPS[STEPS.length - 1];
   const paintGoal = () => { $(el, '#goal').textContent = '目標　' + (F.START ? cur().goal : '—'); };
   function flash(ids, ms = 5000) { ids.forEach(id => el.querySelectorAll(`[data-hs="${id}"]`).forEach(b => { b.classList.add('show'); setTimeout(() => b.classList.remove('show'), ms); })); }
+  const paintHintMeta = () => {
+    const m = $(el, '#hintMeta'); if (!m) return;
+    if (task) { m.textContent = '第 1 段免費'; return; }
+    if (!F.START) { m.textContent = ''; return; }
+    const have = S0.hints[cur().k] || 0;
+    if (have <= 0) m.textContent = '第 1 段免費';
+    else if (have < 3) m.textContent = '1 💎';
+    else m.textContent = '已看完';
+  };
+  paintHintMeta();
   $(el, '#hintBtn').addEventListener('click', async () => {
     sfx('tap');
+    if (task) { toast(task.hint); return; }
     if (!F.START) { toast('這裡不需要提示，往下看劇情吧。'); return; }
     const stp = cur(); const have = S0.hints[stp.k] || 0;
     const lv = Math.min(have + 1, 3);
     const isNew = lv > have;
     if (isNew && lv >= 2) {
       const dd = get();
-      const ok = await modal({ title: '使用提示', body: `消耗 ${HINT_COST} 顆鑽石，取得第 ${lv} 段提示。`, bodyHtml: `<div class="col" style="align-items:center;gap:4px"><div class="row" style="height:48px;gap:12px;font-size:18px"><span style="color:var(--text-2)">消耗</span><img src="${IMG('diamond.webp')}" alt="鑽石" style="width:40px;height:40px"><b style="font-size:24px">×${HINT_COST}</b></div><div style="font-size:14px;line-height:24px;color:var(--muted)">第 ${lv}／3 段提示　目前持有 ${dd.diamonds} 顆鑽石</div></div>`, buttons: [{ label: '取消', kind: 'btn-line', value: false }, { label: '使用提示', kind: 'btn', value: true }] });
+      const noDia = dd.diamonds < HINT_COST;
+      const ok = await modal({ title: '使用提示', body: `消耗 ${HINT_COST} 顆鑽石，取得第 ${lv} 段提示。`, bodyHtml: `<div class="col" style="align-items:center;gap:4px"><div class="row" style="height:48px;gap:12px;font-size:18px"><span style="color:var(--text-2)">消耗</span><img src="${IMG('diamond.webp')}" alt="鑽石" style="width:40px;height:40px"><b style="font-size:24px">×${HINT_COST}</b></div><div style="font-size:14px;line-height:24px;color:var(--muted)">第 ${lv}／3 段提示　目前持有 ${dd.diamonds} 顆鑽石</div></div>`, buttons: [{ label: '取消', kind: 'btn-line', value: false }, { label: noDia ? '鑽石不足' : '使用提示', kind: 'btn', value: true, disabled: noDia }] });
       if (!ok || !alive) return;
-      if (dd.diamonds < HINT_COST) { await modal({ title: '鑽石不足', body: '鑽石不足，可以完成每日任務或前往儲值取得。', buttons: [{ label: '知道了', kind: 'btn', value: true }] }); return; }
-      dd.diamonds -= HINT_COST; save();
+      if (get().diamonds < HINT_COST) { toast('鑽石不足'); return; }
+      get().diamonds -= HINT_COST; save();
+      toast(`已扣 1 顆，剩 ${get().diamonds} 顆`);
     }
     if (isNew) { S0.hints[stp.k] = lv; persist(); }
     sfx('hint'); if (lv >= 2) flash(stp.hl);
     if (lv === 1) { await say(stp.hints[0], 'dark'); S(); }
     else sys([`提示 ${lv}／3：${stp.hints[lv - 1]}`], 4600);
+    paintHintMeta();
   });
 
   // ---------- 設定、離開 ----------
@@ -320,10 +354,12 @@ export function render(st, params, go) {
   // ---------- 失誤：整理與解讀文件錯一次＋1，滿 3 次 → 達克收走文件離開；重來回到分類，保留 P1／P2 與已買提示 ----------
   const paintFail = () => { const n = $(el, '#alert'); n.classList.toggle('hidden', !F.AT_ROOM); n.querySelectorAll('i').forEach((x, i) => x.classList.toggle('on', i < S0.fail)); };
   const FAIL_LINE = ['那份放錯了。', '（看了你一眼）你確定你看得懂？'];
-  async function miss() {
+  const FAIL_LINE_P4 = ['這個結論站不住腳。', '（看了你一眼）你確定你看得懂？'];
+  async function miss(kind) {
     sfx('error'); S0.fail++; persist(); paintFail();
     if (S0.fail >= MAX_FAIL) { await failed(); return; }
-    await say(FAIL_LINE[S0.fail - 1], 'dark'); S();
+    const lines = kind === 'p4' ? FAIL_LINE_P4 : FAIL_LINE;
+    await say(lines[S0.fail - 1], 'dark'); S();
   }
   async function failed() {
     closeCu();
@@ -338,8 +374,9 @@ export function render(st, params, go) {
     meta.keep = { items: S0.items.slice(), read: S0.read.slice(), flags: { ...F }, log: S0.log.slice() };
     meta.st = null; meta.cleared = false; save();
     const b = html(`<div class="n1-fail"><div class="col" style="align-items:center;gap:16px;z-index:2">
-<div class="label">EV_N02_FAIL</div><h2>達克失去了耐心</h2><p>文件被收走了。再來一次的話，會從整理文件開始。</p>
-<div class="row" style="gap:16px;height:56px"><button type="button" class="btn-line" data-a="out" style="width:208px">返回關卡選擇</button><button type="button" class="btn" data-a="retry" style="width:208px">重新挑戰</button></div></div></div>`);
+<h2>達克失去了耐心</h2><p>文件被收走了。再來一次的話，會從整理文件開始。</p>
+<p>已保留：置物櫃、家門進度與已買提示</p>
+<div class="row" style="gap:16px;height:56px"><button type="button" class="btn-line" data-a="out" style="width:208px">返回關卡選擇</button><button type="button" class="btn" data-a="retry" style="width:208px">繼續調查</button></div></div></div>`);
     b.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (!a) return; sfx('tap'); if (a.dataset.a === 'retry') go('n02', { retry: true }); else go('stages', { tab: 0 }); });
     el.appendChild(b);
   }
@@ -352,7 +389,8 @@ export function render(st, params, go) {
     await say('樓上還有一扇窗亮著。樓下那扇，是暗的。', 'me', { think: true }); S();
     await tapTask('dark', '點擊靠在車旁的人', [
       { id: 'dark', x: 1055, y: 300, w: 150, h: 290, label: '靠在車旁的人' },
-    ]);
+      { id: 'car', x: 922, y: 375, w: 310, h: 185, label: '黑色轎車' },
+    ], { hint: '達克就站在右邊的車旁。', miss: '達克在右邊的車旁。' });
     await lines([
       ['dark', '（看了一眼，嘆氣）看來我不值得你記住？'],
       ['me', '……'],
@@ -363,8 +401,9 @@ export function render(st, params, go) {
       ['dark', '上車吧！教授叫我來帶你回去。'],
     ]);
     await tapTask('car', '點擊那台黑色轎車', [
+      { id: 'dark', x: 1055, y: 300, w: 150, h: 290, label: '靠在車旁的人' },
       { id: 'car', x: 922, y: 375, w: 310, h: 185, label: '黑色轎車' },
-    ]);
+    ], { hint: '點右邊那台黑色轎車。', miss: '要上車，點右邊那台黑色轎車。' });
     await say('謝謝……', 'me'); S();
     if (d02 === 1) await say('那個保安……我總覺得他沒把話說完。', 'me', { think: true });
     else if (d02 === 0) await say('系統會出錯。簽名不會。', 'me', { think: true });
@@ -388,13 +427,14 @@ export function render(st, params, go) {
     if (!meta.seenIntro) {
       await tapTask('prof', '點擊窗邊的教授', [
         { id: 'prof', x: 560, y: 130, w: 160, h: 470, label: '因杜阿森' },
-      ]);
+        ...A_HS,
+      ], { hint: '教授在窗邊。', miss: '教授在窗邊。' });
       await lines([
         ['prof', '你回來了。很好！'],
         ['me', '教授，我好像……'],
         ['prof', '嗯……先坐著休息吧！剩下的之後說……'],
       ]);
-      await tapTask('desk', '點擊自己的座位坐下', [A_HS.find(h => h.id === 'desk')]);
+      await tapTask('desk', '點擊自己的座位坐下', A_HS, { hint: '你的座位在左邊。', miss: '你的座位在左邊。' });
       await lines([
         ['prof', '（看向達克）辛苦你了，讓你跑了這趟。'],
         ['dark', '幫一個小忙而已，不過這小子……'],
@@ -429,7 +469,7 @@ export function render(st, params, go) {
       meta.seenIntro = true; save();
       setHs(A_HS);
     }
-    flag('START'); paintGoal();
+    flag('START'); paintGoal(); paintHintMeta();
     return loop(async id => {
       if (id === 'back') { closeCu(); return; }
       if (id === 'desk') { await deskCu(); return; }
@@ -591,8 +631,8 @@ export function render(st, params, go) {
       flag('C_IN');
       if (F.C_RETRY) {
         await lines([
-          ['dark', '（把文件扔回地上）最後一次。'],
-          ['dark', '再放錯，我就帶走。'],
+          ['dark', '（把文件扔回地上）這次放仔細點。'],
+          ['dark', '三次，文件我就帶走。'],
         ]);
       } else {
         await lines([
@@ -653,24 +693,29 @@ export function render(st, params, go) {
     ];
     const PIN = [[400, 218], [638, 218], [875, 218], [400, 418], [638, 418], [875, 418]];
     const KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
-    const paint = () => openCu(cuBg('N02-BG_DETAIL-010') +
-      KEYS.map((k, i) => `<div class="n2-pinned" style="left:${PIN[i][0] - 70}px;top:${PIN[i][1] - 6}px"><img src="${IMG(DOCS[k].asset + '.webp')}" alt=""><span>${k}</span></div>`).join('') +
-      `<button type="button" class="btn n2-answer" data-hs="ans">整理出結論</button>`,
-    KEYS.map((k, i) => ({ id: 'r' + k, x: PIN[i][0] - 76, y: PIN[i][1] - 12, w: 152, h: 176, label: '讀 ' + DOCS[k].title })));
+    const unreadOf = () => KEYS.filter(k => !S0.read.includes(k));
+    const paint = () => {
+      const unread = unreadOf();
+      openCu(cuBg('N02-BG_DETAIL-010') +
+        KEYS.map((k, i) => `<div class="n2-pinned" style="left:${PIN[i][0] - 70}px;top:${PIN[i][1] - 6}px"><img src="${IMG(DOCS[k].asset + '.webp')}" alt=""><span>${k}</span>${unread.includes(k) ? '<i class="n2-unread" aria-label="還沒看">未</i>' : ''}</div>`).join('') +
+        `<button type="button" class="btn n2-answer${unread.length ? ' is-wait' : ''}" data-hs="ans">整理出結論</button>`,
+      KEYS.map((k, i) => ({ id: 'r' + k, x: PIN[i][0] - 76, y: PIN[i][1] - 12, w: 152, h: 176, label: '讀 ' + DOCS[k].title })));
+      const ans = $(cu, '.n2-answer');
+      if (ans) ans.addEventListener('click', ev => { ev.stopPropagation(); sfx('tap'); emit({ type: 'hs', id: 'ans' }); });
+    };
     paint();
-    $(cu, '.n2-answer').addEventListener('click', ev => { ev.stopPropagation(); sfx('tap'); emit({ type: 'hs', id: 'ans' }); });
     return loop(async id => {
       if (id === 'back') { closeCu(); return true; }
-      if (id[0] === 'r') { await readDoc(id[1]); S(); return; }
+      if (id[0] === 'r') { await readDoc(id[1]); S(); paint(); return; }
       if (id !== 'ans') return;
-      const unread = ['A', 'B', 'C', 'D', 'E', 'F'].filter(k => !S0.read.includes(k));
-      if (unread.length) { await say('看完再下結論。', 'dark'); S(); return; }
+      const unread = unreadOf();
+      if (unread.length) { toast(`看完再下結論。還沒看：${unread.join('、')}（${KEYS.length - unread.length}/6）`); return; }
       const ansBtn = $(cu, '.n2-answer'); if (ansBtn) ansBtn.style.visibility = 'hidden';
       const showAns = () => { const b = $(cu, '.n2-answer'); if (b) b.style.visibility = ''; };
       for (let qi = F.P4_Q || 0; qi < Q.length; qi++) {
         const c = await choose(`${qi + 1}／2　${Q[qi].q}`, Q[qi].o); S();
         if (c < 0) { showAns(); return; }
-        if (c !== Q[qi].a) { showAns(); await miss(); S(); return; }
+        if (c !== Q[qi].a) { showAns(); await miss('p4'); S(); return; }
         sfx('pin'); flag('P4_Q', qi + 1);
       }
       flag('P4'); closeCu();

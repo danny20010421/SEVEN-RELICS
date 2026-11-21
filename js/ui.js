@@ -76,13 +76,14 @@ ${title ? `<h2>${title}</h2>` : ''}
 ${body ? `<p>${body}</p>` : ''}
 ${bodyHtml}
 ${scroll ? `<div class="scroll">${scroll}</div>` : ''}
-<div class="actions">${buttons.map((b, i) => `<button type="button" class="${b.kind || 'btn'}" style="width:208px" data-i="${i}">${b.label}</button>`).join('')}</div>
+<div class="actions">${buttons.map((b, i) => `<button type="button" class="${b.kind || 'btn'}" style="width:208px" data-i="${i}"${b.disabled ? ' disabled' : ''}>${b.label}</button>`).join('')}</div>
 ${closable ? `<button type="button" class="x" aria-label="關閉">${ICON.close}</button>` : ''}
 </div></div>`);
     const done = v => { el.remove(); resolve(v); };
     el.addEventListener('click', e => {
       const b = e.target.closest('[data-i]');
       if (b) {
+        if (b.disabled || buttons[+b.dataset.i].disabled) return;
         sfx('tap');
         const v = buttons[+b.dataset.i].value;
         if (v && validate) { const r = validate(el); if (r && r.error) { toast(r.error); return; } done(r); return; }
