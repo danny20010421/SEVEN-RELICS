@@ -3,7 +3,7 @@
 // 美術：Grok 交件（docs/N02-grok-art.md），熱點與文件格線照 docs/N02-geometry.json 的舞台座標。
 import { get, save } from './store.js';
 import { sfx, bgm, applyVolume } from './audio.js';
-import { html, $, IMG, ICON, wait, esc, modal, toast } from './ui.js';
+import { html, $, IMG, ICON, wait, esc, modal, toast, bustImg } from './ui.js';
 
 const MAX_FAIL = 3; // 整理與解讀文件錯 3 次 → 達克收走文件離開 → 整節從頭
 const HINT_COST = 1; // 第二節起：每次提示 1 顆鑽石
@@ -121,8 +121,6 @@ export function render(st, params, go) {
     setHs(objs);
   }
   const setBg = f => { const b = $(scene, '#bgimg'); if (b) b.src = IMG(f + '.webp'); };
-  const pose = { dark: 'N02-CHAR-015' }; // 達克半身像目前用哪一張（015 站姿／015b 看文件／015c 轉身離開）
-  const swapChar = (k, file) => { pose[k] = file; };
   function setHs(list, layer = hsLayer) {
     if (layer === hsLayer) hsLayer.innerHTML = '';
     list.forEach(({ id, x, y, w, h, label }) => {
@@ -156,8 +154,8 @@ export function render(st, params, go) {
     return new Promise(res => {
       const calm = cu.classList.contains('hidden') && !el.querySelector('.g1-docback');
       let pic = null;
-      if (who === 'me' && calm && opt.pic !== false) pic = html(`<img class="portrait n1-char" src="${IMG(g === 'f' ? 'N01-CHAR-012.webp' : 'N01-CHAR-013.webp')}" alt="">`);
-      if ((who === 'dark' || who === 'prof') && calm && opt.pic !== false) pic = html(`<img class="portrait npc n1-char n2-bust" src="${IMG((who === 'dark' ? pose.dark : 'N01-CHAR-014') + '.webp')}" alt="">`);
+      if (who === 'me' && calm && opt.pic !== false) pic = html(bustImg(g === 'f' ? 'N01-CHAR-012' : 'N01-CHAR-013', 'left'));
+      if ((who === 'dark' || who === 'prof') && calm && opt.pic !== false) pic = html(bustImg(who === 'dark' ? 'N02-CHAR-015' : 'N01-CHAR-014', 'right'));
       if (pic) el.appendChild(pic);
       const c = null;
       const b = html(`<div class="sub${opt.think ? ' think' : ''}" role="button" tabindex="0" aria-label="點一下繼續"><div class="who"><span>${esc(opt.think ? pname + '（心裡）' : WHO[who] || '')}</span></div><p class="cn">${cn}</p>${ICON.down}</div>`);
@@ -319,18 +317,15 @@ export function render(st, params, go) {
     setScene('N02-BG-001', '舊館外・深夜', []);
     $(el, '#black').classList.remove('on'); await wait(600); S();
     await lines([
-      ['dark', '……出來了。'],
-      ['me', '（左右看了看）你在跟我說話？'],
-      ['dark', '這裡沒有別人。'],
-      ['me', '抱歉，你是……？'],
-      ['dark', '（看了你一眼）達克・利姆。教授的學生。'],
+      ['dark', '（看了一眼，嘆氣）看來我不值得你記住？'],
+      ['me', '……'],
+      ['dark', '我也是因杜阿森教授的學生。'],
       ['me', '教授的學生？那我們……'],
-      ['dark', '同一個研究室。僅此而已。'],
-      ['me', '……我不記得你。'],
-      ['dark', '無所謂。教授要我來接你。上車。'],
-      ['me', '教授叫你來的？'],
-      ['dark', '不然呢。'],
-      ['me', '竟然有人在等我。……可是這個人，看起來一點也不想來。', { think: true }],
+      ['dark', '同一個研究室。僅此而已！'],
+      ['me', '那現在……？'],
+      ['dark', '上車吧！教授叫我來帶你回去。'],
+      ['me', '謝謝……'],
+      ['me', '他好像有點眼熟。', { think: true }],
     ]);
     sfx('cardoor'); await wait(700); S(); sfx('caroff');
     await sys(['前往：學校・教授研究室'], 1600); S();
@@ -349,20 +344,29 @@ export function render(st, params, go) {
     setScene('N02-BG-002', '學校・教授研究室', A_HS);
     if (!meta.seenIntro) {
       await lines([
-        ['prof', '你出來了。很好。'],
-        ['me', '教授……你在電話裡說，出來以後再說。'],
-        ['prof', '嗯。先坐。（看向達克）達克，謝謝你跑這一趟。'],
-        ['dark', '教授。'],
-        ['prof', '（轉向你）你還記得他嗎？'],
-        ['me', '……不記得。'],
-        ['dark', '從見面開始就這樣。'],
-        ['prof', '他沒有在演。（停頓）{主角}，你還記得多少？'],
-        ['me', '今晚以前的事……很模糊。舊館裡，還少了七分鐘。'],
+        ['prof', '你回來了。很好！'],
+        ['me', '教授，我好像……'],
+        ['prof', '嗯……先坐著休息吧！剩下的之後說……'],
+        ['prof', '（看向達克）辛苦你了，讓你跑了這趟。'],
+        ['dark', '幫一個小忙而已，不過這小子……'],
+        ['prof', '（看向你）你還記得他嗎？'],
+        ['me', '也是你的學生……'],
+        ['dark', '從見面就這樣……'],
+        ['prof', '看來是真的。（停頓）'],
+        ['prof', '他不是裝的。達克，他失憶了！'],
+        ['dark', '？'],
+        ['prof', '{主角}，你還記得多少？'],
+        ['me', '……什麼都不記得了，很突然地出現在那。'],
+        ['me', '我甚至不知道自己怎麼進去……'],
         ['dark', '……'],
-        ['prof', '達克，我想拜託你一件事。帶他回住處。熟悉的地方，也許能讓他想起一些東西。'],
-        ['dark', '……為什麼是我？'],
-        ['prof', '你們在同一個研究室待過。地址我寫給你。現在只有你能幫這個忙。'],
-        ['dark', '……我知道了。'],
+        ['prof', '達克，再拜託你一件事。'],
+        ['dark', '教授您說。'],
+        ['prof', '先帶他回家吧！或許熟悉的地方，能喚醒他的記憶，讓他想起一些東西。'],
+        ['dark', '……'],
+        ['prof', '你們同一個研究室的，互相幫忙一下。'],
+        ['prof', '地址我寫給你。現在只有你能幫忙了。'],
+        ['dark', '……知道了。'],
+        ['dark', '我只幫忙送到家。'],
         ['prof', '麻煩你了。（轉向你）還有，你之前收集的那些歷史文件，回去整理一下。你失憶前……已經快摸到某些東西了。'],
         ['me', '什麼東西？'],
         ['prof', '等你自己找到，我再告訴你我知道的部分。'],
@@ -493,7 +497,7 @@ export function render(st, params, go) {
     const K = { k1: [570, 151], k2: [635, 151], k3: [700, 151], k4: [570, 212], k5: [635, 212], k6: [700, 212], k7: [570, 273], k8: [635, 273], k9: [700, 273], kC: [570, 335], k0: [635, 335], kOK: [700, 335] };
     const paint = msg => openCu(cuBg('N02-BG_DETAIL-007') +
       `<div class="n2-lcd" style="left:565px;top:35px;width:191px;height:59px">${[0, 1, 2, 3, 4, 5].map(i => `<i class="${i < v.length ? 'on' : ''}"></i>`).join('')}</div>` +
-      `<i class="n2-led${ok ? ' on' : ''}" style="left:640px;top:100px"></i><div class="n1-state" style="left:640px;top:648px">${msg || ''}</div>`,
+      `<i class="n2-led${ok ? ' on' : ''}" style="left:648px;top:107px;width:26px;height:26px"></i><div class="n1-state" style="left:640px;top:648px">${msg || ''}</div>`,
     Object.entries(K).map(([k, [x, y]]) => ({ id: k, x, y, w: 56, h: 56, label: k === 'kOK' ? '確認' : k === 'kC' ? '清除' : k.slice(1) })));
     paint();
     const r = await loop(async id => {
@@ -602,15 +606,13 @@ export function render(st, params, go) {
         sfx('pin'); flag('P4_Q', qi + 1);
       }
       flag('P4'); closeCu();
-      swapChar('dark', 'N02-CHAR-015b');
-      await lines([
+            await lines([
         ['me', '西伯利亞、京都、香港、泰國……幾十年、好幾個國家，都有同一群人經手。'],
         ['dark', '同一群人？'],
         ['me', '名字每次都不一樣。可是做事的方法一模一樣。'],
         ['dark', '（看著文件，安靜了很久）'],
       ]);
-      swapChar('dark', 'N02-CHAR-015');
-      setBg('N02-BG-004-notebook');
+            setBg('N02-BG-004-notebook');
       await sys(['你把筆記本放在書桌上，翻到最後一頁'], 1800); S();
       paintGoal(); return true;
     });
@@ -624,8 +626,7 @@ export function render(st, params, go) {
       ['me', '舊館那張借閱卡，旁邊的字也是我寫的。'],
       ['me', '我在找一個人。'],
     ]);
-    swapChar('dark', 'N02-CHAR-015c');
-    await lines([
+        await lines([
       ['dark', '（拿起外套）我走了。'],
       ['me', '達克。'],
       ['dark', '還有事？'],
@@ -640,14 +641,14 @@ export function render(st, params, go) {
     if (!dd.records.includes('n02')) dd.records.push('n02');
     meta.st = null; meta.cleared = true; save();
     $(el, '#black').classList.add('on'); await wait(600); S();
-    const card = html(`<div class="n1-fail"><div class="col" style="align-items:center;gap:16px;z-index:2"><div class="label">第一章・第二節</div><h2>留下來的人</h2><p>完</p><div class="row" style="height:56px"><button type="button" class="btn" data-a="out" style="width:208px">返回關卡選擇</button></div></div></div>`);
+    const card = html(`<div class="n1-fail"><div class="col" style="align-items:center;gap:16px;z-index:2"><div class="label">第一章・第二節</div><h2>留下來的人</h2><p>完</p><p class="n2-credit">背景音樂　HORROR — Mehul ShaRma</p><div class="row" style="height:56px"><button type="button" class="btn" data-a="out" style="width:208px">返回關卡選擇</button></div></div></div>`);
     el.appendChild(card);
     await new Promise(r => $(card, '[data-a]').addEventListener('click', () => { sfx('tap'); r(); })); S();
     go('stages', { tab: 0 });
   }
 
   async function flow() {
-    paintSlots(); paintGoal(); bgm(null); // 第二節背景音樂由製作人提供後再接上
+    paintSlots(); paintGoal(); bgm('n02'); // 背景音樂：HORROR — Mehul ShaRma
     let where = S0.scene || 'S';
     if (params && params.retry && meta.seenIntro) where = 'A'; // 重新挑戰：略過舊館外的劇情
     const RUN = { S: sceneS, A: sceneA, B: sceneB, C: sceneC };

@@ -1,4 +1,5 @@
 import { get, save } from './store.js';
+import { STAGE_ASSETS } from './preload.js';
 import { sfx, unlock, bgm } from './audio.js';
 import { html, $, $$, IMG, ICON, modal, alertBox, toast, wait, esc } from './ui.js';
 
@@ -202,4 +203,43 @@ export function name(st, p, go) {
     save();
     go('prologue');
   });
+}
+
+// ---------- 進關卡前：先把這一關的圖片與音樂全部下載完，才進入 ----------
+const stageReady = new Set();
+export const stageNeedsLoad = name => !!STAGE_ASSETS[name] && !stageReady.has(name);
+export function stageLoading(st, p, go) {
+  const list = STAGE_ASSETS[p.next];
+  const items = [...list.img.map(n => ({ t: 'img', n })), ...list.audio.map(n => ({ t: 'audio', n }))];
+  const el = html(`<div class="scr">
+<img class="bg load-slide on" src="${IMG('load1.webp')}" alt="">
+<img class="bg load-slide" src="${IMG('load2.webp')}" alt="">
+<div class="load-shade"></div>
+<div class="abs" style="left:48px;top:24px;height:64px;display:flex;align-items:center">${WORDMARK(194, 64)}</div>
+<div class="abs col" style="left:48px;right:48px;bottom:40px;gap:24px">
+  <div class="row" style="justify-content:flex-end;height:32px"><div class="dots" aria-hidden="true"><i class="on"></i><i></i></div></div>
+  <div class="col" style="gap:8px">
+    <div class="row" style="height:32px;justify-content:space-between"><div style="font-size:16px;line-height:32px;color:var(--text-2)">下載關卡資源中</div><div id="pct" style="font-family:var(--cinzel);font-weight:700;font-size:24px;line-height:32px">0%</div></div>
+    <div class="bar" role="progressbar" aria-label="關卡資源下載進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="fill" style="width:0%;box-shadow:0 0 16px rgba(229,38,58,0.8);transition:width 0.3s"></i></div>
+  </div>
+</div>
+</div>`);
+  st.appendChild(el);
+  const slides = $$(el, '.load-slide'), dots = $$(el, '.dots i');
+  let k = 0, done = 0, alive = true;
+  const car = setInterval(() => { k = 1 - k; slides.forEach((s, i) => s.classList.toggle('on', i === k)); dots.forEach((s, i) => s.classList.toggle('on', i === k)); }, 2600);
+  const set = v => { $(el, '#pct').textContent = v + '%'; $(el, '#fill').style.width = v + '%'; $(el, '[role=progressbar]').setAttribute('aria-valuenow', v); };
+  const finish = () => {
+    clearInterval(car);
+    stageReady.add(p.next);
+    setTimeout(() => { if (alive) go(p.next, p.params || {}); }, 400);
+  };
+  const one = () => { done++; if (!alive) return; set(Math.round(done / items.length * 100)); if (done === items.length) finish(); };
+  // 圖片：等解碼完成；音訊：整檔下載進快取（失敗也算完成，避免卡住）
+  items.forEach(it => {
+    if (it.t === 'img') { const im = new Image(); im.onload = () => (im.decode ? im.decode().catch(() => {}) : Promise.resolve()).then(one); im.onerror = one; im.src = IMG(it.n); }
+    else fetch(it.n).then(r => r.arrayBuffer()).catch(() => {}).then(one);
+  });
+  if (!items.length) finish();
+  return () => { alive = false; clearInterval(car); };
 }

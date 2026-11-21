@@ -3,7 +3,7 @@
 // 美術依 N01 art 包（UI/UX 審核通過）與 art/CODE_NOTES.md；座標＝母片像素 ÷3（背景）或 ÷2（近景）。
 import { get, save } from './store.js';
 import { sfx, bgm, applyVolume } from './audio.js';
-import { html, $, IMG, ICON, wait, esc, modal, toast } from './ui.js';
+import { html, $, IMG, ICON, wait, esc, modal, toast, bustImg } from './ui.js';
 
 const TOTAL = 1800; // 劇情時鐘基準（第一節不限時，只用來推算標準時）
 const NO_LIMIT = true; // 第一章第一節：不限時挑戰
@@ -248,7 +248,7 @@ export function render(st, params, go) {
     return new Promise(res => {
       const calm = cu.classList.contains('hidden') && cine.classList.contains('hidden') && !el.querySelector('.g1-docback');
       let pic = null;
-      if (who === 'me' && calm && opt.pic !== false) pic = html(`<img class="portrait n1-char" src="${IMG(g === 'f' ? 'N01-CHAR-012.webp' : 'N01-CHAR-013.webp')}" alt="">`);
+      if (who === 'me' && calm && opt.pic !== false) pic = html(bustImg(g === 'f' ? 'N01-CHAR-012' : 'N01-CHAR-013', 'left'));
       if (pic) el.appendChild(pic);
       const phone = who === 'ind' ? '<span class="n1-phone" aria-hidden="true">☎</span>' : '';
       const b = html(`<div class="sub${who === 'cast' ? ' think' : ''}" role="button" tabindex="0" aria-label="點一下繼續"><div class="who"><span>${phone}${esc(WHO[who] || '')}</span></div><p class="cn">${cn}</p>${ICON.down}</div>`);

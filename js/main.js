@@ -10,7 +10,7 @@ import * as lobby from './lobby.js';
 import * as pages from './pages.js';
 
 const SCREENS = {
-  terms: front.terms, loading: front.loading, login: front.login, name: front.name,
+  terms: front.terms, loading: front.loading, stageload: front.stageLoading, login: front.login, name: front.name,
   prologue: prologue.render,
   g01: g01.render,
   n01: n01.render,
@@ -25,6 +25,8 @@ let cleanup = null;
 let current = null;
 export function go(name, params = {}) {
   if (!SCREENS[name]) return;
+  // 關卡資源沒下載完，先進下載畫面
+  if (front.stageNeedsLoad(name)) { name = 'stageload'; params = { next: arguments[0], params }; }
   if (cleanup) { try { cleanup(); } catch (e) {} cleanup = null; }
   const st = stage();
   st.innerHTML = '';
