@@ -13,7 +13,7 @@ const MAX_ALERT = 3; // 答錯 3 次被保安發現 → 失敗、退出、從頭
 const ELDER_MOSAIC = '<span class="mosaic" aria-label="模糊不清的名字"><i></i><i></i><i></i></span>';
 // 新文件的紙張：美術補圖前先借用現有空白紙（DOC-072 借閱卡、DOC-073 信紙到位後換掉）
 const DOC_ART = { borrow: 'N01-DOC-072', letter: 'N01-DOC-073' };
-const WAIT = { P01: 4, P02: 4, P03: 3, P04: 3, P05: 4 }; // 答錯後的等待秒數（縮短）
+const WAIT = { P01: 1, P02: 1, P03: 1, P04: 1, P05: 1 }; // 答錯後只停 1 秒，不再鎖 3–4 秒
 const STD0 = 21 * 60 + 7; // 開場斷電：標準時 21:07（真實時間軸：20:53 進閱覽室被打暈、21:02 醒來聽到廣播、21:07 斷電）
 const OFFSET = 7; // 保安終端快 7 分鐘
 const PAUSE_IN_DIALOGUE = true; // 對白播放時暫停倒數（GDD 4.3 建議實機 A/B 測試後定案）
@@ -213,6 +213,7 @@ export function render(st, params, go) {
     flag('G_' + k); await wait(300); S();
     await playLines(GUIDE[k]);
   }
+  // HELP 不再於答錯時自動播出（會讓提示鈕沒有用）。內容留著，以免日後要接回提示鈕。
   async function help() {
     const k = cur().k;
     if (!HELP[k] || F['H_' + k]) return;
@@ -326,8 +327,8 @@ export function render(st, params, go) {
     '〔叮、叮〕→〔低沉的嗡鳴〕→〔喀一聲〕；電話鈴那段不屬於這捲帶子。'] },
   { k: 'P05', done: () => F.P05_SOLVED, goal: '完成最終推理', hl: ['console'], hl3: ['console'], hints: [
     '先選結論，再從四份文件裡選一份能證明它的。',
-    '我在館裡的證據在閱覽室；錄音的證據是磁帶；清場表的問題要看簽名和測試啟動的先後。',
-    '①已在閱覽室＋訪客卡（背面）②不足以證明＋錄音磁帶 ③尚未釐清＋訪客出入紀錄。'] },
+    '第一題看訪客卡是什麼時候發的；第二題把整段錄音聽完，他們在吵什麼；第三題對照訪客出入紀錄，今晚有沒有人上樓巡查。',
+    '①已在館內＋訪客卡背面　②清場表沒巡就先簽＋錄音磁帶　③尚未釐清＋訪客出入紀錄。'] },
   { k: 'CHK', done: () => F.CHECKS_DONE, goal: '完成人工清查', hl: ['chk'], hl3: ['chk'], hints: [
     '右側牆上的人工清場面板有三個清查點。',
     '清查表只能寫你親眼確認過的事。',
@@ -342,13 +343,18 @@ export function render(st, params, go) {
   // 提示鈕預設 .dim；同一步驟 90 秒沒進展 → .pulse（不再自動閃熱點）
   let idleT = 0, idleK = null;
   const hintBtn = $(el, '#hintBtn'); hintBtn.classList.add('dim');
-  const paintHintBtn = () => { const n = Math.max(0, FREE_HINTS - (S0.hintUsed || 0)); hintBtn.querySelector('span').textContent = `提示 ${n}`; hintBtn.setAttribute('aria-label', `提示，剩 ${n} 次`); };
+  const freeLeft = () => Math.max(0, FREE_HINTS - (S0.hintUsed || 0));
+  const paintHintBtn = () => { const n = freeLeft(); hintBtn.querySelector('span').textContent = `提示 ${n}`; hintBtn.setAttribute('aria-label', `提示，剩 ${n} 次`); };
+  const pulseHint = on => {
+    if (on && freeLeft() > 0) { hintBtn.classList.remove('dim'); hintBtn.classList.add('pulse'); }
+    else { hintBtn.classList.remove('pulse'); hintBtn.classList.add('dim'); }
+  };
   paintHintBtn();
   const armIdle = () => {
     const k = F.EV_N01_START ? cur().k : null;
     if (k === idleK && idleT) return;
     idleK = k; clearTimeout(idleT); hintBtn.classList.remove('pulse'); hintBtn.classList.add('dim');
-    idleT = setTimeout(() => { if (alive && F.EV_N01_START) { hintBtn.classList.remove('dim'); hintBtn.classList.add('pulse'); } idleT = 0; }, window.__N01_IDLE_MS || 90000);
+    idleT = setTimeout(() => { if (alive && F.EV_N01_START) pulseHint(true); idleT = 0; }, window.__N01_IDLE_MS || 90000);
   };
   el.addEventListener('pointerdown', armIdle);
   hintBtn.addEventListener('click', async () => {
@@ -394,8 +400,13 @@ export function render(st, params, go) {
     sfx('step'); el.classList.add('n1-sweep'); setTimeout(() => el.classList.remove('n1-sweep'), 1600);
     await say(ALERT_LINE[S0.alert - 1], 'guardv'); S();
     if (S0.alert === 1) { await say('你聽到了嗎？他在附近。動作快一點，但別慌。', 'ind'); S(); }
-    if (S0.alert === 2) { await me('腳步聲越來越近了……'); S(); await say('再錯一次，他就會發現。慢慢想，想清楚再動手。', 'ind'); S(); }
-    await help();
+    if (S0.alert === 2) {
+      await me('腳步聲越來越近了……'); S();
+      await say(freeLeft() > 0
+        ? '再錯一次，他就會發現。想不清楚的話，用提示。'
+        : '再錯一次，他就會發現。慢慢想，想清楚再動手。', 'ind'); S();
+    }
+    pulseHint(true);
   }
   async function caught() {
     running = false;
@@ -405,7 +416,7 @@ export function render(st, params, go) {
     ended = true; alive = false; F.N01_CAUGHT = true;
     meta.st = null; save();
     const b = html(`<div class="n1-fail"><div class="n1-shut" aria-hidden="true"></div><div class="col" style="align-items:center;gap:16px;z-index:2">
-<div class="label">EV_CAUGHT</div><h2>被保安發現了</h2><p>警察正在趕來的路上。這一晚，你沒能離開。</p>
+<h2>被保安發現了</h2><p>警察正在趕來的路上。這一晚，你沒能離開。</p>
 <div class="row" style="gap:16px;height:56px"><button type="button" class="btn-line" data-a="out" style="width:208px">返回關卡選擇</button><button type="button" class="btn" data-a="retry" style="width:208px">重新挑戰</button></div></div></div>`);
     b.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (!a) return; sfx('tap'); if (a.dataset.a === 'retry') go('n01', { retry: true }); else go('stages', { tab: 0 }); });
     el.appendChild(b); sfx('error');
@@ -789,7 +800,7 @@ export function render(st, params, go) {
         if (isM(code)) { lockFor('P03_MLOCK', WAIT.P03); sfx('error'); await me('這份維護卷宗不是那一天的。', { pic: false }); S(); await alarm(); }
         await new Promise(r => v.addEventListener('click', () => { sfx('tap'); v.remove(); r(); })); S();
         F.P03_MISS = (F.P03_MISS || 0) + 1; persist();
-        if (!isM(code) && F.P03_MISS >= 2) await help(); // 開錯兩個非目標抽屜，教授也會出聲
+        if (!isM(code) && F.P03_MISS >= 2) pulseHint(true);
         paint(); return;
       }
       flag('P03_SOLVED'); sfx('unlock'); paint(); await wait(700); S();
@@ -1018,7 +1029,9 @@ export function render(st, params, go) {
       ok[i] = true; F.CHK_OK = [...ok]; persist(); sfx('clang'); paint();
       if (!ok.every(Boolean)) return;
       flag('CHECKS_DONE'); sfx('unlock'); await wait(600); S(); closeCu(); setBg('N01-BG-004-checked'); await wait(800); S();
-      await say('……喂？出口控制間？這個時間怎麼會有人在裡面？', 'guard'); S();
+      await say((S0.alert || 0) > 0
+        ? '……喂？出口控制間？剛才門外那個聲音，是你？'
+        : '……喂？出口控制間？這麼晚了，還有人在裡面？', 'guard'); S();
       await me('我被鎖在館裡了。系統說需要經過人員確認才能離開。'); S();
       await say('今晚八點五十五開始夜間安全測試，測試期間門禁會自己鎖死。這是正常的！', 'guard'); S();
       await me('清場表上寫「無其他人員」，簽名是八點五十九分。'); S();
@@ -1034,7 +1047,7 @@ export function render(st, params, go) {
       await say(['系統確實有出錯。但系統不會自己簽名。', '也許。但「沒做完」和「說謊」之間，還有著很多可能。', '不知道，是一個可以接受的答案。'][c], 'ind'); S();
       await say('對了——你上來的時候，有沒有看到什麼？', 'guard'); S();
       await me('……為什麼這樣問？'); S();
-      await say('沒事。監控今晚整晚都沒訊號，我只是問問。', 'guard'); S();
+      await say('沒事。今晚畫面有點不穩，我只是問問。', 'guard'); S();
       await me('（他沒看見我的臉。趁現在走！）'); S();
       paintGoal(); return true;
     });
@@ -1110,11 +1123,10 @@ export function render(st, params, go) {
     await fadeTo(() => { setScene('N01-BG-005', '台灣雨夜館外', []); $(el, '#slots').classList.add('hidden'); }); S();
     await sys([`離館時間　標準時 ${outStd}`], 2000); S();
     // 蒙太奇的反轉：這些事都對得上那七分鐘，但都不是主角做的（劇本草稿，待確認）
-    await me('所以是……巡查人員先簽了清場表，怕別人發現她偷懶才出現爭執的嗎？加上終端的時間快了七分鐘……'); S();
+    await me('清場表是先簽的。終端快了七分鐘。'); S();
     await me('這一切似乎都對得上……'); S();
-    await me('但好像又有不對勁的地方？'); S();
-    await me('畢竟，我為什麼會出現在那！'); S();
-    await me('我還是不記得……而且那我到底是什麼時候，申請了這份文件？'); S();
+    await me('但好像又有不對勁的地方。'); S();
+    await me('畢竟，我為什麼會出現在那。'); S();
     // EV_NOTE：沒拿或沒讀過也在這裡補讀，不會漏
     if (!has('note')) S0.items.push('note');
     await readDoc('noteF'); S();
@@ -1124,7 +1136,7 @@ export function render(st, params, go) {
     // 熄燈鏡頭：二樓西側閱覽室的窗燈熄掉（無台詞）
     const win = html('<div class="n1-winoff" style="left:804px;top:267px;width:30px;height:65px"></div>');
     scene.appendChild(win); await wait(700); S(); win.classList.add('on'); sfx('tap'); await wait(900); S();
-    await me('如果我不記得自己來過這裡……那我到底是什麼時候，申請了這份文件？'); S();
+    await me('如果我不記得自己來過這裡……這份文件，是什麼時候申請的？'); S();
     await sys(['雨聲漸漸停了'], 2200); S();
     $(el, '#black').classList.add('on'); await wait(900); S();
     const dd = get();
