@@ -13,7 +13,7 @@
 | N01-BG-002 | 檔案走廊背景 | B | `assets/img/N01-BG-002.webp` | 是 | 常態 | — |
 | N01-BG-003 | 微縮膠卷室背景 | C | `assets/img/N01-BG-003.webp` | 是 | 常態 | — |
 | N01-BG-004 | 出口控制間背景 | D | `assets/img/N01-BG-004.webp` | 是 | 常態 | — |
-| N01-BG-005 | 台灣雨夜館外背景 | OUT | `assets/img/N01-BG-005.webp` | 是 | 常態 | — |
+| N01-BG-005 | 台灣雨夜館外背景 | OUT | `assets/img/N01-BG-005.webp` | 是 | 常態 | 側門右邊停著一台黑色轎車＝N02 達克靠著的同一台（N02-BG-001 已對照），不要改車款與顏色 |
 | N01-BG_DETAIL-006 | 桌面近景 | A | `assets/img/N01-BG_DETAIL-006.webp` | 否 | 常態 | — |
 | N01-BG_DETAIL-007 | 電箱近景 | A | `assets/img/N01-BG_DETAIL-007.webp` | 是 | 常態 | 備用配電箱 40,190,130×190 |
 | N01-BG_DETAIL-008 | 時鐘／終端近景 | B | `assets/img/N01-BG_DETAIL-008.webp` | 是 | 常態 | — |
@@ -22,7 +22,7 @@
 | N01-BG_DETAIL-011 | 出口控制台近景 | D | `assets/img/N01-BG_DETAIL-011.webp` | 是 | 常態 | 出口控制台 70,320,270×220 |
 | N01-CHAR-012 | 女性主角全身 | GLOBAL | `assets/img/N01-CHAR-012.webp` | 否 | 中性立繪 | — |
 | N01-CHAR-013 | 男性主角全身 | GLOBAL | `assets/img/N01-CHAR-013.webp` | 否 | 中性立繪 | — |
-| N01-CHAR-014 | 因杜阿森全身 | GLOBAL | `assets/img/N01-CHAR-014.webp` | 否 | 中性立繪 | — |
+| N01-CHAR-014 | 因杜阿森全身 | GLOBAL | `assets/img/N01-CHAR-014.webp` | 否 | 中性立繪 | N01 結尾不再使用（教授整節只在電話裡）；N02 場景 2 教授立繪沿用，勿刪 |
 | N01-CHAR-015 | 艾琳全身 | GLOBAL | `assets/img/N01-CHAR-015.webp` | 否 | 中性立繪 | — |
 | N01-CHAR-016 | 保安半身 | GLOBAL | `assets/img/N01-CHAR-016.webp` | 否 | 中性立繪 | — |
 | N01-EXPR-017 | 女性主角-中性 | GLOBAL | `assets/img/N01-EXPR-017.webp` | 否 | 表情差分 | — |
