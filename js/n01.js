@@ -249,7 +249,6 @@ export function render(st, params, go) {
       const calm = cu.classList.contains('hidden') && cine.classList.contains('hidden') && !el.querySelector('.g1-docback');
       let pic = null;
       if (who === 'me' && calm && opt.pic !== false) pic = html(`<img class="portrait n1-char" src="${IMG(g === 'f' ? 'N01-CHAR-012.webp' : 'N01-CHAR-013.webp')}" alt="">`);
-      if (who === 'indp' && calm) pic = html(`<img class="portrait npc n1-char" src="${IMG('N01-CHAR-014.webp')}" alt="">`);
       if (pic) el.appendChild(pic);
       const phone = who === 'ind' ? '<span class="n1-phone" aria-hidden="true">☎</span>' : '';
       const b = html(`<div class="sub${who === 'cast' ? ' think' : ''}" role="button" tabindex="0" aria-label="點一下繼續"><div class="who"><span>${phone}${esc(WHO[who] || '')}</span></div><p class="cn">${cn}</p>${ICON.down}</div>`);
@@ -1099,9 +1098,7 @@ export function render(st, params, go) {
     await me('艾琳先簽了清場表。錄音裡是別人在吵架。終端的時間快了七分鐘。'); S();
     await me('每一件事都對得上那七分鐘。'); S();
     await me('可是沒有一件，是我做的。'); S();
-    await say('找到你想找的東西了嗎？', 'indp'); S();
-    await me('我連自己想找什麼都不知道。'); S();
-    await say('那你今天至少學會了一件事：不知道自己正在找什麼，比誤以為自己已經找到答案要好。', 'indp'); S();
+    await me('我連自己想找什麼……都不知道。'); S();
     // EV_NOTE：沒拿或沒讀過也在這裡補讀，不會漏
     if (!has('note')) S0.items.push('note');
     await readDoc('noteF'); S();
@@ -1112,6 +1109,7 @@ export function render(st, params, go) {
     const win = html('<div class="n1-winoff" style="left:804px;top:267px;width:30px;height:65px"></div>');
     scene.appendChild(win); await wait(700); S(); win.classList.add('on'); sfx('tap'); await wait(900); S();
     await me('如果我不記得自己來過這裡……那我到底是什麼時候，申請了這份文件？'); S();
+    await sys(['雨聲漸漸停了'], 2200); S();
     $(el, '#black').classList.add('on'); await wait(900); S();
     const dd = get();
     if (!dd.records.includes('n01')) dd.records.push('n01');
@@ -1120,7 +1118,7 @@ export function render(st, params, go) {
     const nf = { ...oldF }; Object.entries(F).forEach(([k, v]) => { if (k.startsWith('n01_') && v) nf[k] = v; });
     dd.n01.last = { trust: S0.trust, habit: S0.habit, noteDisclosure: S0.noteDisclosure, choices: S0.choices, read: S0.read, flags: nf, hintCost: S0.hintCost || 0 };
     save();
-    const card = html(`<div class="g01-card"><div class="label">第一章・第一節　完</div><h2>不存在的第七分鐘</h2><p>下一節「留下來的人」</p><p class="n1-hc">使用提示 ${S0.hintCost || 0} 次</p><button type="button" class="btn" style="width:208px;pointer-events:auto" data-a>返回關卡選擇</button></div>`);
+    const card = html(`<div class="g01-card"><div class="label">第一章・第一節　完</div><h2>不存在的第七分鐘</h2><p>雨停了。街燈下，有人等了一段時間。</p><p>下一節「留下來的人」</p><p class="n1-hc">使用提示 ${S0.hintCost || 0} 次</p><button type="button" class="btn" style="width:208px;pointer-events:auto" data-a>返回關卡選擇</button></div>`);
     el.appendChild(card);
     await new Promise(r => $(card, '[data-a]').addEventListener('click', () => { sfx('tap'); r(); })); S();
     go('stages', { tab: 0 });
