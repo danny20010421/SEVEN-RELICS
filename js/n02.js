@@ -57,15 +57,7 @@ const DOCS = {
 const SORT = { A: '1900', B: '1930', C: '1950', D: '1970' }; // 正確資料夾
 const FOLDERS = ['1900', '1930', '1950', '1970'];
 
-// ---------- 場景熱點與站位（舞台座標，取自 docs/N02-geometry.json） ----------
-const CHAR = { 'N02-CHAR-015': 0.4777, 'N02-CHAR-015b': 0.4777, 'N02-CHAR-015c': 0.4777, 'N01-CHAR-014': 0.5357 };
-// [x 腳底中心, y 腳底, 高度]
-const STAND = {
-  S: { dark: [1130, 590, 290] },
-  A: { prof: [640, 600, 470], dark: [860, 640, 500] },
-  B: { dark: [230, 650, 520] },
-  C: { dark: [600, 450, 400] },
-};
+// ---------- 場景熱點（舞台座標，取自 docs/N02-geometry.json） ----------
 const MONTHS = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
 const CIRCLED = { 2: 12, 9: 25 }; // 3/12、10/25（月份從 0 起算）
 
@@ -123,15 +115,14 @@ export function render(st, params, go) {
   const has = id => S0.items.includes(id);
 
   // ---------- 場景：背景＋站著的角色＋熱點 ----------
-  const charImg = (key, file, [fx, fy, h]) => { const w = Math.round(h * CHAR[file]); return `<img class="n2-stand" id="c-${key}" src="${IMG(file + '.webp')}" alt="" style="left:${fx - w / 2}px;top:${fy - h}px;width:${w}px;height:${h}px">`; };
   function setScene(bgId, title, objs, chars = {}) {
-    scene.innerHTML = `<div class="n1-gb"><span>${bgId}　${title}</span></div><img class="bg" id="bgimg" src="${IMG(bgId + '.webp')}" alt="${title}" onerror="this.remove()">` +
-      Object.entries(chars).map(([k, [file, pos]]) => charImg(k, file, pos)).join('');
-    const charHs = Object.entries(chars).map(([k, [, [fx, fy, h]]]) => { const w = Math.round(h * 0.42); return { id: k, x: fx - w / 2, y: fy - h + 8, w, h: h - 16, label: k === 'dark' ? '達克' : '因杜阿森' }; });
-    setHs([...objs, ...charHs]);
+    // 角色不站在場景裡，只在對話時出現半身像（製作人決定）
+    scene.innerHTML = `<div class="n1-gb"><span>${bgId}　${title}</span></div><img class="bg" id="bgimg" src="${IMG(bgId + '.webp')}" alt="${title}" onerror="this.remove()">`;
+    setHs(objs);
   }
   const setBg = f => { const b = $(scene, '#bgimg'); if (b) b.src = IMG(f + '.webp'); };
-  const swapChar = (k, file) => { const c = $(scene, '#c-' + k); if (c) c.src = IMG(file + '.webp'); };
+  const pose = { dark: 'N02-CHAR-015' }; // 達克半身像目前用哪一張（015 站姿／015b 看文件／015c 轉身離開）
+  const swapChar = (k, file) => { pose[k] = file; };
   function setHs(list, layer = hsLayer) {
     if (layer === hsLayer) hsLayer.innerHTML = '';
     list.forEach(({ id, x, y, w, h, label }) => {
@@ -166,8 +157,9 @@ export function render(st, params, go) {
       const calm = cu.classList.contains('hidden') && !el.querySelector('.g1-docback');
       let pic = null;
       if (who === 'me' && calm && opt.pic !== false) pic = html(`<img class="portrait n1-char" src="${IMG(g === 'f' ? 'N01-CHAR-012.webp' : 'N01-CHAR-013.webp')}" alt="">`);
+      if ((who === 'dark' || who === 'prof') && calm && opt.pic !== false) pic = html(`<img class="portrait npc n1-char n2-bust" src="${IMG((who === 'dark' ? pose.dark : 'N01-CHAR-014') + '.webp')}" alt="">`);
       if (pic) el.appendChild(pic);
-      const c = $(scene, '#c-' + who); if (c) c.classList.add('talk');
+      const c = null;
       const b = html(`<div class="sub${opt.think ? ' think' : ''}" role="button" tabindex="0" aria-label="點一下繼續"><div class="who"><span>${esc(opt.think ? pname + '（心裡）' : WHO[who] || '')}</span></div><p class="cn">${cn}</p>${ICON.down}</div>`);
       const done = () => { sfx('tap'); b.remove(); if (pic) pic.remove(); if (c) c.classList.remove('talk'); res(); };
       b.addEventListener('click', done);
@@ -324,7 +316,7 @@ export function render(st, params, go) {
   // ================= 場景 =================
   // 序　舊館外・雨停之後（BG-001）：達克靠著 N01 結尾那台黑色轎車
   async function sceneS() {
-    setScene('N02-BG-001', '舊館外・深夜', [], { dark: ['N02-CHAR-015', STAND.S.dark] });
+    setScene('N02-BG-001', '舊館外・深夜', []);
     $(el, '#black').classList.remove('on'); await wait(600); S();
     await lines([
       ['dark', '……出來了。'],
@@ -354,7 +346,7 @@ export function render(st, params, go) {
     { id: 'shelf', x: 600, y: 88, w: 310, h: 140, label: '書架' },
   ];
   async function sceneA() {
-    setScene('N02-BG-002', '學校・教授研究室', A_HS, { prof: ['N01-CHAR-014', STAND.A.prof], dark: ['N02-CHAR-015', STAND.A.dark] });
+    setScene('N02-BG-002', '學校・教授研究室', A_HS);
     if (!meta.seenIntro) {
       await lines([
         ['prof', '你出來了。很好。'],
@@ -453,7 +445,7 @@ export function render(st, params, go) {
     { id: 'light', x: 765, y: 262, w: 28, h: 35, label: '電燈開關' },
   ];
   async function sceneB() {
-    setScene(F.GATE ? 'N02-BG-003-open' : 'N02-BG-003', '公寓三樓・門口', B_HS(), { dark: ['N02-CHAR-015', STAND.B.dark] });
+    setScene(F.GATE ? 'N02-BG-003-open' : 'N02-BG-003', '公寓三樓・門口', B_HS());
     if (!F.B_IN) {
       flag('B_IN');
       await lines([
@@ -471,10 +463,10 @@ export function render(st, params, go) {
       if (id === 'dark') { await say(F.GATE ? '大部分人會把密碼留在自己天天看得到的地方。' : '……', 'dark'); S(); return; }
       if (id === 'mail') { await mailCu(); return; }
       if (id === 'gate') {
-        sfx('latch'); flag('GATE'); setBg('N02-BG-003-open'); setHs([...B_HS(), ...charHsB()]);
+        sfx('latch'); flag('GATE'); setBg('N02-BG-003-open'); setHs(B_HS());
         await lines([
           ['me', '鑰匙能開外面的鐵門，可是裡面這道……是密碼鎖。', { think: true }],
-          ['dark', '（看了一眼手錶，沒有說話）'],
+          ['dark', '（看了一眼手錶）大部分人會把密碼留在自己天天看得到的地方。'],
         ]);
         paintGoal(); return;
       }
@@ -482,7 +474,6 @@ export function render(st, params, go) {
       if (id === 'keypad') { if (await p2()) return 'C'; }
     });
   }
-  const charHsB = () => { const [fx, fy, h] = STAND.B.dark; const w = Math.round(h * 0.42); return [{ id: 'dark', x: fx - w / 2, y: fy - h + 8, w, h: h - 16, label: '達克' }]; };
   async function mailCu() {
     openCu(cuBg('N02-BG_DETAIL-008'), [
       { id: 'bill', x: 363, y: 380, w: 525, h: 175, label: '帳單信封' },
@@ -531,7 +522,7 @@ export function render(st, params, go) {
     { id: 'basket', x: 262, y: 306, w: 69, h: 140, label: '捲起來的紙' },
   ];
   async function sceneC() {
-    setScene(F.P4 ? 'N02-BG-004-notebook' : 'N02-BG-004', '我的房間', C_HS, { dark: ['N02-CHAR-015', STAND.C.dark] });
+    setScene(F.P4 ? 'N02-BG-004-notebook' : 'N02-BG-004', '我的房間', C_HS);
     flag('AT_ROOM'); paintFail();
     if (!F.C_IN) {
       flag('C_IN');
@@ -641,7 +632,7 @@ export function render(st, params, go) {
       ['me', '謝謝。'],
       ['dark', '（沒有回頭）教授交代的事，我做完了而已。'],
     ]);
-    sfx('door'); const c = $(scene, '#c-dark'); if (c) c.classList.add('leave');
+    sfx('door');
     await wait(700); S();
     await say('以前的我，到底是個什麼樣的人？', 'me', { think: true }); S();
     ended = true;
