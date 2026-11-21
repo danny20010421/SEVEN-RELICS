@@ -105,3 +105,19 @@ export function rewardModal(title, list) {
     closable: false,
   });
 }
+
+// ---------- 對話半身像：所有角色統一「頭頂到腰」同樣大小 ----------
+// [頭頂 y, 腰 y, 圖寬, 圖高]（原圖像素）
+const BUST = {
+  'N01-CHAR-012': [50, 380, 600, 1120],
+  'N01-CHAR-013': [52, 425, 600, 1120],
+  'N01-CHAR-014': [55, 470, 600, 1120],
+  'N02-CHAR-015': [8, 640, 867, 1815],
+};
+const BUST_HEAD = 88, BUST_WAIST = 560; // 舞台上頭頂、腰的位置
+export function bustImg(file, side = 'left') {
+  const [top, waist, w, h] = BUST[file] || [50, 420, 600, 1120];
+  const k = (BUST_WAIST - BUST_HEAD) / (waist - top);
+  const iw = Math.round(w * k), ih = Math.round(h * k), cx = side === 'left' ? 256 : 900;
+  return `<div class="bust ${side}" aria-hidden="true" style="height:${BUST_WAIST + 24}px"><img src="${IMG(file + '.webp')}" alt="" style="left:${Math.round(cx - iw / 2)}px;top:${Math.round(BUST_HEAD - top * k)}px;width:${iw}px;height:${ih}px"></div>`;
+}

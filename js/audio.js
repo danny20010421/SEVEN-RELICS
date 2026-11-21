@@ -142,7 +142,7 @@ function stopDrone() {
 
 // 背景音樂檔：登入頁 bgm-000110〈Cold Scrapes Below〉；序章 bgm-000073〈Night Pursuit〉；大廳與各內頁 WombatNoisesAudio〈DON'T GO INSIDE〉
 // 沒有登記檔案的畫面使用合成環境音
-const FILES = { login: 'assets/audio/bgm-login.mp3', n00: 'assets/audio/bgm-n00.mp3', lobby: 'assets/audio/bgm-lobby.mp3' };
+const FILES = { login: 'assets/audio/bgm-login.mp3', n00: 'assets/audio/bgm-n00.mp3', lobby: 'assets/audio/bgm-lobby.mp3', n02: 'assets/audio/N02-BGM-HORROR.mp3' }; // n02：HORROR — Mehul ShaRma（章節結束時署名）
 export async function bgm(name) {
   if (!ensure() || currentBgm === name) return;
   currentBgm = name;
