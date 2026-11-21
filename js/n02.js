@@ -1,6 +1,6 @@
-// 主線第一章第二節 N02　灰盒可玩版
+// 主線第一章第二節 N02〈留下來的人〉
 // 劇本：docs/N02-for-grok-final.md（製作人確認版）。玩法：docs/N02-gameplay.md。
-// 美術尚未交件：場景先用灰盒＋可點範圍；檔名即素材 ID，美術放進 assets/img/ 後自動顯示。
+// 美術：Grok 交件（docs/N02-grok-art.md），熱點與文件格線照 docs/N02-geometry.json 的舞台座標。
 import { get, save } from './store.js';
 import { sfx, bgm, applyVolume } from './audio.js';
 import { html, $, IMG, ICON, wait, esc, modal, toast } from './ui.js';
@@ -9,6 +9,7 @@ const MAX_FAIL = 3; // 整理與解讀文件錯 3 次 → 達克收走文件離�
 const HINT_COST = 1; // 第二節起：每次提示 1 顆鑽石
 
 const ITEMS = {
+  slip: { name: '紙條', asset: 'N01-PROP-038' }, // N01 唯一帶過來的道具
   key: { name: '住處鑰匙', asset: 'N02-PROP-001' },
   note: { name: '筆記本', asset: 'N02-PROP-002' },
   pass: { name: '研究室出入證', asset: 'N02-PROP-003' },
@@ -19,26 +20,54 @@ const ICO = {
   log: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>',
 };
 
-// ---------- 文件（字由程式寫在紙上；紙張圖到位前顯示灰盒紙） ----------
+// ---------- 文件：字寫在 Grok 交的空白紙上（座標 docs/N02-geometry.json，單位＝紙張百分比） ----------
+const T = (x, y, w, h, t, cls = '') => `<div class="n2t ${cls}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%">${t}</div>`;
+// 寫在橫線上：每行底＝線的 y
+const onLines = (L, rows, x, w, h = 3.4, cls = 'hand') => rows.map(([i, t, c = '']) => T(x, L[i] - h, w, h, t, `line ${cls} ${c}`)).join('');
+const L011 = [9.4, 13.1, 17.0, 20.85, 24.7, 28.5, 32.3, 36.1, 40.0, 43.8, 47.6, 51.35, 55.2, 58.85, 62.6, 66.4, 70.15, 73.9, 77.6, 81.3, 85.0, 88.8, 92.5, 96.25];
+const L016 = [20.2, 22.9, 25.75, 28.55, 31.3, 34.1, 36.9, 39.65, 42.5, 45.3, 48.0, 50.6, 53.5, 56.2, 59.0, 61.75, 64.5, 67.15, 69.9, 72.7, 75.4, 78.15, 80.85, 83.55, 86.3];
+// 直書格紙（DOC-018）：一格一字，由右往左
+const R018 = [13.44, 18.15, 23.21, 28.14, 33.08, 38.02, 43.02, 48.02, 53.02, 58.01, 62.95, 67.95, 72.95, 78.0, 82.94, 87.94, 92.94, 97.99];
+const C018 = [[4.45, 8.7], [10.05, 14.3], [15.7, 19.95], [21.35, 25.6], [27.0, 31.2], [32.6, 36.8], [38.2, 42.5], [43.9, 48.3], [51.4, 55.7], [57.1, 61.4], [62.8, 67.1], [68.5, 72.75], [74.15, 78.4], [79.85, 84.1], [85.5, 89.8], [91.05, 95.35]];
+const VERT = { '，': '︐', '。': '︒', '「': '﹁', '」': '﹂', '-': '｜', '、': '︑' };
+function vertical(cols) {
+  return cols.map((txt, ci) => { const [x0, x1] = C018[C018.length - 1 - ci]; return [...txt].map((ch, ri) => ri < R018.length - 1 ? T(x0, R018[ri], x1 - x0, R018[ri + 1] - R018[ri], VERT[ch] || ch, 'cell') : '').join(''); }).join('');
+}
+// 表格（DOC-019、022）
+const grid = (xs, ys, rows) => rows.map((r, ri) => { let c = 0; return r.map(cell => { const [t, span = 1, cls = ''] = Array.isArray(cell) ? cell : [cell]; const x0 = xs[c], x1 = xs[c + span]; c += span; return t === '' ? '' : T(x0, ys[ri], x1 - x0, ys[ri + 1] - ys[ri], t, 'cellb ' + cls); }).join(''); }).join('');
+const SCRIBBLE = '<svg class="scribble" viewBox="0 0 120 24" aria-label="被筆塗掉的名字"><path d="M2 14 L20 6 L14 18 L34 5 L28 19 L50 6 L44 18 L66 5 L60 19 L82 6 L76 18 L98 5 L92 19 L116 8" /><path d="M4 9 L116 15" /><path d="M6 17 L114 10" /></svg>';
+const MOSAIC = '<span class="mosaic" aria-label="模糊不清的名字"><i></i><i></i><i></i></span>';
 const DOCS = {
-  thesis: { title: '論文草稿封面', asset: 'N02-DOC-012', html: '<h4>研究計畫（草稿）</h4><p class="big">1908—1978 年間<br>跨國異常事件與失蹤樣本比較研究</p><p class="muted">指導教授：因杜阿森</p>' },
-  sticky: { title: '便條', asset: 'N02-DOC-013', html: '<p class="hand big">密碼：論文的第一個年份。<br>別再忘了。</p>' },
-  cal: { title: '桌曆', asset: 'N02-DOC-013', html: '<h4>桌曆</h4><p>圈起來的日子：3 月 12 日、10 月 25 日</p>' },
-  pass: { title: '研究室出入證', asset: 'N02-DOC-014', html: '<h4>研究室出入證</h4><table><tr><th>姓名</th><td>{name}</td></tr><tr><th>研究室</th><td>因杜阿森研究室</td></tr><tr><th>首次登記</th><td>2023.09.18</td></tr></table>' },
-  bill: { title: '帳單信封', asset: 'N02-DOC-015', html: '<h4>水費通知</h4><p>收件人：{name}</p><p>地址：三樓　37 號</p>' },
-  note1: { title: '筆記本・第一頁', asset: 'N02-DOC-011', html: '<p class="hand">家門：門牌，接上我第一次進研究室的那天（月日）。</p><p class="hand">歸檔：所有年份先換成西元再分。</p>' },
-  rule: { title: '牆上的分類規則', asset: 'N02-DOC-013', html: '<p class="hand big">依年代歸檔。<br>每十年一個資料夾。</p><p class="muted">（下半張被撕掉了）</p>' },
-  conv: { title: '紀年換算對照表', asset: 'N02-DOC-022', html: '<h4>紀年換算對照表</h4><table><tr><th>明治</th><td>＋1867</td></tr><tr><th>昭和</th><td>＋1925</td></tr><tr><th>民國</th><td>＋1911</td></tr><tr><th>佛曆</th><td>－543</td></tr></table>' },
-  A: { title: '📄 調查報告（俄文譯本）', asset: 'N02-DOC-016', html: '<h4>現場調查報告</h4><p>日期：西元 1908 年</p><p>西伯利亞通古斯河谷大爆炸後，北方礦物學會派員進入現場，回收「異常結晶樣本」三箱，運往「90-S」。</p><p class="muted">末頁：樣本不列入公開紀錄。</p>' },
-  B: { title: '📄 考古發掘報告', asset: 'N02-DOC-018', html: '<h4>發掘報告</h4><p>日期：昭和十二年</p><p>東亞古代文明研究所發掘青銅器一批，表面刻有無法辨識的文字。全數移交「90-S」。</p><p class="muted">（報告後半頁被裁掉）</p>' },
-  C: { title: '📄 剪報', asset: 'N02-DOC-017', html: '<h4>南海沉船打撈古儀器　海外基金會「代為研究」</h4><p>日期：民國四十四年</p><p>沉船中打撈出的古代天文儀器殘件，已由一家海外基金會運走。博物館事後才得知。</p>' },
-  D: { title: '📄 研究站採集紀錄', asset: 'N02-DOC-019', html: '<h4>熱帶生命科學協會　研究站紀錄</h4><p>日期：佛曆二五二一年</p><p>雨林深處採得不明植物種子樣本，全數移送 90-S。</p><p class="muted">研究站同年因火災關閉，紀錄僅存此頁。</p>' },
-  E: { title: '📄 無署名的信', asset: 'N02-DOC-020', html: '<p class="hand">各地機構更名一事，已照辦。</p><p class="hand">一律送往 90-S。</p><p class="hand">不得公開，不得歸還。</p>' },
-  F: { title: '📄 我的筆記', asset: 'N02-DOC-011', html: '<p class="hand">北方礦物學會（1908）<br>東亞古代文明研究所（1937）<br>？基金會（1955）<br>熱帶生命科學協會（1978）</p><p class="hand">國家不同，名字不同。都說「為了研究」。最後都送到同一個地方。之後都沒有公開。</p><p class="hand">90-S……是編號，還是座標？</p>' },
-  last: { title: '筆記本・最後一頁', asset: 'N02-DOC-011', html: '<p class="hand big" style="text-align:center;margin-top:30%">是他。</p><p style="text-align:center"><span class="mosaic" aria-label="被塗掉的名字"><i></i><i></i><i></i></span></p>' },
+  slip: { title: '紙條', asset: 'N01-DOC-062-front', r: 1.013, html: T(12, 30, 76, 40, '<p>不要讓別人替你描述，你當時看見了什麼。</p><p>尤其不要急著相信，你自己寫下的版本。</p>', 'hand para') },
+  thesis: { title: '論文草稿封面', asset: 'N02-DOC-012', r: 0.747, html: T(13.4, 16, 77.4, 6, '研究計畫（草稿）', 'muted') + T(13.4, 30, 77.4, 20, '1908—1978 年間<br>跨國異常事件與失蹤樣本<br>比較研究', 'title') + T(13.4, 78, 77.4, 6, '指導教授　因杜阿森', 'muted') },
+  sticky: { title: '便條', asset: 'N02-DOC-013', r: 0.992, html: T(8.06, 21, 83.67, 72, '密碼：<br>論文的第一個年份。<br>別再忘了。', 'hand big') },
+  rule: { title: '牆上的分類規則', asset: 'N02-DOC-013', r: 0.992, html: T(8.06, 21, 83.67, 46, '依年代歸檔。<br>每十年一個資料夾。', 'hand big') + T(8.06, 70, 83.67, 18, '（下半張被撕掉了）', 'muted') },
+  pass: { title: '研究室出入證', asset: 'N02-DOC-014', r: 1.609, html: T(4.75, 14.56, 90.5, 13.36, '研究室出入證', 'band') + T(34.9, 36.69, 61, 14.48, '姓名　{name}', 'fld') + T(34.9, 56.23, 61, 14.4, '研究室　因杜阿森研究室', 'fld') + T(34.9, 76.1, 61, 14.4, '首次登記　2023.09.18', 'fld') },
+  bill: { title: '帳單信封', asset: 'N02-DOC-015', r: 1.815, html: T(5.25, 37.39, 48.75, 32.94, '<p>{name}　收</p><p>三樓　37 號</p>', 'fld para') + T(5.25, 12, 60, 14, '水費繳費通知', 'muted l') },
+  note1: { title: '筆記本・第一頁', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[2, '家門：門牌，接上我第一次'], [3, '進研究室的那天（月日）。'], [5, '歸檔：所有年份先換成西元，'], [6, '再分。']], 14.4, 82.3) },
+  conv: { title: '紀年換算對照表', asset: 'N02-DOC-022', r: 0.7495, html: T(3.74, 4.65, 92.39, 18.65, '紀年換算對照表', 'title') + grid([3.74, 32.56, 96.13], [23.3, 31.3, 44.4, 56.9, 69.4, 81.9], [[['紀年', 1, 'head'], ['換算成西元', 1, 'head']], ['明治', '＋1867'], ['昭和', '＋1925'], ['民國', '＋1911'], ['佛曆', '－543']]) },
+  A: { title: '📄 A　現場調查報告', asset: 'N02-DOC-016', r: 0.7475, html: T(4.55, 5.65, 91.1, 10.9, '現場調查報告', 'title') + onLines(L016, [[0, '日期：西元 1908 年'], [2, '西伯利亞通古斯河谷大爆炸後，'], [3, '北方礦物學會派員進入現場，'], [4, '回收「異常結晶樣本」三箱，'], [5, '運往「90-S」。'], [21, '樣本不列入公開紀錄。']], 8, 84, 2.4, 'type') },
+  B: { title: '📄 B　考古發掘報告', asset: 'N02-DOC-018', r: 1.1488, html: vertical(['發掘報告', '昭和十二年', '東亞古代文明研究所', '發掘青銅器一批', '表面刻有無法辨識', '的文字', '全數移交', '「90-S」']) },
+  C: { title: '📄 C　剪報', asset: 'N02-DOC-017', r: 0.75, html: T(2, 5.55, 96, 13.25, '南海沉船打撈古儀器<br>海外基金會「代為研究」', 'headline') + T(3.5, 20.5, 29, 60, '<p>【本報訊】民國四十四年，南海一艘沉船中，打撈出一具古代天文儀器的殘件。</p>', 'col') + T(35.4, 20.5, 29, 60, '<p>儀器已由一家海外基金會以「代為研究」為名運走。</p><p>博物館方面表示，事後才得知此事。</p>', 'col') + T(67.5, 49, 30, 8, '（打撈出的儀器殘件）', 'caption') },
+  D: { title: '📄 D　研究站採集紀錄', asset: 'N02-DOC-019', r: 0.748, html: T(4.81, 8.3, 89.84, 7.65, '熱帶生命科學協會　研究站採集紀錄', 'title sm') + grid([4.81, 27.87, 50.47, 72.53], [18.7, 28.0, 36.15, 44.3], [[['日期', 1, 'head'], ['樣本', 1, 'head'], ['去向', 1, 'head']], ['佛曆<br>二五二一年', '雨林深處採得<br>不明植物種子', '全數移送<br>90-S'], [['備註：研究站同年因火災關閉，<br>紀錄僅存此頁。', 3]]]) },
+  E: { title: '📄 E　無署名的信', asset: 'N02-DOC-020', r: 0.747, html: T(10.04, 9, 79.92, 22, '<p>各地機構更名一事，已照辦。</p><p>一律送往 90-S。</p><p>不得公開，不得歸還。</p>', 'hand para l') },
+  F: { title: '📄 F　我的筆記', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[1, '北方礦物學會（1908）'], [2, '東亞古代文明研究所（1937）'], [3, '？基金會（1955）'], [4, '熱帶生命科學協會（1978）'], [6, '國家不同，名字不同。'], [7, '都說「為了研究」。'], [8, '最後都送到同一個地方。'], [9, '之後都沒有公開。'], [11, '90-S……'], [12, '是編號，還是座標？']], 14.4, 82.3) },
+  last: { title: '筆記本・最後一頁', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[10, '是他。', 'center big'], [12, SCRIBBLE, 'center']], 14.4, 82.3, 4.2) },
 };
 const SORT = { A: '1900', B: '1930', C: '1950', D: '1970' }; // 正確資料夾
 const FOLDERS = ['1900', '1930', '1950', '1970'];
+
+// ---------- 場景熱點與站位（舞台座標，取自 docs/N02-geometry.json） ----------
+const CHAR = { 'N02-CHAR-015': 0.4777, 'N02-CHAR-015b': 0.4777, 'N02-CHAR-015c': 0.4777, 'N01-CHAR-014': 0.5357 };
+// [x 腳底中心, y 腳底, 高度]
+const STAND = {
+  S: { dark: [1130, 590, 290] },
+  A: { prof: [640, 600, 470], dark: [860, 640, 500] },
+  B: { dark: [230, 650, 520] },
+  C: { dark: [600, 450, 400] },
+};
+const MONTHS = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+const CIRCLED = { 2: 12, 9: 25 }; // 3/12、10/25（月份從 0 起算）
 
 export function render(st, params, go) {
   const d = get();
@@ -46,7 +75,7 @@ export function render(st, params, go) {
   const pname = (d.player && d.player.name) || '玩家';
   d.n02 = d.n02 || {};
   const meta = d.n02; // seenIntro 跨次保留
-  const fresh = () => ({ scene: 'S', items: [], read: [], flags: {}, hints: {}, fail: 0, placed: {}, log: [] });
+  const fresh = () => ({ scene: 'S', items: ['slip'], read: [], flags: {}, hints: {}, fail: 0, placed: {}, log: [] });
   let S0 = params && params.resume && meta.st ? meta.st : fresh();
   const F = S0.flags;
 
@@ -86,21 +115,27 @@ export function render(st, params, go) {
       const id = S0.items[i];
       if (!id) { s.appendChild(html('<span class="slot" role="img" aria-label="空的道具欄"></span>')); continue; }
       const b = html(`<button type="button" class="slot has${ping === id ? ' ping' : ''}" aria-label="${ITEMS[id].name}"><span class="n1-gb-item">${ITEMS[id].name}</span><img src="${IMG(ITEMS[id].asset + '.webp')}" alt="" onerror="this.remove()"></button>`);
-      b.addEventListener('click', () => { sfx('tap'); if (id === 'note') readDoc('note1'); else if (id === 'pass') readDoc('pass'); else toast('住處鑰匙。到門口會自動使用。'); });
+      b.addEventListener('click', () => { sfx('tap'); if (id === 'note') readDoc(F.P4 ? 'F' : 'note1'); else if (id === 'pass') readDoc('pass'); else if (id === 'slip') readDoc('slip'); else toast('公寓鐵門的鑰匙。到門口點鐵門就會使用。'); });
       s.appendChild(b);
     }
   }
   const addItem = id => { if (!S0.items.includes(id)) S0.items.push(id); sfx('pick'); persist(); paintSlots(id); };
+  const has = id => S0.items.includes(id);
 
-  // ---------- 場景（灰盒：可點範圍顯示名稱；正式背景到位後只留熱點） ----------
-  function setScene(bgId, title, objs) {
-    scene.innerHTML = `<div class="n1-gb"><span>${bgId}　${title}</span></div><img class="bg" src="${IMG(bgId + '.webp')}" alt="${title}" onerror="this.remove()">`;
-    setHs(objs);
+  // ---------- 場景：背景＋站著的角色＋熱點 ----------
+  const charImg = (key, file, [fx, fy, h]) => { const w = Math.round(h * CHAR[file]); return `<img class="n2-stand" id="c-${key}" src="${IMG(file + '.webp')}" alt="" style="left:${fx - w / 2}px;top:${fy - h}px;width:${w}px;height:${h}px">`; };
+  function setScene(bgId, title, objs, chars = {}) {
+    scene.innerHTML = `<div class="n1-gb"><span>${bgId}　${title}</span></div><img class="bg" id="bgimg" src="${IMG(bgId + '.webp')}" alt="${title}" onerror="this.remove()">` +
+      Object.entries(chars).map(([k, [file, pos]]) => charImg(k, file, pos)).join('');
+    const charHs = Object.entries(chars).map(([k, [, [fx, fy, h]]]) => { const w = Math.round(h * 0.42); return { id: k, x: fx - w / 2, y: fy - h + 8, w, h: h - 16, label: k === 'dark' ? '達克' : '因杜阿森' }; });
+    setHs([...objs, ...charHs]);
   }
+  const setBg = f => { const b = $(scene, '#bgimg'); if (b) b.src = IMG(f + '.webp'); };
+  const swapChar = (k, file) => { const c = $(scene, '#c-' + k); if (c) c.src = IMG(file + '.webp'); };
   function setHs(list, layer = hsLayer) {
     if (layer === hsLayer) hsLayer.innerHTML = '';
-    list.forEach(({ id, x, y, w, h, label, cls = '' }) => {
-      const b = html(`<button type="button" class="area n2-gb ${cls}" data-hs="${id}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px" aria-label="${label}"><span>${label}</span></button>`);
+    list.forEach(({ id, x, y, w, h, label }) => {
+      const b = html(`<button type="button" class="area n2-gb" data-hs="${id}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px" aria-label="${label}"><span>${label}</span></button>`);
       b.addEventListener('click', ev => { ev.stopPropagation(); sfx('tap'); emit({ type: 'hs', id }); });
       layer.appendChild(b);
     });
@@ -112,28 +147,29 @@ export function render(st, params, go) {
       if (r) return r;
     }
   }
-  function openCu(inner, list = [], showLabels = false) {
+  function openCu(inner, list = []) {
     cu.innerHTML = `<div class="n1-gb"></div>${inner}`;
     const b = html(`<button type="button" class="btn-line g1-cuback">${ICON.back}<span>返回</span></button>`);
     b.addEventListener('click', ev => { ev.stopPropagation(); sfx('tap'); emit({ type: 'hs', id: 'back' }); });
-    cu.appendChild(b); setHs(list, cu); cu.classList.toggle('labels', showLabels);
+    cu.appendChild(b); setHs(list, cu);
     cu.classList.remove('hidden'); hsLayer.classList.add('hidden'); $(el, '#slots').classList.add('cu-hide');
   }
   const closeCu = () => { cu.classList.add('hidden'); cu.innerHTML = ''; hsLayer.classList.remove('hidden'); $(el, '#slots').classList.remove('cu-hide'); };
+  const cuBg = f => `<img class="bg" src="${IMG(f + '.webp')}" alt="" onerror="this.remove()">`;
 
-  // ---------- 對白 ----------
+  // ---------- 對白（場景裡的角色站在原地；對話框只顯示主角立繪） ----------
   const WHO = { me: pname, dark: '達克', prof: '因杜阿森' };
-  const PIC = { me: g === 'f' ? 'N01-CHAR-012' : 'N01-CHAR-013', dark: 'N02-CHAR-015', prof: 'N01-CHAR-014' };
   function say(cn, who = 'me', opt = {}) {
     cn = cn.replace(/\{主角\}/g, esc(pname));
-    S0.log.push([WHO[who] || '', cn]); if (S0.log.length > 200) S0.log.shift();
+    S0.log.push([opt.think ? pname + '（心裡）' : WHO[who] || '', cn]); if (S0.log.length > 200) S0.log.shift();
     return new Promise(res => {
       const calm = cu.classList.contains('hidden') && !el.querySelector('.g1-docback');
       let pic = null;
-      if (PIC[who] && calm && opt.pic !== false) pic = html(`<img class="portrait n1-char${who === 'me' ? '' : ' npc'}" src="${IMG(PIC[who] + '.webp')}" alt="">`);
+      if (who === 'me' && calm && opt.pic !== false) pic = html(`<img class="portrait n1-char" src="${IMG(g === 'f' ? 'N01-CHAR-012.webp' : 'N01-CHAR-013.webp')}" alt="">`);
       if (pic) el.appendChild(pic);
+      const c = $(scene, '#c-' + who); if (c) c.classList.add('talk');
       const b = html(`<div class="sub${opt.think ? ' think' : ''}" role="button" tabindex="0" aria-label="點一下繼續"><div class="who"><span>${esc(opt.think ? pname + '（心裡）' : WHO[who] || '')}</span></div><p class="cn">${cn}</p>${ICON.down}</div>`);
-      const done = () => { sfx('tap'); b.remove(); if (pic) pic.remove(); res(); };
+      const done = () => { sfx('tap'); b.remove(); if (pic) pic.remove(); if (c) c.classList.remove('talk'); res(); };
       b.addEventListener('click', done);
       b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') done(); });
       el.appendChild(b); b.focus({ preventScroll: true });
@@ -144,6 +180,13 @@ export function render(st, params, go) {
     const b = html(`<div class="sysmsg" style="top:240px"><div role="status">${ls.map(l => `<p>${l}</p>`).join('')}</div></div>`);
     el.appendChild(b); await wait(ms); b.remove();
   }
+  function choose(q, options) {
+    return new Promise(res => {
+      const b = html(`<div class="n1-choice n2-choice" role="group" aria-label="${q}"><p class="n2-q">${q}</p>${options.map((o, i) => `<button type="button" class="btn-line" data-i="${i}">${o}</button>`).join('')}<button type="button" class="btn-line n2-cancel" data-i="-1">再看看文件</button></div>`);
+      b.addEventListener('click', e => { const t = e.target.closest('[data-i]'); if (!t) return; sfx('tap'); b.remove(); res(+t.dataset.i); });
+      el.appendChild(b);
+    });
+  }
   $(el, '#logBtn').addEventListener('click', () => {
     sfx('tap');
     const m = html(`<div class="modal-back" style="z-index:44"><div class="gdoc" role="dialog" aria-label="對話紀錄"><div class="label">對話紀錄</div><h2>已讀內容</h2><div class="redline"></div>
@@ -152,14 +195,44 @@ export function render(st, params, go) {
     el.appendChild(m); const lg = $(m, '.n1-log'); lg.scrollTop = lg.scrollHeight;
   });
 
-  // ---------- 文件 ----------
+  // ---------- 文件：依紙張原比例顯示 ----------
+  const paperBox = r => { const h = r < 1.2 ? 600 : Math.round(820 / r), w = Math.round(h * r); return { w, h, x: Math.round(572 - w / 2), y: Math.round(380 - h / 2) }; };
   function readDoc(id) {
-    if (!S0.read.includes(id)) { S0.read.push(id); persist(); }
+    if (id !== 'last' && !S0.read.includes(id)) { S0.read.push(id); persist(); }
     sfx('page');
     return new Promise(res => {
-      const doc = DOCS[id];
-      const m = html(`<div class="g1-docback n1-docback" role="dialog" aria-label="${doc.title}"><div class="n1-paper n2-paper" style="left:332px;top:88px;width:480px;height:576px"><img src="${IMG(doc.asset + '.webp')}" alt="" onerror="this.remove()"><div class="n1-ink">${doc.html.replace(/\{name\}/g, esc(pname))}</div></div><div class="g1-dochint">點旁邊收起</div></div>`);
+      const doc = DOCS[id]; const { w, h, x, y } = paperBox(doc.r);
+      const m = html(`<div class="g1-docback n1-docback" role="dialog" aria-label="${doc.title}"><div class="n1-paper n2-paper" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"><img src="${IMG(doc.asset + '.webp')}" alt="" onerror="this.remove()"><div class="n2-ink">${doc.html.replace(/\{name\}/g, esc(pname))}</div></div><div class="g1-dochint">點旁邊收起</div></div>`);
       m.addEventListener('click', e => { if (e.target.closest('.n1-paper')) return; sfx('tap'); m.remove(); res(); });
+      el.appendChild(m);
+    });
+  }
+  // 桌曆：DOC-023 月份頁，可翻 12 個月；3/12、10/25 有深色筆圈（不顯示年份）
+  function calendar() {
+    sfx('page');
+    let mo = 0;
+    const COLS = [2.1, 16.2, 30.1, 43.4, 57.0, 70.55, 84.15, 98.0], ROWS = [33.0, 43.7, 54.2, 64.8, 75.4, 85.7, 96.2];
+    const page = () => {
+      const first = new Date(2026, mo, 1).getDay(), days = new Date(2026, mo + 1, 0).getDate();
+      let cells = '';
+      for (let dd = 1; dd <= days; dd++) {
+        const k = first + dd - 1, c = k % 7, r = Math.floor(k / 7);
+        const x0 = COLS[c], y0 = ROWS[r], w = COLS[c + 1] - COLS[c], h = ROWS[r + 1] - ROWS[r];
+        cells += T(x0, y0, w, h, `<span>${dd}</span>${CIRCLED[mo] === dd ? '<svg class="ring" viewBox="0 0 100 70" aria-label="圈起來的日子"><path d="M14 40 C10 14 60 4 84 18 C98 28 92 58 58 64 C30 68 8 56 18 30" /></svg>' : ''}`, 'dd');
+      }
+      return T(2.1, 11.33, 95.9, 13.08, MONTHS[mo], 'month') + ['日', '一', '二', '三', '四', '五', '六'].map((w, i) => T(COLS[i], 24.41, COLS[i + 1] - COLS[i], 8.63, w, 'wk')).join('') + cells;
+    };
+    return new Promise(res => {
+      const { w, h, x, y } = paperBox(1.2516);
+      const m = html(`<div class="g1-docback n1-docback" role="dialog" aria-label="桌曆"><div class="n1-paper n2-paper" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"><img src="${IMG('N02-DOC-023.webp')}" alt="" onerror="this.remove()"><div class="n2-ink cal"></div></div>
+<button type="button" class="btn-line n2-flip" data-f="-1" style="left:${x - 72}px;top:${y + h / 2 - 28}px" aria-label="上一個月">${ICON.back}</button><button type="button" class="btn-line n2-flip next" data-f="1" style="left:${x + w + 16}px;top:${y + h / 2 - 28}px" aria-label="下一個月">${ICON.back}</button><div class="g1-dochint">點旁邊收起</div></div>`);
+      const ink = $(m, '.n2-ink'); ink.innerHTML = page();
+      m.addEventListener('click', e => {
+        const f = e.target.closest('[data-f]');
+        if (f) { mo = (mo + +f.dataset.f + 12) % 12; sfx('page'); ink.innerHTML = page(); return; }
+        if (e.target.closest('.n1-paper')) return;
+        sfx('tap'); m.remove(); res();
+      });
       el.appendChild(m);
     });
   }
@@ -167,7 +240,7 @@ export function render(st, params, go) {
     sfx('tap');
     if (!S0.read.length) { toast('還沒有看過任何文件。'); return; }
     const m = html(`<div class="modal-back" style="z-index:44"><div class="gdoc" role="dialog" aria-label="檔案"><div class="label">調查檔案</div><h2>已讀文件</h2><div class="redline"></div>
-<div class="gfiles">${S0.read.filter(i => i !== 'last').map(i => `<button type="button" class="gfile" data-doc="${i}"><span>${DOCS[i].title}</span></button>`).join('')}</div><button type="button" class="x" aria-label="關閉">${ICON.close}</button></div></div>`);
+<div class="gfiles">${S0.read.map(i => `<button type="button" class="gfile" data-doc="${i}"><span>${DOCS[i].title}</span></button>`).join('')}</div><button type="button" class="x" aria-label="關閉">${ICON.close}</button></div></div>`);
     m.addEventListener('click', e => {
       const b = e.target.closest('[data-doc]');
       if (b) { sfx('tap'); m.remove(); readDoc(b.dataset.doc); return; }
@@ -180,10 +253,11 @@ export function render(st, params, go) {
   const STEPS = [
     { k: 'P1', done: () => F.P1, goal: '打開自己的置物櫃', hl: ['desk', 'locker'], hints: ['先看看自己的座位。', '便條說密碼是「論文的第一個年份」。論文草稿就在桌上。', '論文題目是 1908—1978 年，置物櫃密碼 1908。'] },
     { k: 'GO', done: () => F.AT_HOME, goal: '回住處', hl: ['door'], hints: ['拿到鑰匙了，從門口離開。', '點研究室的門。', '點研究室的門。'] },
-    { k: 'P2', done: () => F.P2, goal: '打開家門', hl: ['plate', 'keypad', 'mail'], hints: ['筆記本第一頁寫著家門密碼的規則。', '門牌是 37；出入證上有第一次登記的日期。', '37＋0918＝370918。'] },
+    { k: 'GATE', done: () => F.GATE, goal: '打開鐵門', hl: ['gate'], hints: ['住處鑰匙可以開鐵門。', '點鐵門。', '點鐵門，會自動用鑰匙。'] },
+    { k: 'P2', done: () => F.P2, goal: '打開家門', hl: ['plate', 'keypad'], hints: ['筆記本第一頁寫著家門密碼的規則。', '門牌是 37；出入證上有第一次登記的日期。', '37＋0918＝370918。'] },
     { k: 'P3', done: () => F.P3, goal: '整理文件', hl: ['wall', 'shelf', 'pile'], hints: ['牆上的規則只寫了一半，另一半在筆記本裡。', '所有年份先換成西元。書架上有換算對照表；佛曆是減 543。', 'A 1908→1900 年代、B 昭和12＝1937→1930 年代、C 民國44＝1955→1950 年代、D 佛曆2521＝1978→1970 年代。'] },
-    { k: 'P4', done: () => F.P4, goal: '讀懂文件', hl: ['board'], hints: ['先看軟木板上的信和你自己的筆記。', '四份文件的機構名字都不一樣，但做的事和東西的去向一樣。', '第一題選「以研究為名帶走、送往 90-S、從未公開」；第二題選「一群不斷改名、以研究為名收走樣本與器物的人」。'] },
-    { k: 'END', done: () => false, goal: '看筆記本最後一頁', hl: ['desk2'], hints: ['書桌上的筆記本。', '點書桌。', '點書桌。'] },
+    { k: 'P4', done: () => F.P4, goal: '讀懂文件', hl: ['board'], hints: ['先看軟木板上的信（E）和你自己的筆記（F）。', '四份文件的機構名字都不一樣，但做的事和東西的去向一樣。', '第一題選「以研究為名帶走、送往 90-S、從未公開」；第二題選「一群不斷改名、以研究為名收走樣本與器物的人」。'] },
+    { k: 'END', done: () => false, goal: '翻到筆記本最後一頁', hl: ['desk'], hints: ['書桌上的筆記本。', '點書桌上的筆記本。', '點書桌上的筆記本。'] },
   ];
   const cur = () => STEPS.find(s => !s.done()) || STEPS[STEPS.length - 1];
   const paintGoal = () => { $(el, '#goal').textContent = '目標　' + (F.START ? cur().goal : '—'); };
@@ -224,7 +298,7 @@ export function render(st, params, go) {
 
   // ---------- 失誤：整理與解讀文件錯一次＋1，滿 3 次 → 達克收走文件 → 失敗、整節從頭 ----------
   const paintFail = () => { const n = $(el, '#alert'); n.classList.toggle('hidden', !F.AT_ROOM); n.querySelectorAll('i').forEach((x, i) => x.classList.toggle('on', i < S0.fail)); };
-  const FAIL_LINE = ['那份放錯了。', '（看了他一眼）你確定你看得懂？'];
+  const FAIL_LINE = ['那份放錯了。', '（看了你一眼）你確定你看得懂？'];
   async function miss() {
     sfx('error'); S0.fail++; persist(); paintFail();
     if (S0.fail >= MAX_FAIL) { await failed(); return; }
@@ -248,11 +322,10 @@ export function render(st, params, go) {
   }
 
   // ================= 場景 =================
-  // 序　舊館外（純劇情）
+  // 序　舊館外・雨停之後（BG-001）：達克靠著 N01 結尾那台黑色轎車
   async function sceneS() {
-    setScene('N02-BG-001', '舊館外・深夜', []);
-    $(el, '#black').classList.remove('on'); await wait(500); S();
-    sfx('bike');
+    setScene('N02-BG-001', '舊館外・深夜', [], { dark: ['N02-CHAR-015', STAND.S.dark] });
+    $(el, '#black').classList.remove('on'); await wait(600); S();
     await lines([
       ['dark', '……出來了。'],
       ['me', '（左右看了看）你在跟我說話？'],
@@ -267,20 +340,21 @@ export function render(st, params, go) {
       ['dark', '不然呢。'],
       ['me', '竟然有人在等我。……可是這個人，看起來一點也不想來。', { think: true }],
     ]);
+    sfx('cardoor'); await wait(700); S(); sfx('caroff');
     await sys(['前往：學校・教授研究室'], 1600); S();
     return 'A';
   }
 
-  // A　教授研究室
+  // A　教授研究室（BG-002）
   const A_HS = [
-    { id: 'desk', x: 120, y: 380, w: 280, h: 160, label: '我的座位' },
-    { id: 'locker', x: 860, y: 200, w: 160, h: 360, label: '學生置物櫃' },
-    { id: 'prof', x: 520, y: 180, w: 180, h: 340, label: '教授' },
-    { id: 'dark', x: 720, y: 200, w: 120, h: 340, label: '達克' },
-    { id: 'door', x: 40, y: 140, w: 70, h: 360, label: '研究室的門' },
+    { id: 'door', x: 38, y: 44, w: 110, h: 381, label: '研究室的門' },
+    { id: 'desk', x: 0, y: 415, w: 475, h: 160, label: '我的座位' },
+    { id: 'locker', x: 1045, y: 119, w: 55, h: 331, label: '我的置物櫃' },
+    { id: 'window', x: 281, y: 19, w: 269, h: 275, label: '窗' },
+    { id: 'shelf', x: 600, y: 88, w: 310, h: 140, label: '書架' },
   ];
   async function sceneA() {
-    setScene('N02-BG-002', '學校・教授研究室', A_HS);
+    setScene('N02-BG-002', '學校・教授研究室', A_HS, { prof: ['N01-CHAR-014', STAND.A.prof], dark: ['N02-CHAR-015', STAND.A.dark] });
     if (!meta.seenIntro) {
       await lines([
         ['prof', '你出來了。很好。'],
@@ -295,7 +369,7 @@ export function render(st, params, go) {
         ['dark', '……'],
         ['prof', '達克，我想拜託你一件事。帶他回住處。熟悉的地方，也許能讓他想起一些東西。'],
         ['dark', '……為什麼是我？'],
-        ['prof', '你們在同一個研究室待過，他的住處你也去過。現在只有你能幫這個忙。'],
+        ['prof', '你們在同一個研究室待過。地址我寫給你。現在只有你能幫這個忙。'],
         ['dark', '……我知道了。'],
         ['prof', '麻煩你了。（轉向你）還有，你之前收集的那些歷史文件，回去整理一下。你失憶前……已經快摸到某些東西了。'],
         ['me', '什麼東西？'],
@@ -308,113 +382,156 @@ export function render(st, params, go) {
     return loop(async id => {
       if (id === 'back') { closeCu(); return; }
       if (id === 'desk') { await deskCu(); return; }
-      if (id === 'locker') { if (F.P1) return void sys(['置物櫃已經打開了'], 1200); await p1(); paintGoal(); return; }
+      if (id === 'locker') { if (F.P1_TAKEN) return void sys(['置物櫃裡只剩一條灰色圍巾'], 1400); await p1(); paintGoal(); return; }
+      if (id === 'window') return void sys(['校園的燈都熄了。'], 1400);
+      if (id === 'shelf') return void sys(['教授的書，大部分是外文。'], 1400);
       if (id === 'prof') { await say('文件整理好了，再來告訴我。', 'prof'); S(); return; }
-      if (id === 'dark') { await say(F.P1 ? '走了。' : '……', 'dark'); S(); return; }
-      if (id === 'door') { if (!F.P1) { await say('先拿到鑰匙再走。', 'dark'); S(); return; } await sys(['前往：住處'], 1400); S(); return 'B'; }
+      if (id === 'dark') { await say(F.P1_TAKEN ? '走了。' : '……', 'dark'); S(); return; }
+      if (id === 'door') { if (!F.P1_TAKEN) { await say('先拿到鑰匙再走。', 'dark'); S(); return; } await sys(['前往：住處'], 1400); S(); return 'B'; }
     });
   }
+  // 書桌近景（DETAIL-005）
   async function deskCu() {
-    openCu(`<div class="n2-cut">N02-BG_DETAIL-005　我的書桌</div><img class="bg" src="${IMG('N02-BG_DETAIL-005.webp')}" alt="書桌近景" onerror="this.remove()">`, [
-      { id: 'thesis', x: 200, y: 200, w: 300, h: 380, label: '論文草稿' },
-      { id: 'sticky', x: 560, y: 240, w: 200, h: 200, label: '便條' },
-      { id: 'cal', x: 820, y: 220, w: 280, h: 300, label: '桌曆' },
-    ], true);
+    openCu(cuBg('N02-BG_DETAIL-005'), [
+      { id: 'thesis', x: 115, y: 138, w: 466, h: 402, label: '論文草稿' },
+      { id: 'sticky', x: 631, y: 319, w: 140, h: 102, label: '便條' },
+      { id: 'cal', x: 835, y: 119, w: 384, h: 306, label: '桌曆' },
+    ]);
     return loop(async id => {
       if (id === 'back') { closeCu(); return true; }
+      if (id === 'cal') { await calendar(); S(); return; }
       if (DOCS[id]) { await readDoc(id); S(); }
     });
   }
-  // 謎題 1：四位數轉盤鎖，答案 1908
+  // 謎題 1：置物櫃四位數轉盤鎖（DETAIL-006），答案 1908；打開後三樣東西一一拿走
   async function p1() {
     const v = F.P1_V || [0, 0, 0, 0];
-    const paint = msg => openCu(`<div class="n2-cut">N02-BG_DETAIL-006　置物櫃轉盤鎖</div><img class="bg" src="${IMG('N02-BG_DETAIL-006.webp')}" alt="轉盤鎖" onerror="this.remove()">
-<div class="n2-dial">${v.map(n => `<span>${n}</span>`).join('')}</div><div class="n1-state" style="left:640px;top:520px">${msg || '上下轉動，對齊四個數字'}</div>`,
-    [...[0, 1, 2, 3].flatMap(i => [{ id: 'u' + i, x: 448 + i * 104, y: 216, w: 96, h: 64, label: `第 ${i + 1} 格往上` }, { id: 'd' + i, x: 448 + i * 104, y: 424, w: 96, h: 64, label: `第 ${i + 1} 格往下` }]),
-      { id: 'pull', x: 560, y: 584, w: 160, h: 56, label: '拉開置物櫃' }]);
+    const WX = [506, 600, 694, 788];
+    const paint = msg => openCu(cuBg(F.P1 ? (F.P1_TAKEN ? 'N02-BG_DETAIL-006-empty' : 'N02-BG_DETAIL-006-open') : 'N02-BG_DETAIL-006') +
+      (F.P1 ? '' : WX.map((x, i) => `<div class="n2-wheel" style="left:${x}px;top:431px;width:75px;height:94px"><span>${v[i]}</span></div>`).join('')) +
+      `<div class="n1-state" style="left:640px;top:648px">${msg || (F.P1 ? '把裡面的東西拿走' : '點上下的齒紋轉動，對好之後拉開櫃門')}</div>`,
+    F.P1 ? [
+      ...(has('key') ? [] : [{ id: 'key', x: 445, y: 200, w: 125, h: 125, label: '住處鑰匙' }]),
+      ...(has('note') ? [] : [{ id: 'note', x: 575, y: 75, w: 380, h: 213, label: '筆記本' }]),
+      ...(has('pass') ? [] : [{ id: 'pass', x: 570, y: 263, w: 225, h: 88, label: '研究室出入證' }]),
+      { id: 'scarf', x: 600, y: 388, w: 250, h: 312, label: '灰色圍巾' },
+    ] : [
+      ...WX.flatMap((x, i) => [{ id: 'u' + i, x, y: 375, w: 75, h: 56, label: `第 ${i + 1} 輪往上` }, { id: 'd' + i, x, y: 525, w: 75, h: 63, label: `第 ${i + 1} 輪往下` }]),
+      { id: 'pull', x: 306, y: 222, w: 113, h: 415, label: '拉開櫃門' },
+    ]);
     paint();
     return loop(async id => {
       if (id === 'back') { closeCu(); return true; }
-      if (id[0] === 'u' || id[0] === 'd') { const i = +id[1]; v[i] = (v[i] + (id[0] === 'u' ? 1 : 9)) % 10; F.P1_V = [...v]; persist(); sfx('dial'); paint(); return; }
-      if (id !== 'pull') return;
-      if (v.join('') !== '1908') { sfx('error'); paint('鎖沒有開'); return; }
-      sfx('latch'); flag('P1'); closeCu();
-      addItem('key'); addItem('note'); addItem('pass');
-      await sys(['取得：住處鑰匙、筆記本、研究室出入證'], 2000); S();
-      await lines([
-        ['me', '這是我的筆記？'],
-        ['dark', '上面寫著你的名字。'],
-      ]);
-      paintGoal(); return true;
+      if (!F.P1) {
+        if (id[0] === 'u' || id[0] === 'd') { const i = +id[1]; v[i] = (v[i] + (id[0] === 'u' ? 1 : 9)) % 10; F.P1_V = [...v]; persist(); sfx('dial'); paint(); return; }
+        if (id !== 'pull') return;
+        if (v.join('') !== '1908') { sfx('error'); paint('鎖沒有開'); return; }
+        sfx('latch'); flag('P1'); paint(); return;
+      }
+      if (id === 'scarf') { await sys(['一條灰色圍巾。'], 1200); S(); return; }
+      if (id === 'key' || id === 'note' || id === 'pass') {
+        addItem(id);
+        if (id === 'note') { await lines([['me', '這是我的筆記？'], ['dark', '上面寫著你的名字。']]); }
+        if (has('key') && has('note') && has('pass')) { flag('P1_TAKEN'); paint(); await wait(600); S(); closeCu(); paintGoal(); return true; }
+        paint(); return;
+      }
     });
   }
 
-  // B　公寓門口
-  const B_HS = [
-    { id: 'plate', x: 620, y: 150, w: 100, h: 60, label: '門牌' },
-    { id: 'keypad', x: 760, y: 260, w: 90, h: 130, label: '密碼鎖' },
-    { id: 'mail', x: 160, y: 300, w: 180, h: 140, label: '信箱' },
-    { id: 'shoe', x: 360, y: 420, w: 200, h: 160, label: '鞋櫃' },
-    { id: 'dark', x: 940, y: 180, w: 120, h: 360, label: '達克' },
+  // B　公寓三樓（BG-003 → 用鑰匙開鐵門 → BG-003-open）
+  const B_HS = () => F.GATE ? [
+    { id: 'plate', x: 575, y: 91, w: 81, h: 40, label: '門牌' },
+    { id: 'keypad', x: 680, y: 305, w: 70, h: 120, label: '密碼鎖' },
+    { id: 'inner', x: 470, y: 140, w: 200, h: 460, label: '內門' },
+    { id: 'mail', x: 337, y: 240, w: 94, h: 122, label: '信箱' },
+    { id: 'shoe', x: 785, y: 394, w: 253, h: 225, label: '鞋櫃' },
+  ] : [
+    { id: 'plate', x: 575, y: 91, w: 81, h: 40, label: '門牌' },
+    { id: 'gate', x: 460, y: 131, w: 288, h: 475, label: '鐵門' },
+    { id: 'mail', x: 337, y: 240, w: 94, h: 122, label: '信箱' },
+    { id: 'shoe', x: 785, y: 394, w: 253, h: 225, label: '鞋櫃' },
+    { id: 'light', x: 765, y: 262, w: 28, h: 35, label: '電燈開關' },
   ];
   async function sceneB() {
-    setScene('N02-BG-003', '公寓三樓・門口', B_HS);
+    setScene(F.GATE ? 'N02-BG-003-open' : 'N02-BG-003', '公寓三樓・門口', B_HS(), { dark: ['N02-CHAR-015', STAND.B.dark] });
     if (!F.B_IN) {
-      flag('B_IN'); sfx('latch');
+      flag('B_IN');
       await lines([
         ['dark', '到了。'],
         ['me', '你怎麼知道我住這裡？'],
         ['dark', '教授給了地址。'],
-        ['me', '鑰匙能開外面的鐵門，可是裡面這道……是密碼鎖。', { think: true }],
-        ['dark', '（看了一眼手錶，沒有說話）'],
       ]);
       flag('AT_HOME'); paintGoal();
     }
     return loop(async id => {
       if (id === 'back') { closeCu(); return; }
       if (id === 'plate') return void sys(['門牌：37'], 1600);
-      if (id === 'mail') { await readDoc('bill'); return; }
-      if (id === 'shoe') return void sys(['一雙鞋、一把傘。'], 1400);
-      if (id === 'dark') { await say('大部分人會把密碼留在自己天天看得到的地方。', 'dark'); S(); return; }
+      if (id === 'shoe') return void sys(['一雙球鞋、一把傘。'], 1400);
+      if (id === 'light') return void sys(['按了幾下，燈還是只亮一半。'], 1400);
+      if (id === 'dark') { await say(F.GATE ? '大部分人會把密碼留在自己天天看得到的地方。' : '……', 'dark'); S(); return; }
+      if (id === 'mail') { await mailCu(); return; }
+      if (id === 'gate') {
+        sfx('latch'); flag('GATE'); setBg('N02-BG-003-open'); setHs([...B_HS(), ...charHsB()]);
+        await lines([
+          ['me', '鑰匙能開外面的鐵門，可是裡面這道……是密碼鎖。', { think: true }],
+          ['dark', '（看了一眼手錶，沒有說話）'],
+        ]);
+        paintGoal(); return;
+      }
+      if (id === 'inner') { if (!F.P2) return void sys(['內門鎖著。旁邊是密碼鎖。'], 1400); return 'C'; }
       if (id === 'keypad') { if (await p2()) return 'C'; }
     });
   }
-  // 謎題 2：六位數按鍵，答案 370918
+  const charHsB = () => { const [fx, fy, h] = STAND.B.dark; const w = Math.round(h * 0.42); return [{ id: 'dark', x: fx - w / 2, y: fy - h + 8, w, h: h - 16, label: '達克' }]; };
+  async function mailCu() {
+    openCu(cuBg('N02-BG_DETAIL-008'), [
+      { id: 'bill', x: 363, y: 380, w: 525, h: 175, label: '帳單信封' },
+      { id: 'kraft', x: 388, y: 275, w: 525, h: 105, label: '牛皮紙信封' },
+      { id: 'slot', x: 438, y: 75, w: 475, h: 125, label: '卡在投信口的信封' },
+    ]);
+    return loop(async id => {
+      if (id === 'back') { closeCu(); return true; }
+      if (id === 'bill') { await readDoc('bill'); S(); return; }
+      if (id === 'kraft') { await sys(['牛皮紙信封，裡面是空的。'], 1400); S(); return; }
+      if (id === 'slot') { await sys(['夾在投信口的廣告傳單。'], 1400); S(); return; }
+    });
+  }
+  // 謎題 2：六位數按鍵密碼鎖（DETAIL-007），答案 370918
   async function p2() {
-    let v = '';
-    const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'OK'];
-    const paint = msg => openCu(`<div class="n2-cut">N02-BG_DETAIL-007　密碼鎖</div><img class="bg" src="${IMG('N02-BG_DETAIL-007.webp')}" alt="密碼鎖" onerror="this.remove()">
-<div class="n2-lcd">${(v + '------').slice(0, 6).split('').map(c => `<span>${c === '-' ? '' : '•'}</span>`).join('')}</div>
-<div class="n2-keys">${KEYS.map(k => `<span>${k === 'OK' ? '確認' : k === 'C' ? '清除' : k}</span>`).join('')}</div><div class="n1-state" style="left:640px;top:648px">${msg || ''}</div>`,
-    KEYS.map((k, i) => ({ id: 'k' + k, x: 520 + (i % 3) * 88, y: 248 + Math.floor(i / 3) * 88, w: 80, h: 80, label: k === 'OK' ? '確認' : k === 'C' ? '清除' : k })));
+    let v = '', ok = false;
+    const K = { k1: [570, 151], k2: [635, 151], k3: [700, 151], k4: [570, 212], k5: [635, 212], k6: [700, 212], k7: [570, 273], k8: [635, 273], k9: [700, 273], kC: [570, 335], k0: [635, 335], kOK: [700, 335] };
+    const paint = msg => openCu(cuBg('N02-BG_DETAIL-007') +
+      `<div class="n2-lcd" style="left:565px;top:35px;width:191px;height:59px">${[0, 1, 2, 3, 4, 5].map(i => `<i class="${i < v.length ? 'on' : ''}"></i>`).join('')}</div>` +
+      `<i class="n2-led${ok ? ' on' : ''}" style="left:640px;top:100px"></i><div class="n1-state" style="left:640px;top:648px">${msg || ''}</div>`,
+    Object.entries(K).map(([k, [x, y]]) => ({ id: k, x, y, w: 56, h: 56, label: k === 'kOK' ? '確認' : k === 'kC' ? '清除' : k.slice(1) })));
     paint();
     const r = await loop(async id => {
       if (id === 'back') { closeCu(); return 'no'; }
-      const k = id.slice(1);
-      if (k === 'C') { v = ''; sfx('beep'); paint(); return; }
-      if (k === 'OK') {
+      if (id === 'kC') { v = v.slice(0, -1); sfx('beep'); paint(); return; }
+      if (id === 'kOK') {
         if (v === '370918') return 'ok';
         sfx('beepErr'); v = ''; paint('密碼錯誤'); return;
       }
-      if (v.length < 6) { v += k; sfx('beep'); paint(); }
+      if (v.length < 6) { v += id.slice(1); sfx('beep'); paint(); }
     });
     if (r !== 'ok') return false;
-    sfx('latch'); flag('P2'); closeCu();
+    ok = true; paint(); sfx('latch'); flag('P2'); await wait(700); S(); closeCu();
     await sys(['門開了'], 1200); S();
     return true;
   }
 
-  // C　主角房間
+  // C　主角房間（BG-004；筆記本在身上，書桌是空的。謎題 4 完成後把筆記本放回桌上 → BG-004-notebook）
   const C_HS = [
-    { id: 'wall', x: 180, y: 120, w: 200, h: 160, label: '牆上的紙條' },
-    { id: 'pile', x: 400, y: 460, w: 360, h: 160, label: '地上的文件堆' },
-    { id: 'board', x: 820, y: 120, w: 300, h: 240, label: '軟木板' },
-    { id: 'desk2', x: 820, y: 400, w: 300, h: 180, label: '書桌' },
-    { id: 'shelf', x: 40, y: 300, w: 140, h: 320, label: '書架' },
-    { id: 'dark', x: 600, y: 160, w: 110, h: 300, label: '達克' },
+    { id: 'shelf', x: 0, y: 0, w: 269, h: 460, label: '書架' },
+    { id: 'wall', x: 272, y: 88, w: 190, h: 175, label: '牆上的紙條' },
+    { id: 'pile', x: 362, y: 450, w: 438, h: 175, label: '整理桌' },
+    { id: 'floor', x: 190, y: 630, w: 810, h: 90, label: '地上的文件' },
+    { id: 'board', x: 740, y: 69, w: 329, h: 219, label: '軟木板' },
+    { id: 'desk', x: 800, y: 306, w: 340, h: 200, label: '書桌' },
+    { id: 'basket', x: 262, y: 306, w: 69, h: 140, label: '捲起來的紙' },
   ];
   async function sceneC() {
-    setScene('N02-BG-004', '我的房間', C_HS);
+    setScene(F.P4 ? 'N02-BG-004-notebook' : 'N02-BG-004', '我的房間', C_HS, { dark: ['N02-CHAR-015', STAND.C.dark] });
     flag('AT_ROOM'); paintFail();
     if (!F.C_IN) {
       flag('C_IN');
@@ -432,68 +549,78 @@ export function render(st, params, go) {
       if (id === 'back') { closeCu(); return; }
       if (id === 'wall') { await readDoc('rule'); return; }
       if (id === 'shelf') { await readDoc('conv'); return; }
+      if (id === 'basket') return void sys(['幾卷舊地圖。現在先不管它。'], 1400);
       if (id === 'dark') { await say(F.P3 ? '……' : '文件不會自己分類。', 'dark'); S(); return; }
-      if (id === 'pile') { if (F.P3) return void sys(['文件都歸檔好了'], 1200); await p3(); paintGoal(); return; }
+      if (id === 'pile' || id === 'floor') { if (F.P3) return void sys(['文件都歸檔好了'], 1200); await p3(); paintGoal(); return; }
       if (id === 'board') { if (!F.P3) { await say('先把地上的東西整理好。', 'dark'); S(); return; } if (F.P4) return void sys(['軟木板上的線索都串起來了'], 1200); await p4(); paintGoal(); return; }
-      if (id === 'desk2') { if (!F.P4) { await readDoc('note1'); return; } return 'END'; }
+      if (id === 'desk') { if (!F.P4) return void sys(['書桌。筆記本在我身上。'], 1400); return 'END'; }
     });
   }
-  // 謎題 3：四份文件放進四個年代資料夾（點文件 → 點資料夾）
+  // 謎題 3：整理桌（DETAIL-009）：點文件拿起（再點一次可閱讀）→ 點資料夾放進去
   async function p3() {
     let sel = null;
     const left = () => Object.keys(SORT).filter(k => !S0.placed[k]);
-    const paint = msg => openCu(`<div class="n2-cut">N02-BG_DETAIL-009　整理桌</div><img class="bg" src="${IMG('N02-BG_DETAIL-009.webp')}" alt="整理桌" onerror="this.remove()">
-<div class="n2-docs">${Object.keys(SORT).map(k => `<span class="${S0.placed[k] ? 'used' : ''}${sel === k ? ' sel' : ''}">${S0.placed[k] ? '' : DOCS[k].title.replace('📄 ', '')}</span>`).join('')}</div>
-<div class="n2-folders">${FOLDERS.map(f => `<span><b>${f} 年代</b><small>${Object.keys(S0.placed).filter(k => S0.placed[k] === f).map(k => k).join('、') || '—'}</small></span>`).join('')}</div>
-<div class="n1-state" style="left:640px;top:648px">${msg || (sel ? `已拿起「${DOCS[sel].title.replace('📄 ', '')}」：點一個資料夾放進去，或點「讀」看內容` : '點一份文件拿起來')}</div>
-${sel ? `<div class="n2-readbtn">讀這份文件</div>` : ''}`,
-    [...Object.keys(SORT).filter(k => !S0.placed[k]).map(k => ({ id: 'd' + k, x: 168 + 'ABCD'.indexOf(k) * 240, y: 152, w: 224, h: 120, label: '文件 ' + k })),
-      ...FOLDERS.map((f, i) => ({ id: 'f' + f, x: 168 + i * 240, y: 376, w: 224, h: 200, label: f + ' 年代資料夾' })),
-      ...(sel ? [{ id: 'read', x: 1000, y: 584, w: 200, h: 48, label: '讀這份文件' }] : [])]);
+    const FX = [120, 390, 658, 925], TAB = [215, 485, 753, 1020]; // 資料夾、標籤（DETAIL-009）
+    const thumb = k => `<img src="${IMG(DOCS[k].asset + '.webp')}" alt="">`;
+    const paint = msg => openCu(cuBg(F.P3 ? 'N02-BG_DETAIL-009-done' : 'N02-BG_DETAIL-009') +
+      Object.keys(SORT).map((k, i) => S0.placed[k] ? '' : `<div class="n2-card${sel === k ? ' sel' : ''}" style="left:${150 + i * 270}px;top:96px">${thumb(k)}<span>${k}</span></div>`).join('') +
+      FOLDERS.map((f, i) => `<div class="n2-tab" style="left:${TAB[i]}px;top:314px">${f}s</div>` + (F.P3 ? '' : Object.keys(S0.placed).filter(k => S0.placed[k] === f).map(k => `<div class="n2-infolder" style="left:${FX[i] + 60}px;top:360px">${thumb(k)}</div>`).join(''))).join('') +
+      `<div class="n1-state" style="left:640px;top:648px">${msg || (sel ? `拿起了文件 ${sel}：點資料夾放進去，再點一次文件可以閱讀` : '點一份文件拿起來')}</div>`,
+    [...left().map(k => ({ id: 'd' + k, x: 150 + 'ABCD'.indexOf(k) * 270, y: 96, w: 160, h: 200, label: '文件 ' + k })),
+      ...FOLDERS.map((f, i) => ({ id: 'f' + f, x: FX[i], y: 320, w: 238, h: 300, label: f + ' 年代資料夾' }))]);
     paint();
     return loop(async id => {
       if (id === 'back') { closeCu(); return true; }
-      if (id === 'read' && sel) { await readDoc(sel); S(); paint(); return; }
-      if (id[0] === 'd') { sel = id[1]; sfx('page'); paint(); return; }
+      if (id[0] === 'd') { const k = id[1]; if (sel === k) { await readDoc(k); S(); paint(); return; } sel = k; sfx('page'); paint(); return; }
       if (id[0] === 'f') {
         if (!sel) { paint('先拿起一份文件'); return; }
         const f = id.slice(1);
-        if (SORT[sel] !== f) { const s = sel; sel = null; paint(); await miss(); S(); if (!ended) paint(`「${DOCS[s].title.replace('📄 ', '')}」不屬於 ${f} 年代`); return; }
+        if (SORT[sel] !== f) { const s = sel; sel = null; paint(); await miss(); S(); if (!ended) paint(`文件 ${s} 不屬於 ${f} 年代`); return; }
         S0.placed[sel] = f; persist(); sfx('file'); sel = null;
         if (left().length) { paint(); return; }
-        flag('P3'); paint('四份文件都歸檔好了'); await wait(900); S(); closeCu();
+        flag('P3'); paint('四份文件都歸檔好了'); await wait(1000); S(); closeCu();
         await say('年代分開以後……這四份文件，好像在說同一件事。', 'me'); S();
         return true;
       }
     });
   }
-  // 謎題 4：軟木板。可讀 E、F 與 A～D；兩題四選一
+  // 謎題 4：軟木板（DETAIL-010）：六份文件釘在圖釘上，點來讀；整理好後回答兩題
   async function p4() {
     const Q = [
       { q: '這些文件的共同點是？', o: ['都發生在亞洲', '都以研究為名帶走樣本或器物，送往代號「90-S」的地方，從未公開', '都是政府主導的計畫', '都和戰爭有關'], a: 1 },
       { q: '我之前在查什麼？', o: ['二十世紀的科學造假事件', '一群在世界各地不斷改名、以研究為名收走樣本與器物的人', '各國的考古走私網', '冷戰時期的核子試驗'], a: 1 },
     ];
-    let qi = F.P4_Q || 0;
-    const paint = () => openCu(`<div class="n2-cut">N02-BG_DETAIL-010　軟木板</div><img class="bg" src="${IMG('N02-BG_DETAIL-010.webp')}" alt="軟木板" onerror="this.remove()">
-<div class="n2-pins">${['A', 'B', 'C', 'D', 'E', 'F'].map(k => `<span>${DOCS[k].title.replace('📄 ', '')}</span>`).join('')}</div>
-<div class="n2-quiz"><p class="q">${qi + 1}／2　${Q[qi].q}</p>${Q[qi].o.map((t, i) => `<p class="o">${i + 1}．${t}</p>`).join('')}</div>`,
-    [...['A', 'B', 'C', 'D', 'E', 'F'].map((k, i) => ({ id: 'r' + k, x: 168 + (i % 3) * 320, y: 112 + Math.floor(i / 3) * 80, w: 304, h: 64, label: '讀 ' + DOCS[k].title })),
-      ...Q[qi].o.map((t, i) => ({ id: 'a' + i, x: 168, y: 368 + i * 64, w: 944, h: 56, label: t }))]);
+    const PIN = [[400, 218], [638, 218], [875, 218], [400, 418], [638, 418], [875, 418]];
+    const KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
+    const paint = () => openCu(cuBg('N02-BG_DETAIL-010') +
+      KEYS.map((k, i) => `<div class="n2-pinned" style="left:${PIN[i][0] - 70}px;top:${PIN[i][1] - 6}px"><img src="${IMG(DOCS[k].asset + '.webp')}" alt=""><span>${k}</span></div>`).join('') +
+      `<button type="button" class="btn n2-answer" data-hs="ans">整理出結論</button>`,
+    KEYS.map((k, i) => ({ id: 'r' + k, x: PIN[i][0] - 76, y: PIN[i][1] - 12, w: 152, h: 176, label: '讀 ' + DOCS[k].title })));
     paint();
+    $(cu, '.n2-answer').addEventListener('click', ev => { ev.stopPropagation(); sfx('tap'); emit({ type: 'hs', id: 'ans' }); });
     return loop(async id => {
       if (id === 'back') { closeCu(); return true; }
-      if (id[0] === 'r') { await readDoc(id[1]); S(); paint(); return; }
-      if (id[0] !== 'a') return;
-      if (+id[1] !== Q[qi].a) { closeCu(); await miss(); S(); if (!ended) paint(); return; }
-      sfx('pin'); qi++; flag('P4_Q', qi);
-      if (qi < Q.length) { paint(); return; }
+      if (id[0] === 'r') { await readDoc(id[1]); S(); return; }
+      if (id !== 'ans') return;
+      const ansBtn = $(cu, '.n2-answer'); if (ansBtn) ansBtn.style.visibility = 'hidden';
+      const showAns = () => { const b = $(cu, '.n2-answer'); if (b) b.style.visibility = ''; };
+      for (let qi = F.P4_Q || 0; qi < Q.length; qi++) {
+        const c = await choose(`${qi + 1}／2　${Q[qi].q}`, Q[qi].o); S();
+        if (c < 0) { showAns(); return; }
+        if (c !== Q[qi].a) { showAns(); await miss(); S(); return; }
+        sfx('pin'); flag('P4_Q', qi + 1);
+      }
       flag('P4'); closeCu();
+      swapChar('dark', 'N02-CHAR-015b');
       await lines([
         ['me', '西伯利亞、京都、香港、泰國……幾十年、好幾個國家，都有同一群人經手。'],
         ['dark', '同一群人？'],
         ['me', '名字每次都不一樣。可是做事的方法一模一樣。'],
         ['dark', '（看著文件，安靜了很久）'],
       ]);
+      swapChar('dark', 'N02-CHAR-015');
+      setBg('N02-BG-004-notebook');
+      await sys(['你把筆記本放在書桌上，翻到最後一頁'], 1800); S();
       paintGoal(); return true;
     });
   }
@@ -505,20 +632,24 @@ ${sel ? `<div class="n2-readbtn">讀這份文件</div>` : ''}`,
       ['me', '這一頁……「是他。」旁邊原本寫著一個名字，被我自己塗掉了。'],
       ['me', '舊館那張借閱卡，旁邊的字也是我寫的。'],
       ['me', '我在找一個人。'],
+    ]);
+    swapChar('dark', 'N02-CHAR-015c');
+    await lines([
       ['dark', '（拿起外套）我走了。'],
       ['me', '達克。'],
       ['dark', '還有事？'],
       ['me', '謝謝。'],
       ['dark', '（沒有回頭）教授交代的事，我做完了而已。'],
     ]);
-    sfx('door');
+    sfx('door'); const c = $(scene, '#c-dark'); if (c) c.classList.add('leave');
+    await wait(700); S();
     await say('以前的我，到底是個什麼樣的人？', 'me', { think: true }); S();
     ended = true;
     const dd = get();
     if (!dd.records.includes('n02')) dd.records.push('n02');
     meta.st = null; meta.cleared = true; save();
     $(el, '#black').classList.add('on'); await wait(600); S();
-    const card = html(`<div class="n1-fail"><div class="col" style="align-items:center;gap:16px;z-index:2"><div class="label">第一章・第二節</div><h2>完</h2><div class="row" style="height:56px"><button type="button" class="btn" data-a="out" style="width:208px">返回關卡選擇</button></div></div></div>`);
+    const card = html(`<div class="n1-fail"><div class="col" style="align-items:center;gap:16px;z-index:2"><div class="label">第一章・第二節</div><h2>留下來的人</h2><p>完</p><div class="row" style="height:56px"><button type="button" class="btn" data-a="out" style="width:208px">返回關卡選擇</button></div></div></div>`);
     el.appendChild(card);
     await new Promise(r => $(card, '[data-a]').addEventListener('click', () => { sfx('tap'); r(); })); S();
     go('stages', { tab: 0 });

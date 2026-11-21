@@ -83,7 +83,6 @@ const SFX = {
   hum() { tone(98, 1.4, 'sawtooth', 0.06); tone(196, 1.4, 'triangle', 0.04); noise(1.2, 'lowpass', 300, 0.12); },
   snap() { noise(0.05, 'highpass', 2500, 0.35); tone(420, 0.06, 'square', 0.08); },
   step() { for (const d of [0, 0.45, 0.9]) noise(0.12, 'lowpass', 220, 0.4, d, 2); },
-  bike() { tone(90, 1.2, 'sawtooth', 0.08, 0, 40); noise(1.0, 'lowpass', 300, 0.2, 0, 2, 80); },
   dial() { noise(0.03, 'highpass', 3200, 0.25); tone(2400, 0.02, 'square', 0.05); },
   latch() { noise(0.08, 'bandpass', 1200, 0.35, 0, 3); tone(260, 0.12, 'square', 0.08, 0.05, 160); },
   beep() { tone(1760, 0.07, 'square', 0.06); },
@@ -96,7 +95,7 @@ const SFX = {
 };
 // 有實際錄音檔的音效（找不到檔案時退回合成音）
 // 用 Web Audio 播放（不另開 <audio>，避免 iOS 上把背景音樂擠掉）
-const SFX_FILES = { step: 'assets/audio/N01-SFX-STEP.mp3' };
+const SFX_FILES = { step: 'assets/audio/N01-SFX-STEP.mp3', caroff: 'assets/audio/N02-SFX-CAROFF.mp3', cardoor: 'assets/audio/N02-SFX-CARDOOR.mp3', dial: 'assets/audio/N02-SFX-DIAL.mp3', page: 'assets/audio/N02-SFX-PAGE.mp3', file: 'assets/audio/N02-SFX-FOLDER.mp3' };
 const sfxBuf = {};
 function loadSfx(name) {
   if (sfxBuf[name] !== undefined) return;

@@ -48,7 +48,7 @@ export function stages(st, p, go) {
   </div>
   <div class="nodes">${Array.from({ length: 9 }, (_, i) => { const id = 'n0' + (i + 1), done = d.records.includes(id), open = i === 0 || (i === 1 && d.records.includes('n01')); return `<${open ? 'button type="button" data-sec="' + i + '"' : 'span'} class="node${done ? ' done' : ''}${secSel === i ? ' cur' : ''}" aria-label="第${i + 1}節">${done ? ICON.check : open ? String(i + 1) : ICON.lock}</${open ? 'button' : 'span'}>${i < 8 ? '<span class="link-line"></span>' : ''}`; }).join('')}</div>
   ${secSel === 1 ? `<div class="row" style="padding:24px;justify-content:space-between;gap:24px;background:#1a1213;border:1px solid #2f1e1d">
-    <div class="col" style="gap:8px"><h3 class="serif" style="margin:0;font-size:24px;line-height:32px">第二節　（標題待定）</h3><span style="font-size:16px;line-height:24px;color:var(--text-2)">不限時挑戰，提示每次 1 顆鑽石。</span></div>
+    <div class="col" style="gap:8px"><h3 class="serif" style="margin:0;font-size:24px;line-height:32px">第二節　留下來的人</h3><span style="font-size:16px;line-height:24px;color:var(--text-2)">不限時挑戰，提示每次 1 顆鑽石。</span></div>
     <button type="button" class="btn" id="playN02" style="width:208px">${d.n02 && d.n02.st ? '繼續調查' : d.records.includes('n02') ? '再次挑戰' : '開始挑戰'}</button>
   </div>` : `<div class="row" style="padding:24px;justify-content:space-between;gap:24px;background:#1a1213;border:1px solid #2f1e1d">
     <div class="col" style="gap:8px"><h3 class="serif" style="margin:0;font-size:24px;line-height:32px">第一節　不存在的第七分鐘</h3><span style="font-size:16px;line-height:24px;color:var(--text-2)">${n00Done ? '不限時挑戰，提供 2 次免費提示。' : '先完成序章後開放。'}</span></div>
@@ -68,7 +68,7 @@ export function stages(st, p, go) {
       sfx('tap');
       const dd = get();
       if (dd.n02 && dd.n02.st) {
-        const r = await modal({ title: '第二節', body: '上次的調查還沒完成，要從中斷的地方繼續嗎？', buttons: [{ label: '重新開始', kind: 'btn-line', value: 'new' }, { label: '繼續調查', kind: 'btn', value: 'go' }] });
+        const r = await modal({ title: '第二節　留下來的人', body: '上次的調查還沒完成，要從中斷的地方繼續嗎？', buttons: [{ label: '重新開始', kind: 'btn-line', value: 'new' }, { label: '繼續調查', kind: 'btn', value: 'go' }] });
         if (r === 'go') go('n02', { resume: true }); else if (r === 'new') { dd.n02.st = null; save(); go('n02'); }
         return;
       }
