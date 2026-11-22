@@ -113,7 +113,7 @@ export function render(st, params, go) {
 </div>`);
   st.appendChild(el);
   const scene = $(el, '#scene'), hsLayer = $(el, '#hsLayer'), cu = $(el, '#cu');
-  let alive = true, listeners = [], ended = false;
+  let alive = true, listeners = [], ended = false, selected = null;
   const S = () => { if (!alive) throw new Error('left'); };
   const emit = a => listeners.slice().forEach(l => l(a));
   const act = test => new Promise(res => { const l = a => { if (test(a)) { listeners = listeners.filter(x => x !== l); res(a); } }; listeners.push(l); });
@@ -126,10 +126,12 @@ export function render(st, params, go) {
     for (let i = 0; i < 5; i++) {
       const id = S0.items[i];
       if (!id) { s.appendChild(html('<span class="slot" role="img" aria-label="空的道具欄"></span>')); continue; }
-      const b = html(`<button type="button" class="slot has${ping === id ? ' ping' : ''}" aria-label="${ITEMS[id].name}"><span class="n1-gb-item">${ITEMS[id].name}</span><img src="${IMG(ITEMS[id].asset + '.webp')}" alt="" onerror="this.remove()"></button>`);
-      b.addEventListener('click', () => { sfx('tap'); if (id === 'note') readDoc(F.P4 ? 'F' : 'note1'); else if (id === 'pass') readDoc('pass'); else if (id === 'slip') readDoc('slip'); else toast('公寓鐵門的鑰匙。到門口點鐵門就會使用。'); });
+      const b = html(`<button type="button" class="slot has${selected === id ? ' sel' : ''}${ping === id ? ' ping' : ''}" aria-label="${ITEMS[id].name}"><span class="n1-gb-item">${ITEMS[id].name}</span><img src="${IMG(ITEMS[id].asset + '.webp')}" alt="" onerror="this.remove()"></button>`);
+      b.addEventListener('click', () => { sfx('tap'); if (id === 'note') readDoc(F.P4 ? 'F' : 'note1'); else if (id === 'pass') readDoc('pass'); else if (id === 'slip') readDoc('slip'); else { selected = selected === id ? null : id; paintSlots(); } });
       s.appendChild(b);
     }
+    const ban = $(el, '.use-banner'); if (ban) ban.remove();
+    if (selected) el.appendChild(html(`<div class="use-banner"><div>使用「${ITEMS[selected].name}」：點要開的門　再點一次道具就取消</div></div>`));
   }
   const addItem = id => { if (!S0.items.includes(id)) S0.items.push(id); sfx('pick'); persist(); paintSlots(id); };
   const has = id => S0.items.includes(id);
@@ -151,7 +153,7 @@ export function render(st, params, go) {
     }
     list.forEach(({ id, x, y, w, h, label }) => {
       const b = html(`<button type="button" class="area n2-gb" data-hs="${id}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px" aria-label="${label}"><span>${label}</span></button>`);
-      b.addEventListener('click', ev => { ev.stopPropagation(); sfx('tap'); emit({ type: 'hs', id }); });
+      b.addEventListener('click', ev => { ev.stopPropagation(); sfx('tap'); emit({ type: 'hs', id, item: selected }); });
       layer.appendChild(b);
     });
   }
@@ -180,7 +182,8 @@ export function render(st, params, go) {
   async function loop(handler) {
     for (;;) {
       const a = await act(x => x.type === 'hs'); S();
-      const r = await handler(a.id); S();
+      const r = await handler(a.id, a.item); S();
+      if (a.item && selected === a.item) { selected = null; paintSlots(); }
       if (r) return r;
     }
   }
@@ -291,8 +294,8 @@ export function render(st, params, go) {
   // ---------- 目標與提示（每次 1 顆鑽石） ----------
   const STEPS = [
     { k: 'P1', done: () => F.P1, goal: '打開自己的置物櫃', hl: ['desk', 'locker'], hints: ['桌上不是有東西嗎。', '便條說密碼是「論文的第一個年份」。論文草稿就在桌上。', '論文封面標題的第一個數字，就是那個年份。'] },
-    { k: 'GO', done: () => F.AT_HOME, goal: '回住處', hl: ['door'], hints: ['鑰匙拿到了，還站著做什麼。', '點研究室的門離開。', '從研究室的門出去。'] },
-    { k: 'GATE', done: () => F.GATE, goal: '打開鐵門', hl: ['gate'], hints: ['鑰匙不只開家門。', '點鐵門。', '點鐵門，會自動用鑰匙。'] },
+    { k: 'GO', done: () => F.AT_HOME, goal: '回住處', hl: ['door'], hints: ['鑰匙拿到了，還站著做什麼。', '先點道具欄的鑰匙，再點研究室的門。', '點下方道具欄的「住處鑰匙」，再點研究室的門。'] },
+    { k: 'GATE', done: () => F.GATE, goal: '打開鐵門', hl: ['gate'], hints: ['鑰匙不只開家門。', '先點道具欄的鑰匙，再點鐵門。', '點下方道具欄的「住處鑰匙」，再點鐵門。'] },
     { k: 'P2', done: () => F.P2, goal: '打開家門', hl: ['plate', 'keypad'], hints: ['你自己寫過規則。', '門牌是 37；出入證上有第一次登記的日期。', '門牌號碼，接上第一次進研究室的月日。'] },
     { k: 'P3', done: () => F.P3, goal: '整理文件', hl: ['wall', 'shelf', 'pile'], hints: ['牆上只寫了一半。', '所有年份先換成西元。書架上有換算對照表；佛曆是減 543。已經是西元的，不用換。', '各換成西元以後，再依十年歸檔。別只看文件上原本的紀年。'] },
     { k: 'P4', done: () => F.P4, goal: '讀懂文件', hl: ['board'], hints: ['看完再下結論。', '四份文件的機構名字都不一樣，但做的事和東西的去向一樣。', '共同點不在地點，而在「帶走之後去了哪裡」。你當時在追的，也是這件事。'] },
@@ -388,13 +391,17 @@ export function render(st, params, go) {
     setScene('N02-BG-001', '舊館外・深夜', []);
     $(el, '#black').classList.remove('on'); await wait(600); S();
     await say('樓上還有一扇窗亮著。樓下那扇，是暗的。', 'me', { think: true }); S();
+    if (d02 === 1) await say('那個保安……我總覺得他沒把話說完。', 'me', { think: true });
+    else if (d02 === 0) await say('總感覺哪裡有錯…', 'me', { think: true });
+    else if (d02 === 2) await say('我還是不知道，今晚到底出了什麼事……', 'me', { think: true });
+    S();
     await tapTask('dark', '點擊靠在車旁的人', [
       { id: 'dark', x: 1055, y: 300, w: 150, h: 290, label: '靠在車旁的人' },
       { id: 'car', x: 922, y: 375, w: 310, h: 185, label: '黑色轎車' },
     ], { hint: '達克就站在右邊的車旁。', miss: '達克在右邊的車旁。' });
     await lines([
-      ['dark', '（看了一眼，嘆氣）看來我不值得你記住？'],
-      ['me', '……'],
+      ['dark', '（看了一眼，嘆氣）終於出來了嗎？'],
+      ['me', '……你是？'],
       ['dark', '我也是因杜阿森教授的學生。'],
       ['me', '教授的學生？那我們……'],
       ['dark', '同一個研究室。僅此而已！'],
@@ -405,10 +412,7 @@ export function render(st, params, go) {
       { id: 'car', x: 922, y: 375, w: 133, h: 185, label: '黑色轎車' },
     ], { hint: '點右邊那台黑色轎車。', miss: '要上車，點右邊那台黑色轎車。' });
     await say('謝謝……', 'me'); S();
-    if (d02 === 1) await say('那個保安……我總覺得他沒把話說完。', 'me', { think: true });
-    else if (d02 === 0) await say('系統會出錯。簽名不會。', 'me', { think: true });
-    else if (d02 === 2) await say('我還是不知道，今晚到底出了什麼事。', 'me', { think: true });
-    await say('他好像有點眼熟。', 'me', { think: true }); S();
+    await say('……', 'dark'); S();
     sfx('cardoor'); await wait(700); S(); sfx('caroff');
     await sys(['前往：學校・教授研究室'], 1600); S();
     return 'A';
@@ -430,9 +434,9 @@ export function render(st, params, go) {
         ...A_HS,
       ], { hint: '教授在窗邊。', miss: '教授在窗邊。' });
       await lines([
-        ['prof', '你回來了。很好！'],
+        ['prof', '回來了就好！'],
         ['me', '教授，我好像……'],
-        ['prof', '嗯……先坐著休息吧！剩下的之後說……'],
+        ['prof', '沒事……先坐著休息吧！剩下的之後說……'],
       ]);
       await tapTask('desk', '點擊自己的座位坐下', A_HS, { hint: '你的座位在左邊。', miss: '你的座位在左邊。' });
       await lines([
@@ -470,7 +474,7 @@ export function render(st, params, go) {
       setHs(A_HS);
     }
     flag('START'); paintGoal(); paintHintMeta();
-    return loop(async id => {
+    return loop(async (id, item) => {
       if (id === 'back') { closeCu(); return; }
       if (id === 'desk') { await deskCu(); return; }
       if (id === 'locker') {
@@ -482,7 +486,11 @@ export function render(st, params, go) {
       if (id === 'shelf') return void sys(['教授的書，大部分是外文。'], 1400);
       if (id === 'prof') { await say('文件整理好了，再來告訴我。', 'prof'); S(); return; }
       if (id === 'dark') { await say(F.P1_TAKEN ? '走了。' : '……', 'dark'); S(); return; }
-      if (id === 'door') { if (!F.P1_TAKEN) { await say('先拿到鑰匙再走。', 'dark'); S(); return; } await sys(['前往：住處'], 1400); S(); return 'B'; }
+      if (id === 'door') {
+        if (!F.P1_TAKEN) { await say('先拿到鑰匙再走。', 'dark'); S(); return; }
+        if (item !== 'key') { sfx('error'); await sys(['門鎖著。點道具欄的鑰匙，再點門'], 1600); S(); return; }
+        sfx('latch'); await wait(500); S(); await sys(['前往：住處'], 1400); S(); return 'B';
+      }
     });
   }
   // 書桌近景（DETAIL-005）
@@ -502,7 +510,9 @@ export function render(st, params, go) {
   async function p1() {
     const v = F.P1_V || [0, 0, 0, 0];
     const WX = [506, 600, 694, 788];
-    const paint = msg => openCu(cuBg(F.P1 ? (F.P1_TAKEN ? 'N02-BG_DETAIL-006-empty' : 'N02-BG_DETAIL-006-open') : 'N02-BG_DETAIL-006') +
+    // 拿走一樣就少一樣：依已拿的物品組合換圖（k 鑰匙、n 筆記本、p 出入證）
+    const openImg = () => { const t = ['key', 'note', 'pass'].filter(has).map(k => k[0]).join(''); return t.length === 3 ? 'N02-BG_DETAIL-006-empty' : t ? 'N02-BG_DETAIL-006-open-' + t : 'N02-BG_DETAIL-006-open'; };
+    const paint = msg => openCu(cuBg(F.P1 ? (F.P1_TAKEN ? 'N02-BG_DETAIL-006-empty' : openImg()) : 'N02-BG_DETAIL-006') +
       (F.P1 ? '' : WX.map((x, i) => `<div class="n2-wheel" style="left:${x}px;top:431px;width:75px;height:94px"><span>${v[i]}</span></div>`).join('')) +
       `<div class="n1-state" style="left:640px;top:648px">${msg || (F.P1 ? '把裡面的東西拿走' : '點上下的齒紋轉動，對好之後拉開櫃門')}</div>`,
     F.P1 ? [
@@ -525,8 +535,8 @@ export function render(st, params, go) {
       }
       if (id === 'scarf') { await sys(['一條灰色圍巾。'], 1200); S(); return; }
       if (id === 'key' || id === 'note' || id === 'pass') {
-        addItem(id);
-        if (id === 'note') { await lines([['me', '這是我的筆記？'], ['dark', '上面寫著你的名字。']]); }
+        addItem(id); paint();
+        if (id === 'note') { await lines([['me', '這是我的筆記？'], ['dark', '或許，上面寫著你的名字。']]); }
         if (has('key') && has('note') && has('pass')) { flag('P1_TAKEN'); paint(); await wait(600); S(); closeCu(); paintGoal(); return true; }
         paint(); return;
       }
@@ -554,18 +564,19 @@ export function render(st, params, go) {
       await lines([
         ['dark', '到了。'],
         ['me', '你怎麼知道我住這裡？'],
-        ['dark', '教授給了地址。'],
+        ['dark', '教授剛給了地址。'],
       ]);
       flag('AT_HOME'); paintGoal();
     }
-    return loop(async id => {
+    return loop(async (id, item) => {
       if (id === 'back') { closeCu(); return; }
       if (id === 'plate') return void sys(['門牌：37'], 1600);
       if (id === 'shoe') return void sys(['一雙球鞋、一把傘。'], 1400);
       if (id === 'light') return void sys(['按了幾下，燈還是只亮一半。'], 1400);
-      if (id === 'dark') { await say(F.GATE ? '大部分人會把密碼留在自己天天看得到的地方。' : '……', 'dark'); S(); return; }
+      if (id === 'dark') { await say(F.GATE ? '大部分人應該會把密碼留在自己天天看得到的地方吧？' : '……', 'dark'); S(); return; }
       if (id === 'mail') { await mailCu(); return; }
       if (id === 'gate') {
+        if (item !== 'key') { sfx('error'); return void sys(['鐵門鎖著。點道具欄的鑰匙，再點鐵門'], 1600); }
         sfx('latch'); flag('GATE'); setBg('N02-BG-003-open'); setHs(B_HS());
         await lines([
           ['me', '鑰匙能開外面的鐵門，可是裡面這道……是密碼鎖。', { think: true }],
@@ -638,9 +649,9 @@ export function render(st, params, go) {
         await lines([
           ['dark', '（掃了一眼）你的東西，你自己整理。我在這裡等。'],
           ['me', '這些……都是我收集的？'],
-          ['dark', '房間是你的，不然是誰的。'],
+          ['dark', '房間是你的，不然是誰的！'],
           ['me', '我在找什麼？'],
-          ['dark', '我不知道，也沒興趣。不過你半夜一個人去那間舊館，應該不是去散步。'],
+          ['dark', '我怎麼知道…。不過你半夜一個人去那間舊館，應該不是去散步。'],
         ]);
         await sys([`整理或解讀文件錯 ${MAX_FAIL} 次，達克會收走文件離開`], 2400); S();
       }
