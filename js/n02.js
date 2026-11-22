@@ -391,13 +391,17 @@ export function render(st, params, go) {
     setScene('N02-BG-001', '舊館外・深夜', []);
     $(el, '#black').classList.remove('on'); await wait(600); S();
     await say('樓上還有一扇窗亮著。樓下那扇，是暗的。', 'me', { think: true }); S();
+    if (d02 === 1) await say('那個保安……我總覺得他沒把話說完。', 'me', { think: true });
+    else if (d02 === 0) await say('總感覺哪裡有錯…', 'me', { think: true });
+    else if (d02 === 2) await say('我還是不知道，今晚到底出了什麼事……', 'me', { think: true });
+    S();
     await tapTask('dark', '點擊靠在車旁的人', [
       { id: 'dark', x: 1055, y: 300, w: 150, h: 290, label: '靠在車旁的人' },
       { id: 'car', x: 922, y: 375, w: 310, h: 185, label: '黑色轎車' },
     ], { hint: '達克就站在右邊的車旁。', miss: '達克在右邊的車旁。' });
     await lines([
-      ['dark', '（看了一眼，嘆氣）看來我不值得你記住？'],
-      ['me', '……'],
+      ['dark', '（看了一眼，嘆氣）終於出來了嗎？'],
+      ['me', '……你是？'],
       ['dark', '我也是因杜阿森教授的學生。'],
       ['me', '教授的學生？那我們……'],
       ['dark', '同一個研究室。僅此而已！'],
@@ -408,10 +412,7 @@ export function render(st, params, go) {
       { id: 'car', x: 922, y: 375, w: 133, h: 185, label: '黑色轎車' },
     ], { hint: '點右邊那台黑色轎車。', miss: '要上車，點右邊那台黑色轎車。' });
     await say('謝謝……', 'me'); S();
-    if (d02 === 1) await say('那個保安……我總覺得他沒把話說完。', 'me', { think: true });
-    else if (d02 === 0) await say('系統會出錯。簽名不會。', 'me', { think: true });
-    else if (d02 === 2) await say('我還是不知道，今晚到底出了什麼事。', 'me', { think: true });
-    await say('他好像有點眼熟。', 'me', { think: true }); S();
+    await say('……', 'dark'); S();
     sfx('cardoor'); await wait(700); S(); sfx('caroff');
     await sys(['前往：學校・教授研究室'], 1600); S();
     return 'A';
@@ -433,9 +434,9 @@ export function render(st, params, go) {
         ...A_HS,
       ], { hint: '教授在窗邊。', miss: '教授在窗邊。' });
       await lines([
-        ['prof', '你回來了。很好！'],
+        ['prof', '回來了就好！'],
         ['me', '教授，我好像……'],
-        ['prof', '嗯……先坐著休息吧！剩下的之後說……'],
+        ['prof', '沒事……先坐著休息吧！剩下的之後說……'],
       ]);
       await tapTask('desk', '點擊自己的座位坐下', A_HS, { hint: '你的座位在左邊。', miss: '你的座位在左邊。' });
       await lines([
@@ -535,7 +536,7 @@ export function render(st, params, go) {
       if (id === 'scarf') { await sys(['一條灰色圍巾。'], 1200); S(); return; }
       if (id === 'key' || id === 'note' || id === 'pass') {
         addItem(id); paint();
-        if (id === 'note') { await lines([['me', '這是我的筆記？'], ['dark', '上面寫著你的名字。']]); }
+        if (id === 'note') { await lines([['me', '這是我的筆記？'], ['dark', '或許，上面寫著你的名字。']]); }
         if (has('key') && has('note') && has('pass')) { flag('P1_TAKEN'); paint(); await wait(600); S(); closeCu(); paintGoal(); return true; }
         paint(); return;
       }
@@ -563,7 +564,7 @@ export function render(st, params, go) {
       await lines([
         ['dark', '到了。'],
         ['me', '你怎麼知道我住這裡？'],
-        ['dark', '教授給了地址。'],
+        ['dark', '教授剛給了地址。'],
       ]);
       flag('AT_HOME'); paintGoal();
     }
@@ -572,7 +573,7 @@ export function render(st, params, go) {
       if (id === 'plate') return void sys(['門牌：37'], 1600);
       if (id === 'shoe') return void sys(['一雙球鞋、一把傘。'], 1400);
       if (id === 'light') return void sys(['按了幾下，燈還是只亮一半。'], 1400);
-      if (id === 'dark') { await say(F.GATE ? '大部分人會把密碼留在自己天天看得到的地方。' : '……', 'dark'); S(); return; }
+      if (id === 'dark') { await say(F.GATE ? '大部分人應該會把密碼留在自己天天看得到的地方吧？' : '……', 'dark'); S(); return; }
       if (id === 'mail') { await mailCu(); return; }
       if (id === 'gate') {
         if (item !== 'key') { sfx('error'); return void sys(['鐵門鎖著。點道具欄的鑰匙，再點鐵門'], 1600); }
@@ -648,9 +649,9 @@ export function render(st, params, go) {
         await lines([
           ['dark', '（掃了一眼）你的東西，你自己整理。我在這裡等。'],
           ['me', '這些……都是我收集的？'],
-          ['dark', '房間是你的，不然是誰的。'],
+          ['dark', '房間是你的，不然是誰的！'],
           ['me', '我在找什麼？'],
-          ['dark', '我不知道，也沒興趣。不過你半夜一個人去那間舊館，應該不是去散步。'],
+          ['dark', '我怎麼知道…。不過你半夜一個人去那間舊館，應該不是去散步。'],
         ]);
         await sys([`整理或解讀文件錯 ${MAX_FAIL} 次，達克會收走文件離開`], 2400); S();
       }
