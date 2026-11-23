@@ -1198,3 +1198,7 @@ html.tight-text .n1-ink,
 html.tight-text .gdoc,
 html.tight-text .gdoc p { font-size: 20px; line-height: 28px; }
 html.tight-text .hint-meta { font-size: 22px; line-height: 26px; }
+/* 第一章第二節起：最後 3 分鐘，整個螢幕（含手機黑邊）框紅閃爍 */
+.tl-frame { position: fixed; inset: 0; z-index: 9999; pointer-events: none; box-shadow: inset 0 0 0 6px #e5263a, inset 0 0 64px rgba(229, 38, 58, 0.55); animation: tlframe 1s ease-in-out infinite alternate; }
+.tl-frame.hidden { display: none; }
+@keyframes tlframe { from { opacity: 0.55; } to { opacity: 1; } }
