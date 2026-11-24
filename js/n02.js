@@ -5,7 +5,9 @@ import { get, save } from './store.js';
 import { sfx, bgm, applyVolume } from './audio.js';
 import { html, $, IMG, ICON, wait, esc, modal, toast, clearToast, bustImg } from './ui.js';
 
-const MAX_FAIL = 3; // 整理與解讀文件錯 3 次 → 達克收走文件離開 → 整節從頭
+const MAX_FAIL = 3; // 第一章第二節起：整節錯 3 次（所有謎題都算）→ 從頭重新挑戰
+const LIMIT = 30 * 60; // 每節限時 30 分鐘；只有打開設定時暫停；最後 3 分鐘全螢幕紅框
+const WARN = 3 * 60;
 const HINT_COST = 1; // 第二節起：每次提示 1 顆鑽石
 
 const ITEMS = {
@@ -68,25 +70,9 @@ export function render(st, params, go) {
   d.n02 = d.n02 || {};
   const meta = d.n02; // seenIntro 跨次保留
   const fresh = () => ({ scene: 'S', items: ['slip'], read: [], flags: {}, hints: {}, fail: 0, placed: {}, log: [] });
-  const restoreFailKeep = () => {
-    const keep = meta.keep || {};
-    return {
-      scene: 'C',
-      items: (keep.items || ['slip']).slice(),
-      read: (keep.read || []).slice(),
-      flags: { ...(keep.flags || {}), P3: false, P4: false, C_IN: false, C_RETRY: true, P4_Q: 0 },
-      hints: { ...(meta.hintsKept || {}) },
-      fail: 0,
-      placed: {},
-      log: (keep.log || []).slice(),
-    };
-  };
-  const freshStart = !!(params && params.freshStart);
-  let S0 = (!freshStart && meta.st)
-    ? meta.st
-    : (!freshStart && meta.keep && !meta.cleared)
-      ? restoreFailKeep()
-      : fresh();
+  // 不再接續：每次進來都從頭開始（已買的提示保留）
+  meta.st = null; meta.keep = null;
+  const S0 = fresh(); S0.hints = { ...(meta.hintsKept || {}) };
   const F = S0.flags;
   const n01c = ((d.n01 && d.n01.last && d.n01.last.choices) || {});
   const d01 = n01c.D01, d02 = n01c.D02;
@@ -100,7 +86,7 @@ export function render(st, params, go) {
 <div class="lvl-top" id="hud">
   <button type="button" class="iconbtn" id="leave" aria-label="離開關卡">${ICON.back}</button>
   <div class="lvl-goal"><span class="chip-red" style="height:32px">第一章・第二節</span><span id="goal">目標　—</span></div>
-  <div class="n1-alert hidden" id="alert" aria-label="失誤次數"><span>失誤</span><i></i><i></i><i></i></div>
+  <div class="n1-timer" id="timer" aria-label="剩餘時間">30:00</div><div class="n1-alert" id="alert" aria-label="錯誤次數"><span>錯誤</span><i></i><i></i><i></i></div>
 </div>
 <div class="lvl-right" style="height:64px">
   <div class="hint-wrap"><button type="button" class="iconbtn hud-big" id="hintBtn">${ICO.hint}<span>提示</span></button><span class="hint-meta" id="hintMeta"></span></div>
@@ -117,8 +103,21 @@ export function render(st, params, go) {
   const S = () => { if (!alive) throw new Error('left'); };
   const emit = a => listeners.slice().forEach(l => l(a));
   const act = test => new Promise(res => { const l = a => { if (test(a)) { listeners = listeners.filter(x => x !== l); res(a); } }; listeners.push(l); });
-  const persist = () => { meta.st = S0; save(); };
+  const persist = () => save();
   const flag = (k, v = true) => { F[k] = v; persist(); };
+
+  // ---------- 倒數：牆上時間計算（切到別的 App 也照樣走），只有設定打開時暫停 ----------
+  let t0 = Date.now(), pausedMs = 0, pauseAt = 0, tick = 0;
+  const frame = html('<div class="tl-frame hidden" aria-hidden="true"></div>'); document.body.appendChild(frame);
+  const LIM = window.__N02_LIMIT || LIMIT; // 測試用：縮短限時
+  const left = () => Math.max(0, LIM - Math.floor((Date.now() - t0 - pausedMs - (pauseAt ? Date.now() - pauseAt : 0)) / 1000));
+  function paintTimer() {
+    const t = left(), n = $(el, '#timer');
+    n.textContent = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+    n.classList.toggle('warn', t <= WARN); frame.classList.toggle('hidden', t > WARN || ended);
+    if (t <= 0 && !ended) lose('time');
+  }
+  const stopTimer = () => { clearInterval(tick); frame.remove(); };
 
   // ---------- 道具欄 ----------
   function paintSlots(ping) {
@@ -346,42 +345,38 @@ export function render(st, params, go) {
 <div class="actions"><button type="button" class="btn" style="width:208px" data-ok>完成</button></div><button type="button" class="x" aria-label="關閉">${ICON.close}</button></div></div>`);
     const upd = () => { s.bgm = $(box, '#v1').value / 100; s.sfx = $(box, '#v2').value / 100; applyVolume(); save(); };
     $(box, '#v1').addEventListener('input', upd); $(box, '#v2').addEventListener('input', upd);
-    box.addEventListener('click', e => { if (e.target.closest('[data-ok]') || e.target.closest('.x')) { sfx('tap'); box.remove(); } });
+    pauseAt = Date.now();
+    box.addEventListener('click', e => { if (e.target.closest('[data-ok]') || e.target.closest('.x')) { sfx('tap'); box.remove(); if (pauseAt) { pausedMs += Date.now() - pauseAt; pauseAt = 0; } } });
     el.appendChild(box);
   });
   $(el, '#leave').addEventListener('click', async () => {
     sfx('tap');
-    const ok = await modal({ title: '離開關卡', body: '目前的進度會保存，下次可以從這裡繼續。', buttons: [{ label: '繼續調查', kind: 'btn-line', value: false }, { label: '離開', kind: 'btn', value: true }] });
-    if (ok && alive) { persist(); go('stages', { tab: 0 }); }
+    const ok = await modal({ title: '離開關卡', body: '離開後要從頭挑戰，確定嗎？', buttons: [{ label: '繼續調查', kind: 'btn-line', value: false }, { label: '離開', kind: 'btn', value: true }] });
+    if (ok && alive) { meta.hintsKept = { ...(meta.hintsKept || {}), ...(S0.hints || {}) }; save(); go('stages', { tab: 0 }); }
   });
 
-  // ---------- 失誤：整理與解讀文件錯一次＋1，滿 3 次 → 達克收走文件離開；重來回到分類，保留 P1／P2 與已買提示 ----------
-  const paintFail = () => { const n = $(el, '#alert'); n.classList.toggle('hidden', !F.AT_ROOM); n.querySelectorAll('i').forEach((x, i) => x.classList.toggle('on', i < S0.fail)); };
+  // ---------- 錯誤：所有謎題答錯都算一次；滿 3 次或時間到 → 這一節從頭重新挑戰（已買提示保留） ----------
+  const paintFail = () => $(el, '#alert').querySelectorAll('i').forEach((x, i) => x.classList.toggle('on', i < S0.fail));
   const FAIL_LINE = ['那份放錯了。', '（看了你一眼）你確定你看得懂？'];
   const FAIL_LINE_P4 = ['這個結論站不住腳。', '（看了你一眼）你確定你看得懂？'];
   async function miss(kind) {
     sfx('error'); S0.fail++; persist(); paintFail();
-    if (S0.fail >= MAX_FAIL) { await failed(); return; }
-    const lines = kind === 'p4' ? FAIL_LINE_P4 : FAIL_LINE;
-    await say(lines[S0.fail - 1], 'dark'); S();
+    if (S0.fail >= MAX_FAIL) { await lose('fail'); return; }
+    if (kind === 'p3' || kind === 'p4') { await say((kind === 'p4' ? FAIL_LINE_P4 : FAIL_LINE)[S0.fail - 1], 'dark'); S(); }
   }
-  async function failed() {
-    closeCu();
-    await lines([
-      ['dark', '（把文件一疊疊收起來）夠了。'],
-      ['me', '等一下，我快——'],
-      ['dark', '你連自己的東西都看不懂。今晚就到這裡。'],
-    ]);
+  async function lose(why) {
     if (ended) return;
-    ended = true; alive = false; sfx('door');
-    meta.hintsKept = { ...(meta.hintsKept || {}), ...(S0.hints || {}) };
-    meta.keep = { items: S0.items.slice(), read: S0.read.slice(), flags: { ...F }, log: S0.log.slice() };
-    meta.st = null; meta.cleared = false; save();
+    ended = true; stopTimer(); closeCu(); listeners = [];
+    meta.hintsKept = { ...(meta.hintsKept || {}), ...(S0.hints || {}) }; meta.st = null; meta.keep = null; save();
+    if (why === 'fail' && F.AT_ROOM) {
+      for (const [w, t] of [['dark', '（把文件一疊疊收起來）夠了。'], ['me', '等一下，我快——'], ['dark', '你連自己的東西都看不懂。今晚就到這裡。']]) { await say(t, w).catch(() => {}); }
+      sfx('door');
+    } else sfx('error');
+    alive = false;
     const b = html(`<div class="n1-fail"><div class="col" style="align-items:center;gap:16px;z-index:2">
-<h2>達克失去了耐心</h2><p>文件被收走了。再來一次的話，會從整理文件開始。</p>
-<p>已保留：置物櫃與家門進度、已買提示</p>
-<div class="row" style="gap:16px;height:56px"><button type="button" class="btn-line" data-a="out" style="width:208px">返回關卡選擇</button><button type="button" class="btn" data-a="retry" style="width:208px">繼續調查</button></div></div></div>`);
-    b.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (!a) return; sfx('tap'); if (a.dataset.a === 'retry') go('n02', { retry: true }); else go('stages', { tab: 0 }); });
+<h2>${why === 'time' ? '時間到了' : '錯誤已達 3 次'}</h2><p>這一節要從頭重新挑戰。</p><p>已保留：已買的提示</p>
+<div class="row" style="gap:16px;height:56px"><button type="button" class="btn-line" data-a="out" style="width:208px">返回關卡選擇</button><button type="button" class="btn" data-a="retry" style="width:208px">重新挑戰</button></div></div></div>`);
+    b.addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (!a) return; sfx('tap'); if (a.dataset.a === 'retry') go('n02'); else go('stages', { tab: 0 }); });
     el.appendChild(b);
   }
 
@@ -390,6 +385,7 @@ export function render(st, params, go) {
   async function sceneS() {
     setScene('N02-BG-001', '舊館外・深夜', []);
     $(el, '#black').classList.remove('on'); await wait(600); S();
+    await sys([`限時 30 分鐘　錯 ${MAX_FAIL} 次、時間到或中途離開，都要從頭挑戰`], 2600); S();
     await say('樓上還有一扇窗亮著。樓下那扇，是暗的。', 'me', { think: true }); S();
     if (d02 === 1) await say('那個保安……我總覺得他沒把話說完。', 'me', { think: true });
     else if (d02 === 0) await say('總感覺哪裡有錯…', 'me', { think: true });
@@ -530,7 +526,7 @@ export function render(st, params, go) {
       if (!F.P1) {
         if (id[0] === 'u' || id[0] === 'd') { const i = +id[1]; v[i] = (v[i] + (id[0] === 'u' ? 1 : 9)) % 10; F.P1_V = [...v]; persist(); sfx('dial'); paint(); return; }
         if (id !== 'pull') return;
-        if (v.join('') !== '1908') { sfx('error'); paint('鎖沒有開'); return; }
+        if (v.join('') !== '1908') { paint('鎖沒有開'); await miss('p1'); S(); return; }
         sfx('latch'); flag('P1'); paint(); return;
       }
       if (id === 'scarf') { await sys(['一條灰色圍巾。'], 1200); S(); return; }
@@ -615,7 +611,7 @@ export function render(st, params, go) {
       if (id === 'kC') { v = v.slice(0, -1); sfx('beep'); paint(); return; }
       if (id === 'kOK') {
         if (v === '370918') return 'ok';
-        sfx('beepErr'); v = ''; paint('密碼錯誤'); return;
+        sfx('beepErr'); v = ''; paint('密碼錯誤'); await miss('p2'); S(); return;
       }
       if (v.length < 6) { v += id.slice(1); sfx('beep'); paint(); }
     });
@@ -637,24 +633,16 @@ export function render(st, params, go) {
   ];
   async function sceneC() {
     setScene(F.P4 ? 'N02-BG-004-notebook' : 'N02-BG-004', '我的房間', C_HS);
-    flag('AT_ROOM'); paintFail();
+    flag('AT_ROOM');
     if (!F.C_IN) {
       flag('C_IN');
-      if (F.C_RETRY) {
-        await lines([
-          ['dark', '（把文件扔回地上）這次放仔細點。'],
-          ['dark', '再錯三次，文件我就帶走。'],
-        ]);
-      } else {
-        await lines([
-          ['dark', '（掃了一眼）你的東西，你自己整理。我在這裡等。'],
-          ['me', '這些……都是我收集的？'],
-          ['dark', '房間是你的，不然是誰的！'],
-          ['me', '我在找什麼？'],
-          ['dark', '我怎麼知道…。不過你半夜一個人去那間舊館，應該不是去散步。'],
-        ]);
-        await sys([`整理或解讀文件錯 ${MAX_FAIL} 次，達克會收走文件離開`], 2400); S();
-      }
+      await lines([
+        ['dark', '（掃了一眼）你的東西，你自己整理。我在這裡等。'],
+        ['me', '這些……都是我收集的？'],
+        ['dark', '房間是你的，不然是誰的！'],
+        ['me', '我在找什麼？'],
+        ['dark', '我怎麼知道…。不過你半夜一個人去那間舊館，應該不是去散步。'],
+      ]);
     }
     paintGoal();
     return loop(async id => {
@@ -687,7 +675,7 @@ export function render(st, params, go) {
       if (id[0] === 'f') {
         if (!sel) { paint('先拿起一份文件'); return; }
         const f = id.slice(1);
-        if (SORT[sel] !== f) { sel = null; paint(); await miss(); S(); if (!ended) paint('這份不該放在這裡。'); return; }
+        if (SORT[sel] !== f) { sel = null; paint(); await miss('p3'); S(); if (!ended) paint('這份不該放在這裡。'); return; }
         S0.placed[sel] = f; persist(); sfx('file'); sel = null;
         if (left().length) { paint(); return; }
         flag('P3'); paint('四份文件都歸檔好了'); await wait(1000); S(); closeCu();
@@ -761,7 +749,7 @@ export function render(st, params, go) {
     sfx('door');
     await wait(700); S();
     await say('以前的我，到底是個什麼樣的人？', 'me', { think: true }); S();
-    ended = true;
+    ended = true; stopTimer();
     const dd = get();
     if (!dd.records.includes('n02')) dd.records.push('n02');
     meta.st = null; meta.cleared = true; meta.keep = null; meta.hintsKept = null; save();
@@ -774,9 +762,8 @@ export function render(st, params, go) {
 
   async function flow() {
     paintSlots(); paintGoal(); bgm('n02'); // 背景音樂：HORROR — Mehul ShaRma
-    let where = S0.scene || 'S';
-    if (!freshStart && meta.keep && !meta.cleared && (F.C_RETRY || !meta.st)) where = 'C'; // 失敗後再進關：回到整理文件，保留 P1／P2
-    else if (params && params.retry && meta.seenIntro) where = 'A'; // 手動重來：略過舊館外的劇情
+    let where = 'S';
+    paintFail(); paintTimer(); tick = setInterval(paintTimer, 250);
     const RUN = { S: sceneS, A: sceneA, B: sceneB, C: sceneC };
     let first = true;
     for (;;) {
@@ -791,5 +778,5 @@ export function render(st, params, go) {
     }
   }
   flow().catch(e => { if (e && e.message !== 'left') console.error(e); });
-  return () => { alive = false; listeners = []; if (!ended && F.START) { meta.st = S0; save(); } };
+  return () => { alive = false; listeners = []; stopTimer(); };
 }
