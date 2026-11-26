@@ -8,7 +8,7 @@ The images in the repo are temporary placeholders. Replace them with Grok's vers
 | # | Filename | Size | Content | Code dependencies (must match) |
 |---|---|---|---|---|
 | 1 | `N02-BG-004-mess.webp` | 1920×1080 | Protagonist's room, **same angle and composition as N02-BG-004**, but ransacked: books scattered on the floor, papers everywhere, drawers half open. | Hotspot positions follow BG-004: bookshelf on the left, coffee table in the middle, corkboard upper right, desk on the right, wastebasket at bottom left of the bookshelf (x≈262–331, y≈306–446 on a 1280×720 basis). |
-| 2 | `N02-BG_DETAIL-002b.webp` (optional) | 1920×1080 | Close-up of the entryway floor: half-dried wet shoeprints. | Not used yet (the scene currently uses a subtitle). If drawn, it will be added as a cutaway. |
+| 2 | `N02-BG_DETAIL-015.webp` (optional) | 1920×1080 | Close-up of the entryway floor: half-dried wet shoeprints. | Not used yet (the scene currently uses a subtitle). If drawn, it will be added as a cutaway. |
 | 3 | `N02-BG_DETAIL-012.webp` | 1920×1080 | Bookshelf close-up, front view. **The middle shelf row is completely empty** (y≈260–600, x≈390–1530 on a 1920 basis); the floor is below (y≥650). Room to the left and right of the shelf for pinning notes. | Code draws 8 books on the empty row and 8 more on the floor; leave both areas clear. Spine titles, arrow and conversion table are all drawn by code. |
 | 4 | `N02-BG_DETAIL-013.webp` | 1920×1080 | Close-up of a section of the room wall: old wall panels, **one faintly visible vertical seam between two panels**, no handle, no keyhole. | — |
 | 5 | `N02-BG_DETAIL-014.webp` | 1920×1080 | Table top / floor (wood grain, a few scraps of paper). **The centre must be clear** (1280 basis x 340–940, y 140–540) — that is where the frame sits. | Torn pieces are cut by code. |
@@ -18,3 +18,5 @@ The images in the repo are temporary placeholders. Replace them with Grok's vers
 | 7 | `N02-BG-004.webp` (replace) | 1920×1080 | **The tidied room**: same angle as #1, books back on the shelf, floor mostly clear (a few files still on the coffee table, waiting for P3). Shown after Puzzle A and Puzzle B are both solved. | If replaced, `N02-BG-004-notebook.webp` must be reworked to match (same image + notebook on the desk). |
 
 Once all the art is ready, run `python3 tools/gen_preload.py .` and bump the `?v=` in index.html.
+
+完整交接文件（劇情、角色設定、規格、檢查清單）：https://claude.ai/artifact/Tr6NfVJsxdtMXosxi7f8rs
