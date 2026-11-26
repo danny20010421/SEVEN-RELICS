@@ -1202,3 +1202,18 @@ html.tight-text .hint-meta { font-size: 22px; line-height: 26px; }
 .tl-frame { position: fixed; inset: 0; z-index: 9999; pointer-events: none; box-shadow: inset 0 0 0 6px #e5263a, inset 0 0 64px rgba(229, 38, 58, 0.55); animation: tlframe 1s ease-in-out infinite alternate; }
 .tl-frame.hidden { display: none; }
 @keyframes tlframe { from { opacity: 0.55; } to { opacity: 1; } }
+/* 第二節擴充：書櫃排書、拼碎紙 */
+#cu .n2-slot { position: absolute; border: 2px dashed rgba(232, 216, 196, 0.25); border-radius: 4px; }
+#cu .n2-book { position: absolute; border-radius: 4px 4px 2px 2px; box-shadow: inset 4px 0 0 rgba(255, 255, 255, 0.08), inset -6px 0 0 rgba(0, 0, 0, 0.35), 0 6px 12px rgba(0, 0, 0, 0.5); overflow: hidden; transition: transform 0.15s; }
+#cu .n2-book span { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); writing-mode: vertical-rl; font-family: var(--serif); font-weight: 700; font-size: 16px; letter-spacing: 0.12em; color: #e8c98e; text-shadow: 0 1px 1px #000, 0 0 6px rgba(232, 201, 142, 0.35); }
+#cu .n2-book i { position: absolute; left: 0; top: 24px; width: 80px; height: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='752' height='40'%3E%3Cpath d='M0 14h700V2l52 18-52 18V26H0z' fill='%23c8a463' fill-opacity='.55'/%3E%3C/svg%3E"); background-size: 752px 40px; background-repeat: no-repeat; }
+#cu .n2-book.solved i { filter: drop-shadow(0 0 6px rgba(232, 201, 142, 0.9)); }
+#cu .n2-book.sel { transform: translateY(-16px); box-shadow: 0 0 0 3px var(--glow), 0 12px 20px rgba(0, 0, 0, 0.6); }
+#cu .n2-pin { position: absolute; display: flex; align-items: center; justify-content: center; background: #e8dcc4; color: #3a2a1a; font-family: var(--hand, var(--serif)); font-size: 18px; transform: rotate(-3deg); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); }
+#cu .n2-frame { position: absolute; border: 2px dashed rgba(232, 216, 196, 0.35); background: rgba(0, 0, 0, 0.25); }
+#cu .n2-placed { position: absolute; background-repeat: no-repeat; }
+#cu .n2-torn { position: absolute; background-repeat: no-repeat; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6); cursor: pointer; transition: transform 0.2s; }
+#cu .n2-torn.sel { outline: 3px solid var(--glow); filter: brightness(1.15); }
+#cu .n2-torn.nope { animation: tornno 0.4s ease; }
+@keyframes tornno { 0%, 100% { filter: none; } 50% { filter: brightness(1.6) sepia(1) hue-rotate(-30deg); } }
+#cu .n2-photo-done { position: absolute; z-index: 2; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6); transform: rotate(-4deg); }

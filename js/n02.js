@@ -48,13 +48,17 @@ const DOCS = {
   bill: { title: '帳單信封', asset: 'N02-DOC-015', r: 1.815, html: T(5.25, 37.39, 48.75, 32.94, '<p>{name}　收</p><p>三樓　37 號</p>', 'fld para') + T(5.25, 12, 60, 14, '水費繳費通知', 'muted l') },
   note1: { title: '筆記本・第一頁', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[2, '家門：門牌，接上我第一次'], [3, '進研究室的那天（月日）。'], [5, '歸檔：所有年份先換成西元，'], [6, '再分。已經是西元的，不用換。']], 14.4, 82.3) },
   conv: { title: '紀年換算對照表', asset: 'N02-DOC-022', r: 0.7495, html: T(3.74, 4.65, 92.39, 18.65, '紀年換算對照表', 'title') + grid([3.74, 32.56, 96.13], [23.3, 31.3, 44.4, 56.9, 69.4, 81.9], [[['紀年', 1, 'head'], ['換算成西元', 1, 'head']], ['明治', '＋1867'], ['昭和', '＋1925'], ['民國', '＋1911'], ['佛曆', '－543']]) },
-  A: { title: '📄 A　現場調查報告', asset: 'N02-DOC-016', r: 0.7475, html: T(4.55, 5.65, 91.1, 10.9, '現場調查報告', 'title') + onLines(L016, [[0, '日期：西元 1908 年'], [2, '西伯利亞通古斯河谷大爆炸後，'], [3, '北方礦物學會派員進入現場，'], [4, '回收「異常結晶樣本」三箱，'], [5, '運往「90-S」。'], [21, '樣本不列入公開紀錄。']], 8, 84, 2.4, 'type') },
-  B: { title: '📄 B　考古發掘報告', asset: 'N02-DOC-018', r: 1.1488, html: vertical(['發掘報告', '昭和十二年', '東亞古代文明研究所', '發掘青銅器一批', '表面刻有無法辨識', '的文字', '全數移交', '「90-S」']) },
-  C: { title: '📄 C　剪報', asset: 'N02-DOC-017', r: 0.75, html: T(2, 5.55, 96, 13.25, '北大西洋沉船打撈古儀器<br>海外基金會「代為研究」', 'headline') + T(3.5, 20.5, 29, 60, '<p>【本報訊】據海外通訊，民國四十四年，北大西洋一艘沉船中，打撈出一具古代天文儀器的殘件。</p>', 'col') + T(35.4, 20.5, 29, 60, '<p>儀器已由一家海外基金會以「代為研究」為名運走。</p><p>博物館方面表示，事後才得知此事。</p>', 'col') + T(67.5, 49, 30, 8, '（打撈出的儀器殘件）', 'caption') },
+  A: { title: '📄 A　現場調查報告', asset: 'N02-DOC-016', r: 0.7475, html: T(4.55, 5.65, 91.1, 10.9, '現場調查報告', 'title') + onLines(L016, [[0, '日期：西元 1908 年'], [2, '西伯利亞通古斯河谷大爆炸後，'], [3, '北方礦物學會派員進入現場，'], [4, '回收「異常結晶樣本」三箱，'], [5, '暫存倫敦，待「90-S」'], [6, '可達時運往。'], [21, '樣本不列入公開紀錄。']], 8, 84, 2.4, 'type') },
+  B: { title: '📄 B　考古發掘報告', asset: 'N02-DOC-018', r: 1.1488, html: vertical(['發掘報告', '昭和十二年', '東亞古代文明研究所', '發掘青銅器一批', '表面刻有無法辨識', '的文字', '全數移交', '「90-S」申請小組']) },
+  C: { title: '📄 C　剪報', asset: 'N02-DOC-017', r: 0.75, html: T(2, 5.55, 96, 13.25, '北大西洋沉船打撈古儀器<br>海外基金會「代為研究」', 'headline') + T(3.5, 20.5, 29, 60, '<p>【本報訊】據海外通訊，民國四十四年，北大西洋一艘沉船中，打撈出一具古代天文儀器的殘件。</p>', 'col') + T(35.4, 20.5, 29, 60, '<p>儀器已由一家海外基金會以「代為研究」為名運走。</p><p>博物館方面表示，事後才得知此事。</p><p>打撈當天，現場有人拍下一張照片，底片下落不明。</p>', 'col') + T(67.5, 49, 30, 8, '（打撈出的儀器殘件）', 'caption') },
   D: { title: '📄 D　研究站採集紀錄', asset: 'N02-DOC-019', r: 0.748, html: T(4.81, 8.3, 89.84, 7.65, '熱帶生命科學協會　研究站採集紀錄', 'title sm') + grid([4.81, 27.87, 50.47, 72.53], [18.7, 28.0, 36.15, 44.3], [[['日期', 1, 'head'], ['樣本', 1, 'head'], ['去向', 1, 'head']], ['佛曆<br>二五二一年', '雨林深處採得<br>不明植物種子', '全數移送<br>90-S'], [['備註：研究站同年因火災關閉，<br>紀錄僅存此頁。', 3]]]) },
   E: { title: '📄 E　無署名的信', asset: 'N02-DOC-020', r: 0.747, html: T(10.04, 9, 79.92, 22, '<p>各地機構更名一事，已照辦。</p><p>一律送往 90-S。</p><p>不得公開，不得歸還。</p>', 'hand para l') },
   F: { title: '📄 F　我的筆記', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[1, '北方礦物學會（1908）'], [2, '東亞古代文明研究所（1937）'], [3, '？基金會（1955）'], [4, '熱帶生命科學協會（1978）'], [6, '國家不同，名字不同。'], [7, '都說「為了研究」。'], [9, '90-S……'], [10, '是編號，還是座標？']], 14.4, 82.3) },
-  last: { title: '筆記本・最後一頁', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[10, '是他。', 'center big'], [12, SCRIBBLE, 'center']], 14.4, 82.3, 4.2) },
+  shelfnote: { title: '書櫃側面的便條', asset: 'N02-DOC-013', r: 0.992, html: T(8.06, 21, 83.67, 60, '照出版年排，<br>舊的在左。', 'hand big') },
+  catalog: { title: '文件目錄卡', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[1, 'A　1908　結晶樣本'], [2, 'B　1937　青銅器'], [3, 'C　1955　剪報'], [4, 'D　1978　種子'], [5, 'E　無署名的信'], [6, 'F　我的筆記'], [8, 'G　1955　打撈現場照片（原件）']], 14.4, 82.3) },
+  G: { title: '📄 G　照片影印本', asset: 'N02-DOC-024', r: 1.5, html: '' },
+  mag: { title: '雜誌封面', asset: 'N02-DOC-025', r: 0.75, html: '' },
+  last: { title: '筆記本・最後一頁', asset: 'N02-DOC-011', r: 0.747, html: onLines(L011, [[10, '就是這個人。', 'center big'], [12, SCRIBBLE, 'center']], 14.4, 82.3, 4.2) },
 };
 const SORT = { A: '1900', B: '1930', C: '1950', D: '1970' }; // 正確資料夾
 const FOLDERS = ['1900', '1930', '1950', '1970'];
@@ -296,6 +300,8 @@ export function render(st, params, go) {
     { k: 'GO', done: () => F.AT_HOME, goal: '回住處', hl: ['door'], hints: ['鑰匙拿到了，還站著做什麼。', '先點道具欄的鑰匙，再點研究室的門。', '點下方道具欄的「住處鑰匙」，再點研究室的門。'] },
     { k: 'GATE', done: () => F.GATE, goal: '打開鐵門', hl: ['gate'], hints: ['鑰匙不只開家門。', '先點道具欄的鑰匙，再點鐵門。', '點下方道具欄的「住處鑰匙」，再點鐵門。'] },
     { k: 'P2', done: () => F.P2, goal: '打開家門', hl: ['plate', 'keypad'], hints: ['你自己寫過規則。', '門牌是 37；出入證上有第一次登記的日期。', '門牌號碼，接上第一次進研究室的月日。'] },
+    { k: 'PA', done: () => F.PA, goal: '找出家裡少了什麼', hl: ['shelf'], hints: ['書被翻得亂七八糟，先把書排回書櫃。', '書櫃旁的便條：照出版年排，舊的在左。年份先換成西元，換算對照表也貼在書櫃旁。', '由舊到新：明治四十年、1912、昭和五年、民國三十五年、1951、佛曆二五〇六年、1969、民國六十四年。'] },
+    { k: 'PB', done: () => F.PB, goal: '拼回撕碎的紙', hl: ['basket'], hints: ['不見的東西，也許還留下了一點痕跡。看看廢紙簍。', '點一片碎紙拿起，再點一次可以轉方向；放到框裡對的位置會吸住。', '有 3 片不是照片的紙，放不進框裡，先不用管它們。'] },
     { k: 'P3', done: () => F.P3, goal: '整理文件', hl: ['wall', 'shelf', 'pile'], hints: ['牆上只寫了一半。', '所有年份先換成西元。書架上有換算對照表；佛曆是減 543。已經是西元的，不用換。', '各換成西元以後，再依十年歸檔。別只看文件上原本的紀年。'] },
     { k: 'P4', done: () => F.P4, goal: '讀懂文件', hl: ['board'], hints: ['看完再下結論。', '四份文件的機構名字都不一樣，但做的事和東西的去向一樣。', '共同點不在地點，而在「帶走之後去了哪裡」。你當時在追的，也是這件事。'] },
     { k: 'END', done: () => false, goal: '翻到筆記本最後一頁', hl: ['desk'], hints: ['你自己的筆記本，最後一頁還沒看。', '點書桌上的筆記本。', '筆記本就在書桌上。'] },
@@ -629,31 +635,191 @@ export function render(st, params, go) {
     { id: 'floor', x: 190, y: 630, w: 810, h: 90, label: '地上的文件' },
     { id: 'board', x: 740, y: 69, w: 329, h: 219, label: '軟木板' },
     { id: 'desk', x: 800, y: 306, w: 340, h: 200, label: '書桌' },
-    { id: 'basket', x: 262, y: 306, w: 69, h: 140, label: '捲起來的紙' },
+    { id: 'basket', x: 262, y: 306, w: 69, h: 140, label: '廢紙簍' },
+    { id: 'secret', x: 700, y: 300, w: 100, h: 130, label: '牆' },
   ];
+  const roomBg = () => F.P4 ? 'N02-BG-004-notebook' : (F.PA && F.PB) ? 'N02-BG-004' : 'N02-BG-004-mess';
+  async function afterPB() {
+    if (F.C_TALK) return;
+    flag('C_TALK');
+    setScene(roomBg(), '我的房間', C_HS); // 書排回去、碎紙收掉：房間變乾淨
+    await lines([
+      ['dark', '……整理你的文件吧。'],
+      ['me', '這些……都是我收集的？'],
+      ['dark', '房間是你的，不然是誰的！'],
+      ['me', '我在找什麼？'],
+      ['dark', '我怎麼知道…。不過你半夜一個人去那間舊館，應該不是去散步。'],
+    ]);
+    paintGoal();
+  }
   async function sceneC() {
-    setScene(F.P4 ? 'N02-BG-004-notebook' : 'N02-BG-004', '我的房間', C_HS);
+    setScene(roomBg(), '我的房間', C_HS);
     flag('AT_ROOM');
     if (!F.C_IN) {
       flag('C_IN');
       await lines([
-        ['dark', '（掃了一眼）你的東西，你自己整理。我在這裡等。'],
-        ['me', '這些……都是我收集的？'],
-        ['dark', '房間是你的，不然是誰的！'],
-        ['me', '我在找什麼？'],
-        ['dark', '我怎麼知道…。不過你半夜一個人去那間舊館，應該不是去散步。'],
+        ['me', '……這是我家？'],
+        ['dark', '（站在門口沒進來）你平常就住在這種地方？'],
+        ['me', '……是，是嗎。'],
+      ]);
+      await sys(['玄關的地板上，有半乾的鞋印。'], 2000); S();
+      await lines([
+        ['me', '今晚有下雨。這不是我留下的吧？', { think: true }],
+        ['dark', '（看了一眼密碼鎖）鎖看起來沒壞。'],
+        ['me', '……房間看起來也太亂了吧，不會是被人翻過吧？'],
+        ['dark', '你這能有什麼值錢的嗎？'],
       ]);
     }
     paintGoal();
     return loop(async id => {
       if (id === 'back') { closeCu(); return; }
       if (id === 'wall') { await readDoc('rule'); return; }
-      if (id === 'shelf') { await readDoc('conv'); return; }
-      if (id === 'basket') return void sys(['幾卷舊地圖。現在先不管它。'], 1400);
-      if (id === 'dark') { await say(F.P3 ? '……' : '文件不會自己分類。', 'dark'); S(); return; }
-      if (id === 'pile' || id === 'floor') { if (F.P3) return void sys(['文件都歸檔好了'], 1200); await p3(); paintGoal(); return; }
+      if (id === 'shelf') { if (!F.PA) { await pa(); closeCu(); paintGoal(); return; } await readDoc('conv'); return; }
+      if (id === 'basket') {
+        if (F.PB) return void sys(['廢紙簍空了。'], 1200);
+        if (!F.PA) { await say('廢紙簍塞滿了撕碎的紙……先看看家裡少了什麼。', 'me', { think: true }); S(); return; }
+        await pb(); closeCu(); paintGoal(); if (F.PB) await afterPB(); return;
+      }
+      if (id === 'secret') { if (F.PA) await secretWall(); return; }
+      if (id === 'dark') { await say(F.P3 ? '……' : '先看少了什麼。', 'dark'); S(); return; }
+      if (id === 'pile' || id === 'floor') { if (!F.PB) { await say('先看看少了什麼。', 'dark'); S(); return; } if (F.P3) return void sys(['文件都歸檔好了'], 1200); await p3(); paintGoal(); return; }
       if (id === 'board') { if (!F.P3) { await say('先把地上的東西整理好。', 'dark'); S(); return; } if (F.P4) return void sys(['軟木板上的線索都串起來了'], 1200); await p4(); paintGoal(); return; }
       if (id === 'desk') { if (!F.P4) return void sys(['書桌。筆記本在我身上。'], 1400); return 'END'; }
+    });
+  }
+  // 謎題 A：書櫃排書（DETAIL-012）。點書拿起 → 點空位放入；書櫃上的書可以互換位置；排滿 8 本才檢查，順序錯算 1 次錯誤。
+  // 書脊上各有一段箭頭，排對時拼成一個指向房間另一頭的箭頭（暗室伏筆）。
+  const BOOKS = ['明治四十年', '一九一二', '昭和五年', '民國三十五年', '一九五一', '佛曆二五〇六年', '一九六九', '民國六十四年']; // 正確順序（舊 → 新）
+  const BOOK_COL = ['#5c2a1f', '#28344a', '#4a3c24', '#1f3c30', '#58462f', '#3c1f28', '#2e2e2e', '#64502a'];
+  async function pa() {
+    const SX = 264, PITCH = 96, BW = 80, BH = 220, SY = 176, FY = 470;
+    let shelf = S0.shelf || Array(8).fill(null), floor = S0.floorBooks || [5, 2, 7, 0, 3, 6, 1, 4], sel = null;
+    const save = () => { S0.shelf = shelf; S0.floorBooks = floor; persist(); };
+    const book = (b, x, y, on) => `<div class="n2-book${sel === b ? ' sel' : ''}${on ? ' on' : ''}${F.PA ? ' solved' : ''}" style="left:${x}px;top:${y}px;width:${BW}px;height:${BH}px;background-color:${BOOK_COL[b]}"><i style="background-position:${-b * PITCH}px 0"></i><span>${BOOKS[b]}</span></div>`;
+    const paint = msg => {
+      const list = [];
+      let h = cuBg('N02-BG_DETAIL-012');
+      shelf.forEach((b, i) => { h += b === null ? `<div class="n2-slot" style="left:${SX + i * PITCH}px;top:${SY}px;width:${BW}px;height:${BH}px"></div>` : book(b, SX + i * PITCH, SY, true); list.push({ id: 's' + i, x: SX + i * PITCH, y: SY, w: BW, h: BH, label: '書櫃第 ' + (i + 1) + ' 格' }); });
+      floor.forEach((b, i) => { if (b === null) return; h += book(b, SX + i * PITCH, FY, false); list.push({ id: 'f' + i, x: SX + i * PITCH, y: FY, w: BW, h: BH, label: '地上的書：' + BOOKS[b] }); });
+      h += `<div class="n1-state" style="left:640px;top:136px">${msg || (sel !== null ? `拿起了《${BOOKS[sel]}》：點書櫃的空位放進去` : '點一本書拿起來')}</div>`;
+      list.push({ id: 'note', x: 64, y: 176, w: 160, h: 160, label: '書櫃側面的便條' }, { id: 'conv', x: 1080, y: 176, w: 140, h: 180, label: '紀年換算對照表' });
+      h += `<div class="n2-pin" style="left:64px;top:176px;width:160px;height:160px">便條</div><div class="n2-pin" style="left:1080px;top:176px;width:140px;height:180px">換算表</div>`;
+      openCu(h, list);
+    };
+    paint();
+    return loop(async id => {
+      if (id === 'back') { save(); return true; }
+      if (id === 'note') { await readDoc('shelfnote'); S(); paint(); return; }
+      if (id === 'conv') { await readDoc('conv'); S(); paint(); return; }
+      if (id[0] === 'f') { const i = +id.slice(1); const b = floor[i]; if (b === null) return; sel = sel === b ? null : b; sfx('page'); paint(); return; }
+      if (id[0] === 's') {
+        const i = +id.slice(1), here = shelf[i];
+        if (sel === null) { if (here !== null) { sel = here; sfx('page'); paint(); } return; }
+        const wasFull = shelf.every(x => x !== null), from = shelf.indexOf(sel);
+        if (from >= 0) { shelf[from] = here; shelf[i] = sel; } // 書櫃上互換
+        else { const fi = floor.indexOf(sel); floor[fi] = here; shelf[i] = sel; } // 從地上放上去（原本的書回到地上）
+        sel = null; sfx('step'); save();
+        if (shelf.every(x => x !== null)) {
+          if (shelf.every((x, k) => x === k)) {
+            flag('PA'); sfx('ok'); paint('書排好了'); await wait(900); S();
+            await readDoc('catalog'); S();
+            await lines([
+              ['me', '目錄上寫著 G，照片……不見了。'],
+              ['dark', '錢都沒不見，照片卻消失？'],
+              ['me', '這書脊設計真特別！', { think: true }],
+            ]);
+            return true;
+          }
+          // 從地上放進最後一本、排滿時才算一次錯；之後在書櫃上互換位置不再扣
+          if (!wasFull) { paint('順序好像不對'); await miss('pa'); S(); return; }
+        }
+        paint(); return;
+      }
+    });
+  }
+  async function secretWall() {
+    openCu(cuBg('N02-BG_DETAIL-013'), []);
+    if (!F.SECRET) {
+      flag('SECRET');
+      await lines([
+        ['me', '敲起來是空的……牆板之間有一道縫。'],
+        ['me', '打不開。是牆板還是有其他……', { think: true }],
+      ]);
+    } else await sys(['牆板之間有一道縫，打不開。'], 1400);
+    closeCu();
+  }
+  // 謎題 B：拼回撕碎的紙（DETAIL-014）。8 片照片影印本＋3 片雜誌封面（混在一起、方向混亂、互相堆疊）。
+  // 點一片拿起（移到最上面）、再點一次轉 90 度；點框裡的位置：放對且方向正確就吸住，否則彈回（不算錯）。
+  async function pb() {
+    const FXY = { x: 340, y: 140, w: 600, h: 400 }, CW = 150, CH = 200;
+    const MXY = { x: 490, y: 160, w: 300, h: 400 }, MW = 100;
+    const ST = S0.torn || (S0.torn = {
+      // 左右兩欄各 4 片互相疊著；雜誌 2 條橫在下方、1 條直立在最左（旋轉以中心為準，全部留在畫面內）
+      p: [[155, 110, 90], [1035, 110, 180], [155, 350, 270], [1035, 230, 0], [155, 230, 90], [1035, 350, 180], [155, 470, 270], [1035, 470, 270]],
+      m: [[390, 450, 90], [790, 450, 270], [48, 200, 180]], done: [], mdone: [], z: [] });
+    let sel = null, stage = F.PB ? 'mag' : 'photo';
+    const jag = (k) => { // 每片固定的鋸齒邊
+      let seed = k.charCodeAt(1) * 97 + (+k.slice(1)) * 13; const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+      const pts = []; for (let i = 0; i <= 8; i++) pts.push(`${i * 12.5}% ${r() * 3}%`); for (let i = 0; i <= 8; i++) pts.push(`${100 - r() * 3}% ${i * 12.5}%`);
+      for (let i = 8; i >= 0; i--) pts.push(`${i * 12.5}% ${100 - r() * 3}%`); for (let i = 8; i >= 0; i--) pts.push(`${r() * 3}% ${i * 12.5}%`);
+      return `polygon(${pts.join(',')})`;
+    };
+    const piece = (k) => {
+      const isP = k[0] === 'p', i = +k.slice(1), d = isP ? ST.p[i] : ST.m[i], w = isP ? CW : MW, h = isP ? CH : MXY.h;
+      const bgp = isP ? `-${(i % 4) * CW}px -${Math.floor(i / 4) * CH}px` : `-${i * MW}px 0`;
+      const z = 10 + ST.z.indexOf(k) + 1;
+      return `<div class="n2-torn${sel === k ? ' sel' : ''}" data-k="${k}" style="left:${d[0]}px;top:${d[1]}px;width:${w}px;height:${h}px;transform:rotate(${d[2]}deg);z-index:${z};clip-path:${jag(k)};background-image:url(${IMG((isP ? 'N02-DOC-024' : 'N02-DOC-025') + '.webp')});background-size:${isP ? FXY.w + 'px ' + FXY.h + 'px' : MXY.w + 'px ' + MXY.h + 'px'};background-position:${bgp}"></div>`;
+    };
+    const paint = msg => {
+      const list = [];
+      let h = cuBg('N02-BG_DETAIL-014');
+      if (stage === 'photo') {
+        h += `<div class="n2-frame" style="left:${FXY.x}px;top:${FXY.y}px;width:${FXY.w}px;height:${FXY.h}px"></div>`;
+        ST.done.forEach(i => { h += `<div class="n2-placed" style="left:${FXY.x + (i % 4) * CW}px;top:${FXY.y + Math.floor(i / 4) * CH}px;width:${CW}px;height:${CH}px;background-image:url(${IMG('N02-DOC-024.webp')});background-size:${FXY.w}px ${FXY.h}px;background-position:-${(i % 4) * CW}px -${Math.floor(i / 4) * CH}px"></div>`; });
+        for (let i = 0; i < 8; i++) if (!ST.done.includes(i)) list.push({ id: 'c' + i, x: FXY.x + (i % 4) * CW, y: FXY.y + Math.floor(i / 4) * CH, w: CW, h: CH, label: '框的第 ' + (i + 1) + ' 格' });
+      } else {
+        h += `<img class="n2-photo-done" src="${IMG('N02-DOC-024.webp')}" alt="" style="left:992px;top:176px;width:240px;height:160px">`;
+        h += `<div class="n2-frame" style="left:${MXY.x}px;top:${MXY.y}px;width:${MXY.w}px;height:${MXY.h}px"></div>`;
+        ST.mdone.forEach(i => { h += `<div class="n2-placed" style="left:${MXY.x + i * MW}px;top:${MXY.y}px;width:${MW}px;height:${MXY.h}px;background-image:url(${IMG('N02-DOC-025.webp')});background-size:${MXY.w}px ${MXY.h}px;background-position:-${i * MW}px 0"></div>`; });
+        for (let i = 0; i < 3; i++) if (!ST.mdone.includes(i)) list.push({ id: 'c' + i, x: MXY.x + i * MW, y: MXY.y, w: MW, h: MXY.h, label: '封面的第 ' + (i + 1) + ' 格' });
+      }
+      const loose = [...ST.p.map((_, i) => 'p' + i).filter(k => !ST.done.includes(+k.slice(1))), ...ST.m.map((_, i) => 'm' + i).filter(k => !ST.mdone.includes(+k.slice(1)))];
+      loose.forEach(k => { if (!ST.z.includes(k)) ST.z.push(k); h += piece(k); });
+      h += `<div class="n1-state" style="left:640px;top:104px">${msg || (stage === 'mag' ? '還剩 3 片不是照片的碎紙（可以不拼，點返回離開）' : sel ? '再點一次轉方向；點框裡的位置放進去' : '點一片碎紙拿起來')}</div>`;
+      openCu(h, list);
+      cu.querySelectorAll('.n2-torn').forEach(n => n.addEventListener('click', e => { e.stopPropagation(); emit({ type: 'hs', id: 't' + n.dataset.k }); }));
+    };
+    paint();
+    return loop(async id => {
+      if (id === 'back') { persist(); return true; }
+      if (id[0] === 't') {
+        const k = id.slice(1), d = k[0] === 'p' ? ST.p[+k.slice(1)] : ST.m[+k.slice(1)];
+        if (sel === k) d[2] = (d[2] + 90) % 360; else sel = k;
+        ST.z = ST.z.filter(x => x !== k).concat(k); sfx('page'); paint(); return;
+      }
+      if (id[0] === 'c') {
+        if (!sel) return;
+        const i = +id.slice(1), isP = sel[0] === 'p', j = +sel.slice(1), d = isP ? ST.p[j] : ST.m[j];
+        const fits = stage === 'photo' ? (isP && j === i && d[2] === 0) : (!isP && j === i && d[2] === 0);
+        if (!fits) { sfx('error'); const n = cu.querySelector(`[data-k="${sel}"]`); if (n) { n.classList.remove('nope'); void n.offsetWidth; n.classList.add('nope'); } return; }
+        (stage === 'photo' ? ST.done : ST.mdone).push(i); sel = null; sfx('step'); persist();
+        if (stage === 'photo' && ST.done.length === 8) {
+          flag('PB'); if (!S0.read.includes('G')) S0.read.push('G'); sfx('ok'); paint('拼好了'); await wait(900); S();
+          await readDoc('G'); S();
+          await say('照片上的木箱……也寫著 90-S。', 'me'); S();
+          stage = 'mag'; paint(); return;
+        }
+        if (stage === 'mag' && ST.mdone.length === 3) {
+          if (!S0.read.includes('mag')) S0.read.push('mag'); sfx('ok'); paint('拼好了'); await wait(700); S();
+          await readDoc('mag'); S();
+          await lines([
+            ['me', '剩下這幾片不是照片……是雜誌的封面？'],
+            ['me', '別的都在，只有她的臉被墨水弄髒了……', { think: true }],
+          ]);
+          return true;
+        }
+        paint(); return;
+      }
     });
   }
   // 謎題 3：整理桌（DETAIL-009）：點文件拿起（再點一次可閱讀）→ 點資料夾放進去
@@ -734,10 +900,11 @@ export function render(st, params, go) {
   async function ending() {
     await readDoc('last'); S();
     await lines([
-      ['me', '這一頁……「是他。」旁邊原本寫著一個名字，被我自己塗掉了。'],
+      ['me', '這一頁……「就是這個人。」旁邊原本寫著一個名字，被我自己塗掉了。'],
       ['me', '舊館那張借閱卡，旁邊的字也是我寫的。'],
       ['me', '我在找一個人。'],
       ['me', '可是那個名字，是我自己塗掉的。'],
+      ['me', '被拿走的照片，和這一頁被塗掉的名字……是同一個人嗎？', { think: true }],
     ]);
         await lines([
       ['dark', '（拿起外套）我走了。'],
