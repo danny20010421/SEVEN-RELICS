@@ -1202,3 +1202,5 @@ html.tight-text .hint-meta { font-size: 22px; line-height: 26px; }
 .tl-frame { position: fixed; inset: 0; z-index: 9999; pointer-events: none; box-shadow: inset 0 0 0 6px #e5263a, inset 0 0 64px rgba(229, 38, 58, 0.55); animation: tlframe 1s ease-in-out infinite alternate; }
 .tl-frame.hidden { display: none; }
 @keyframes tlframe { from { opacity: 0.55; } to { opacity: 1; } }
+/* 登入頁：虛構聲明（左下按鈕正下方，小字淡色、無底框） */
+.disclaimer { margin: 0; height: 24px; display: flex; align-items: center; font-size: 12px; line-height: 16px; letter-spacing: 0.08em; color: rgba(232, 216, 196, 0.6); text-shadow: 0 1px 2px #000; pointer-events: none; }

@@ -118,6 +118,7 @@ export function login(st, p, go) {
   <button type="button" class="lbtn" data-info="service">${ICON.headset}<span>客服中心</span></button>
   <button type="button" class="lbtn" data-info="share">${ICON.share}<span>分享遊戲</span></button>
 </div>
+<p class="abs disclaimer" style="left:64px;bottom:16px">本遊戲純屬虛構，所有人物、團體、宗教與事件皆與現實無關。</p>
 <div class="abs row" style="right:64px;top:0;width:400px;height:720px">
 <form class="login-box" novalidate>
   <div class="col" style="gap:8px"><h2 class="serif" style="margin:0;font-size:24px;line-height:32px">帳號登入</h2><div class="muted" style="font-size:14px;line-height:24px">搶先體驗期間，進度儲存在這台裝置上。</div></div>
